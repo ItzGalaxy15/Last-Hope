@@ -1,10 +1,10 @@
-using LastHope.Collision;
+using Last_Hope.Collision;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 
-namespace LastHope.Engine;
+namespace Last_Hope.Engine;
     public abstract class GameObject
     {
 

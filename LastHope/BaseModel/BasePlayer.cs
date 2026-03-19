@@ -1,4 +1,1 @@
-namespace LastHope
-{
-    
-}
+namespace Last_Hope;
