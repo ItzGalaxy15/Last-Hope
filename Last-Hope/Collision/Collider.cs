@@ -69,4 +69,5 @@ public abstract class Collider
     /// <param name="coordinates">The coordinates to check.</param>
     /// <returns>true if the coordinates are within the circle.</returns>
     public abstract bool Contains(Vector2 loc);
+
 }
