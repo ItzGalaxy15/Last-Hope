@@ -52,3 +52,12 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+Last-Hope.slnx
+.vs/slnx.sqlite
+.vs/Last-Hope/CopilotIndices/18.4.106.63888/CodeChunks.db
+.vs/Last-Hope/CopilotIndices/18.4.106.63888/CodeChunks.db-shm
+.vs/Last-Hope/CopilotIndices/18.4.106.63888/CodeChunks.db-wal
+.vs/Last-Hope/CopilotIndices/18.4.106.63888/SemanticSymbols.db
+.vs/Last-Hope/CopilotIndices/18.4.106.63888/SemanticSymbols.db-shm
+.vs/Last-Hope/CopilotIndices/18.4.106.63888/SemanticSymbols.db-wal
+.vs/VSWorkspaceState.json
