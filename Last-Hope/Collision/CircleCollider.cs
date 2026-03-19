@@ -1,7 +1,3 @@
-using System;
-using SpaceDefence.Collision;
-using Microsoft.Xna.Framework;
-
 namespace Last_Hope.Collision;
 
 public class CircleCollider : Collider, IEquatable<CircleCollider>

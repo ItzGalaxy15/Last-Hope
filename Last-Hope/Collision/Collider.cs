@@ -1,6 +1,3 @@
-using System;
-using Microsoft.Xna.Framework;
-
 namespace Last_Hope.Collision;
 
 public abstract class Collider
