@@ -2,7 +2,7 @@
 using System.Reflection.PortableExecutable;
 using Microsoft.Xna.Framework.Input;
 
-namespace LastHope.Engine;
+namespace Last_Hope.Engine;
 
     public class InputManager
     {

@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace LastHope.Engine;
+namespace Last_Hope.Engine;
     
     internal class AnimationManager
     {
