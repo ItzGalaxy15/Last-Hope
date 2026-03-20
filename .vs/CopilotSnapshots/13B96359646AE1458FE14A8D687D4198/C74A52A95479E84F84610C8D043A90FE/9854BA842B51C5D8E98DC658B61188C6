@@ -1,0 +1,8 @@
+﻿namespace Last_Hope;
+
+public sealed class Sword : BaseWeapon
+{
+    public Sword() : base("Sword", 10, 0.1f)
+    {
+    }
+}
