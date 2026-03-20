@@ -1,0 +1,34 @@
+﻿using Last_Hope.BaseModel;
+using Microsoft.Xna.Framework;
+
+namespace Last_Hope;
+
+public class Player1 : BasePlayer
+{
+    public Vector2 Position { get; private set; }
+
+    public Player1(Vector2 startPosition)
+        : base(hp: 100f, weapon: new Sword("Sword", attack: 20, critChance: 0.2f), speed: 220f)
+    {
+        Position = startPosition;
+    }
+
+    public void Move(Vector2 direction, GameTime gameTime)
+    {
+        if (direction == Vector2.Zero)
+            return;
+
+        direction.Normalize();
+        Position += direction * _Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+    }
+
+    public void UseWeapon(Vector2 targetWorldPosition)
+    {
+        Vector2 direction = targetWorldPosition - Position;
+        if (direction == Vector2.Zero)
+            return;
+
+        direction.Normalize();
+        _Weapon.Slash(direction, Position);
+    }
+}
