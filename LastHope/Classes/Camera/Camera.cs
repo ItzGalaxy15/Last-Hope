@@ -27,7 +27,6 @@ namespace Last_Hope.Classes.Camera
             Vector2 halfViewport = _viewportSize.ToVector2() / 2f;
             Vector2 cameraPosition = targetPosition - halfViewport;
 
-            // Remove clamping so camera always follows
             Position = cameraPosition;
             ViewMatrix = Matrix.CreateTranslation(-Position.X, -Position.Y, 0f);
         }
