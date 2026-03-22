@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 
-namespace Last_Hope.Collision;
+namespace LastHope.Collision;
 
 public class LinePieceCollider : Collider, IEquatable<LinePieceCollider>
 {
