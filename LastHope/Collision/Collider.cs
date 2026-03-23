@@ -33,10 +33,6 @@ public abstract class Collider
                 {
                     return Intersects((LinePieceCollider)other);
                 }
-            case ArcCollider:
-                {
-                    return Intersects((ArcCollider)other);
-                }
             case null:
                 {
                     return false;
@@ -66,13 +62,6 @@ public abstract class Collider
     /// <param name="other">The Line to check for intersection</param>
     /// <returns>true there is any overlap between the Circle and the Line.</returns>
     public abstract bool Intersects(LinePieceCollider other);
-
-    /// <summary>
-    /// Gets whether or not the shape intersects the Arc
-    /// </summary>
-    /// <param name="other">The Arc to check for intersection</param>
-    /// <returns>true there is any overlap between the shape and the Arc.</returns>
-    public abstract bool Intersects(ArcCollider other);
 
     /// <summary>
     /// Gets whether or not the provided coordinates lie within the bounds of this shape.
