@@ -1,5 +1,3 @@
-using System;
-using System.Numerics;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
@@ -21,17 +19,17 @@ public abstract class BasePlayer : GameObject
         _Speed = speed;
     }
 
-    public virtual void OnCollision(RectangleCollider other)
+    public override void OnCollision(GameObject gameObject)
     {
 
     }
 
-    public virtual void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime)
     {
 
     }
 
-    public virtual void Draw(GameTime gameTime)
+    public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
 
     }
