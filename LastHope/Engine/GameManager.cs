@@ -17,8 +17,8 @@ namespace Last_Hope.Engine;
         private List<GameObject> _toBeAdded;
         private ContentManager _content;
 
-        private float _spawnTimer = 0f;
-        private float _spawnInterval = 5f;   // seconds between spawns (starts at 5 s)
+        // private float _spawnTimer = 0f;
+        // private float _spawnInterval = 5f;   // seconds between spawns (starts at 5 s)
         private const float MinSpawnInterval = 0.5f;  // fastest possible rate
 
         public Random RNG { get; private set; }
@@ -50,14 +50,13 @@ namespace Last_Hope.Engine;
             // Camera = new Camera();
         }
 
-        // public void Initialize(ContentManager content, Game game, Player _player)
-        // {
-        //     Game = game;
-        //     _content = content;
-        //     _player = player;
-        //     Pixel = new Texture2D(Game.GraphicsDevice, 1,1);
-        //     Pixel.SetData(new[] {Color.White});
-        // }
+        public void Initialize(ContentManager content, Game game)
+        {
+            Game = game;
+            _content = content;
+            Pixel = new Texture2D(Game.GraphicsDevice, 1,1);
+            Pixel.SetData(new[] {Color.White});
+        }
 
         public void Load(ContentManager content)
         {
@@ -89,7 +88,7 @@ namespace Last_Hope.Engine;
                     }
                 }
             }
-            
+
         }
 
         // public List<GameObject> GetObjectsInRadius(Vector2 center, float radius)
@@ -98,7 +97,7 @@ namespace Last_Hope.Engine;
         //     foreach(GameObject e in _gameObjects)
         //     {
         //         if (e.GetCollider() == null) continue;
-                
+
         //         Vector2 objCenter = e.GetCollider().GetBoundingBox().Center.ToVector2();
 
         //         if (Vector2.Distance(center, objCenter) <= radius)
@@ -108,70 +107,48 @@ namespace Last_Hope.Engine;
         //     }
         //     return enemies;
         // }
-        
+
         public void Update(GameTime gameTime)
         {
-            // InputManager.Update();
+            InputManager.Update();
+            HandleInput(InputManager);
 
-            // // Handle input
-            // HandleInput(InputManager);
+            foreach (GameObject gameObject in _gameObjects)
+            {
+                gameObject.Update(gameTime);
+            }
 
+            CheckCollision();
 
-            // // Update
-            // foreach (GameObject gameObject in _gameObjects)
-            // {
-            //     gameObject.Update(gameTime);
-            // }
+            foreach (GameObject gameObject in _toBeAdded)
+            {
+                gameObject.Load(_content);
+                _gameObjects.Add(gameObject);
+            }
+            _toBeAdded.Clear();
 
-            // // Check Collission
-            // CheckCollision();
-
-            // foreach (GameObject gameObject in _toBeAdded)
-            // {
-            //     gameObject.Load(_content);
-            //     _gameObjects.Add(gameObject);
-            // }
-            // _toBeAdded.Clear();
-
-            // foreach (GameObject gameObject in _toBeRemoved)
-            // {
-            //     gameObject.Destroy();
-            //     _gameObjects.Remove(gameObject);
-            //     if (gameObject == _player)
-            //         _player = null;
-            // }
-            // _toBeRemoved.Clear();
-
-            // if (_player != null)
-            // {
-            //     _spawnTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            //     if (_spawnTimer >= _spawnInterval)
-            //     {
-            //         _spawnTimer = 0f;
-            //         _spawnInterval = Math.Max(MinSpawnInterval, _spawnInterval * 0.95f);
-            //         AddGameObject(new Alien());
-            //     }
-
-            //     Camera.Follow(_player.GetPosition().Center.ToVector2(),
-            //                   Game.GraphicsDevice.Viewport,
-            //                   WorldWidth, WorldHeight);
-            // }
+            foreach (GameObject gameObject in _toBeRemoved)
+            {
+                gameObject.Destroy();
+                _gameObjects.Remove(gameObject);
+            }
+            _toBeRemoved.Clear();
         }
 
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            // spriteBatch.Begin(transformMatrix: Camera.GetTransform(spriteBatch.GraphicsDevice.Viewport));
-            // foreach (GameObject gameObject in _gameObjects)
-            // {
-            //     gameObject.Draw(gameTime, spriteBatch);
-            // }
-            // spriteBatch.End();
+            spriteBatch.Begin();
+            foreach (GameObject gameObject in _gameObjects)
+            {
+                gameObject.Draw(gameTime, spriteBatch);
+            }
+            spriteBatch.End();
         }
 
         /// <summary>
-        /// Add a new GameObject to the GameManager. 
-        /// The GameObject will be added at the start of the next Update step. 
-        /// Once it is added, the GameManager will ensure all steps of the game loop will be called on the object automatically. 
+        /// Add a new GameObject to the GameManager.
+        /// The GameObject will be added at the start of the next Update step.
+        /// Once it is added, the GameManager will ensure all steps of the game loop will be called on the object automatically.
         /// </summary>
         /// <param name="gameObject"> The GameObject to add. </param>
         public void AddGameObject(GameObject gameObject)
@@ -180,18 +157,14 @@ namespace Last_Hope.Engine;
         }
 
         /// <summary>
-        /// Remove GameObject from the GameManager. 
+        /// Remove GameObject from the GameManager.
         /// The GameObject will be removed at the start of the next Update step and its Destroy() mehtod will be called.
         /// After that the object will no longer receive any updates.
         /// </summary>
         /// <param name="gameObject"> The GameObject to Remove. </param>
         public void RemoveGameObject(GameObject gameObject)
         {
-            // _toBeRemoved.Add(gameObject);
-            // if(gameObject is Ship)
-            // {
-            //     playerAlive = false;
-            // }
+            _toBeRemoved.Add(gameObject);
         }
 
         /// <summary>
