@@ -1,0 +1,20 @@
+﻿using Last_Hope.Classes.Weapon;
+using Last_Hope.Collision;
+using Last_Hope.Engine;
+using Microsoft.Xna.Framework;
+using System.Reflection.Emit;
+
+namespace Last_Hope;
+
+public class Sword : BaseWeapon
+{
+    public Sword(string name, int attack, float critChance) : base(name, attack, critChance)
+    {
+    }
+
+    public override void Slash(Vector2 direction, Vector2 origin)
+    {
+        Vector2 target = origin + direction * 400;
+    }
+    
+}

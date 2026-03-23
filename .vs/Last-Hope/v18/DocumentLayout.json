@@ -1,0 +1,250 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\degam\\source\\repos\\Last-Hope\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\basemodel\\baseweapon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\basemodel\\baseweapon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\classes\\player\\player1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\classes\\player\\player1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\basemodel\\baseplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\basemodel\\baseplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\classes\\weapon\\slash.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\classes\\weapon\\slash.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\classes\\weapon\\sword.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\classes\\weapon\\sword.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\basemodel\\baseenemy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\basemodel\\baseenemy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\game1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\game1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\collision\\arccollider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\collision\\arccollider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\collision\\linepiececollider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\collision\\linepiececollider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\engine\\gamemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\engine\\gamemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\engine\\gameobject.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\engine\\gameobject.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\collision\\rectanglecollider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\collision\\rectanglecollider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\collision\\circlecollider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\collision\\circlecollider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|c:\\users\\degam\\source\\repos\\last-hope\\lasthope\\collision\\collider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E473C8D3-7B6D-A855-796C-DA09E0F1DD87}|LastHope\\Last_Hope.csproj|solutionrelative:lasthope\\collision\\collider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 13,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Game1.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Game1.cs",
+              "RelativeDocumentMoniker": "LastHope\\Game1.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Game1.cs",
+              "RelativeToolTip": "LastHope\\Game1.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAADwvyUAAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:44:00.259Z",
+              "IsPinned": true
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Player1.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Classes\\Player\\Player1.cs",
+              "RelativeDocumentMoniker": "LastHope\\Classes\\Player\\Player1.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Classes\\Player\\Player1.cs",
+              "RelativeToolTip": "LastHope\\Classes\\Player\\Player1.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-20T17:51:21.248Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "BaseEnemy.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\BaseModel\\BaseEnemy.cs",
+              "RelativeDocumentMoniker": "LastHope\\BaseModel\\BaseEnemy.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\BaseModel\\BaseEnemy.cs",
+              "RelativeToolTip": "LastHope\\BaseModel\\BaseEnemy.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-20T17:49:27.099Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "LinePieceCollider.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\LinePieceCollider.cs",
+              "RelativeDocumentMoniker": "LastHope\\Collision\\LinePieceCollider.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\LinePieceCollider.cs",
+              "RelativeToolTip": "LastHope\\Collision\\LinePieceCollider.cs",
+              "ViewState": "AgIAANoAAAAAAAAAAAAkwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:53:28.853Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "ArcCollider.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\ArcCollider.cs",
+              "RelativeDocumentMoniker": "LastHope\\Collision\\ArcCollider.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\ArcCollider.cs",
+              "RelativeToolTip": "LastHope\\Collision\\ArcCollider.cs",
+              "ViewState": "AgIAAFYAAAAAAAAAAAA7wHEAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:52:29.811Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Slash.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Classes\\Weapon\\Slash.cs",
+              "RelativeDocumentMoniker": "LastHope\\Classes\\Weapon\\Slash.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Classes\\Weapon\\Slash.cs",
+              "RelativeToolTip": "LastHope\\Classes\\Weapon\\Slash.cs",
+              "ViewState": "AgIAACEAAAAAAAAAAAAowC4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:42:48.164Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "GameObject.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Engine\\GameObject.cs",
+              "RelativeDocumentMoniker": "LastHope\\Engine\\GameObject.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Engine\\GameObject.cs",
+              "RelativeToolTip": "LastHope\\Engine\\GameObject.cs",
+              "ViewState": "AgIAACcAAAAAAAAAAAAMwDQAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:35:50.554Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "GameManager.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Engine\\GameManager.cs",
+              "RelativeDocumentMoniker": "LastHope\\Engine\\GameManager.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Engine\\GameManager.cs",
+              "RelativeToolTip": "LastHope\\Engine\\GameManager.cs",
+              "ViewState": "AgIAAJwAAAAAAAAAAAAiwNkAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:35:47.885Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "CircleCollider.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\CircleCollider.cs",
+              "RelativeDocumentMoniker": "LastHope\\Collision\\CircleCollider.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\CircleCollider.cs",
+              "RelativeToolTip": "LastHope\\Collision\\CircleCollider.cs",
+              "ViewState": "AgIAAF4AAAAAAAAAAAAAwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:35:31.831Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "Collider.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\Collider.cs",
+              "RelativeDocumentMoniker": "LastHope\\Collision\\Collider.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\Collider.cs",
+              "RelativeToolTip": "LastHope\\Collision\\Collider.cs",
+              "ViewState": "AgIAAEMAAAAAAAAAAAA0wAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:35:25.29Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "RectangleCollider.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\RectangleCollider.cs",
+              "RelativeDocumentMoniker": "LastHope\\Collision\\RectangleCollider.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Collision\\RectangleCollider.cs",
+              "RelativeToolTip": "LastHope\\Collision\\RectangleCollider.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAwwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:35:23.72Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "BasePlayer.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\BaseModel\\BasePlayer.cs",
+              "RelativeDocumentMoniker": "LastHope\\BaseModel\\BasePlayer.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\BaseModel\\BasePlayer.cs",
+              "RelativeToolTip": "LastHope\\BaseModel\\BasePlayer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:33:10.89Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "BaseWeapon.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\BaseModel\\BaseWeapon.cs",
+              "RelativeDocumentMoniker": "LastHope\\BaseModel\\BaseWeapon.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\BaseModel\\BaseWeapon.cs",
+              "RelativeToolTip": "LastHope\\BaseModel\\BaseWeapon.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:27:15.813Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Sword.cs",
+              "DocumentMoniker": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Classes\\Weapon\\Sword.cs",
+              "RelativeDocumentMoniker": "LastHope\\Classes\\Weapon\\Sword.cs",
+              "ToolTip": "C:\\Users\\degam\\source\\repos\\Last-Hope\\LastHope\\Classes\\Weapon\\Sword.cs",
+              "RelativeToolTip": "LastHope\\Classes\\Weapon\\Sword.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAA6AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-19T16:27:10.556Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
