@@ -117,16 +117,6 @@ public class CircleCollider : Collider, IEquatable<CircleCollider>
     }
 
     /// <summary>
-    /// Gets whether or not the Circle intersects the Arc
-    /// </summary>
-    /// <param name="other">The Arc to check for intersection</param>
-    /// <returns>true there is any overlap between the Circle and the Arc.</returns>
-    public override bool Intersects(ArcCollider other)
-    {
-        return other.Intersects(this);
-    }
-
-    /// <summary>
     /// Get the enclosing Rectangle that surrounds the Circle.
     /// </summary>
     /// <returns></returns>

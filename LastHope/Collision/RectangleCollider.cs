@@ -41,10 +41,5 @@ namespace Last_Hope.Collision
         {
             return other.Intersects(this);
         }
-
-        public override bool Intersects(ArcCollider other)
-        {
-            return other.Intersects(this);
-        }
     }
 }
