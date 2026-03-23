@@ -20,7 +20,7 @@ public class Warrior : BasePlayer
 
 
     public Warrior(Vector2 startPosition)
-        : base(hp: 100f, weapon: new Weapon("Sword", attack: 20, critChance: 0.2f), speed: 220f)
+        : base(hp: 100f, weapon: new Weapon("Sword", attack: 20, critChance: 1.0f), speed: 220f)
     {
         Position = startPosition;
     }

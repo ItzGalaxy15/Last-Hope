@@ -38,6 +38,7 @@ public class Game1 : Game
         var gm = GameManager.GetGameManager();
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         gm.AddGameObject(new Warrior(new Vector2(100, 100)));
+        gm.AddGameObject(new Goblin(new Point(200, 160)));
     }
 
     protected override void Update(GameTime gameTime)

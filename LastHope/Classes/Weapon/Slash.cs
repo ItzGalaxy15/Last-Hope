@@ -1,3 +1,4 @@
+using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
@@ -51,6 +52,16 @@ namespace Last_Hope.Classes.Weapon
 
             // Calculate and apply damage
             int damage = CalculateDamage();
+
+            if (other is BaseEnemy enemy)
+            {
+                hitEnemies.Add(other);
+                enemy.Damage(damage);
+                if (enemy.CurrentHealth <= 0)
+                {
+                    GameManager.GetGameManager().RemoveGameObject(enemy);
+                }
+            }
 
             // TODO: Implement when you have an enemy/health system
 
