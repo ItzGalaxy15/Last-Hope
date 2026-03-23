@@ -237,6 +237,11 @@ public class LinePieceCollider : Collider, IEquatable<LinePieceCollider>
         return other.Start == this.Start && other.End == this.End;
     }
 
+    public override bool Intersects(ArcCollider other)
+    {
+        return other.Intersects(this);
+    }
+
     /// <summary>
     /// Calculates the normalized vector pointing from point1 to point2
     /// </summary>
