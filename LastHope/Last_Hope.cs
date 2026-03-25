@@ -35,12 +35,12 @@ public class Last_Hope : Game
         _gameManager = GameManager.GetGameManager();
         base.Initialize();
 
-        var player = new Warrior(new Vector2(100, 100));
+        _player = new Warrior(new Vector2(100, 100));
  
-        _gameManager.AddGameObject(player);
+        _gameManager.AddGameObject(_player);
         _gameManager.AddGameObject(new Goblin(new Point(600, 660)));
         _gameManager.AddGameObject(new Orc(new Point(300, 360)));
-        _gameManager.Initialize(Content, this, player);
+        _gameManager.Initialize(Content, this, _player);
     }
 
     protected override void LoadContent()
@@ -52,11 +52,6 @@ public class Last_Hope : Game
             new Point(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
             new Point(_background.Width, _background.Height),
             1.2f);
-
-        _player = new Warrior(new Vector2(100, 100));
-        gm.AddGameObject(_player);
-        gm.AddGameObject(new Goblin(new Point(200, 160)));
-        _background = Content.Load<Texture2D>("background");
     }
 
     protected override void Update(GameTime gameTime)
@@ -64,9 +59,8 @@ public class Last_Hope : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        gm.Update(gameTime);
-        _camera.Update(_player.Position);
         _gameManager.Update(gameTime);
+        _camera.Update(_player.Position);
         base.Update(gameTime);
     }
 
@@ -78,9 +72,7 @@ public class Last_Hope : Game
         _spriteBatch.Draw(_background, Vector2.Zero, Color.White);
         _spriteBatch.End();
 
-        gm.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
-        _gameManager.Draw(gameTime, _spriteBatch);
-
+        _gameManager.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
         base.Draw(gameTime);
     }
 }
