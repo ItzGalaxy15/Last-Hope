@@ -54,8 +54,8 @@ public class Last_Hope : Game
             1.2f);
 
         _player = new Warrior(new Vector2(100, 100));
-        gm.AddGameObject(_player);
-        gm.AddGameObject(new Goblin(new Point(200, 160)));
+        _gameManager.AddGameObject(_player);
+        _gameManager.AddGameObject(new Goblin(new Point(200, 160)));
         _background = Content.Load<Texture2D>("background");
     }
 
@@ -64,9 +64,8 @@ public class Last_Hope : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        gm.Update(gameTime);
-        _camera.Update(_player.Position);
         _gameManager.Update(gameTime);
+        _camera.Update(_player.Position);
         base.Update(gameTime);
     }
 
@@ -78,7 +77,6 @@ public class Last_Hope : Game
         _spriteBatch.Draw(_background, Vector2.Zero, Color.White);
         _spriteBatch.End();
 
-        gm.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
         _gameManager.Draw(gameTime, _spriteBatch);
 
         base.Draw(gameTime);
