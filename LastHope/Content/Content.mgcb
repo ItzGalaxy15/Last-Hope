@@ -13,9 +13,7 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin Explosion1.jpg
 #begin Axe.png
-#begin ../../../../../Documents/sprite background/Newbackground1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -25,11 +23,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:../../../../../Documents/sprite background/Newbackground1.png;Newbackground1.png
-/build:Explosion1.jpg
 /build:Axe.png
 
-#begin Axe.png
+#begin Explosion1.jpg
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -39,7 +35,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Axe.png
+/build:Explosion1.jpg
 
 #begin Goblin.png
 /importer:TextureImporter
@@ -52,6 +48,30 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Goblin.png
+
+#begin Newbackground1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Newbackground1.png
+
+#begin Newbackground1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Newbackground1.png
 
 #begin Orc.png
 /importer:TextureImporter
