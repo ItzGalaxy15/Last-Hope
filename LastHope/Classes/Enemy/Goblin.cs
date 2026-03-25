@@ -52,8 +52,7 @@ public class Goblin : BaseEnemy
         }
 
         // Move goblin
-        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Vector2 movement = direction * Speed * deltaTime;
+        Vector2 movement = direction * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         _collider.shape.Location += movement.ToPoint();
     }
