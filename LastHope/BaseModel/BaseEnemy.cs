@@ -22,9 +22,9 @@ public abstract class BaseEnemy : GameObject
 
     public BaseEnemy(float maxHealth, float currentHealth, int speed)
     {
-        this.MaxHealth = maxHealth;
-        this.CurrentHealth = currentHealth;
-        this.Speed = speed;
+        MaxHealth = maxHealth;
+        CurrentHealth = currentHealth;
+        Speed = speed;
     }
 
     public override void Load(ContentManager content)
@@ -32,7 +32,10 @@ public abstract class BaseEnemy : GameObject
         base.Load(content);
     }
 
-    public override abstract void Update(GameTime gameTime);
+    public override void Update(GameTime gameTime)
+    {
+        base.Update(gameTime);
+    }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
@@ -45,6 +48,8 @@ public abstract class BaseEnemy : GameObject
 
     public virtual void Damage(float amount)
     {
-        this.CurrentHealth -= amount;
+        CurrentHealth -= amount;
     }
+
+    public abstract Vector2 GetPosition();
 }
