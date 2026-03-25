@@ -11,6 +11,7 @@ public class Game1 : Game
     private InputManager _inputManager;
     private GameManager _gameManager;
     private SpriteBatch _spriteBatch;
+    private Texture2D _background;
 
     public Game1()
     {
@@ -42,6 +43,7 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        _background = Content.Load<Texture2D>("background");
     }
 
     protected override void Update(GameTime gameTime)
@@ -56,6 +58,13 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
+
+        _spriteBatch.Begin(samplerState: SamplerState.LinearWrap);
+        _spriteBatch.Draw(_background,
+            new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight),
+            new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight),
+            Color.White);
+        _spriteBatch.End();
 
         _gameManager.Draw(gameTime, _spriteBatch);
 

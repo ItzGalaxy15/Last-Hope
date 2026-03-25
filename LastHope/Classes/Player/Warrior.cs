@@ -17,6 +17,8 @@ public class Warrior : BasePlayer
 
     private const float AttackCooldown = 1f;  // 0.5 seconds between attacks
     private double timeSinceLastAttack = 0;
+    private Vector2 _moveInput;
+    private bool _facingLeft;
 
 
     public Warrior(Vector2 startPosition)
@@ -47,10 +49,29 @@ public class Warrior : BasePlayer
         _inputManager = GameManager.GetGameManager().InputManager;
     }
 
+    public override void HandleInput(InputManager inputManager)
+    {
+        _moveInput = Vector2.Zero;
+        if (inputManager.IsKeyDown(Keys.W) || inputManager.IsKeyDown(Keys.Up))
+            _moveInput.Y -= 1f;
+        if (inputManager.IsKeyDown(Keys.S) || inputManager.IsKeyDown(Keys.Down))
+            _moveInput.Y += 1f;
+        if (inputManager.IsKeyDown(Keys.A) || inputManager.IsKeyDown(Keys.Left))
+            _moveInput.X -= 1f;
+        if (inputManager.IsKeyDown(Keys.D) || inputManager.IsKeyDown(Keys.Right))
+            _moveInput.X += 1f;
+    }
+
     public override void Update(GameTime gameTime)
     {
-        timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
+        Move(_moveInput, gameTime);
 
+        if (_moveInput.X < 0f)
+            _facingLeft = true;
+        else if (_moveInput.X > 0f)
+            _facingLeft = false;
+
+        timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
         if (_inputManager.IsKeyPress(Keys.B) && timeSinceLastAttack >= AttackCooldown)
         {
             UseWeapon();
@@ -82,9 +103,15 @@ public class Warrior : BasePlayer
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        spriteBatch.Draw(WarriorSprite, Position, null, Color.White, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
-        spriteBatch.Draw(AxeSprite, Position + new Vector2(40, 5), null, Color.White, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
+        var flip = _facingLeft ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+        float scaledWarriorW = WarriorSprite.Width * 2f;
+        float scaledAxeW = AxeSprite.Width * 2f;
+        Vector2 axeOffset = _facingLeft
+            ? new Vector2(scaledWarriorW - scaledAxeW - 40f, 5f)
+            : new Vector2(40f, 5f);
 
+        spriteBatch.Draw(WarriorSprite, Position, null, Color.White, 0f, Vector2.Zero, 2f, flip, 0f);
+        spriteBatch.Draw(AxeSprite, Position + axeOffset, null, Color.White, 0f, Vector2.Zero, 2f, flip, 0f);
 
         base.Draw(gameTime, spriteBatch);
     }
