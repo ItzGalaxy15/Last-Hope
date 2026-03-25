@@ -2,7 +2,6 @@ using Last_Hope.Classes.Weapon;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope;
 

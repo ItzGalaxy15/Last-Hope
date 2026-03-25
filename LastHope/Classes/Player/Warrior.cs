@@ -1,5 +1,4 @@
 using Last_Hope.BaseModel;
-using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;

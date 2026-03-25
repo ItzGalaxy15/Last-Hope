@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope;
 
-public class Game1 : Game
+public class Last_Hope : Game
 {
     private GraphicsDeviceManager _graphics;
     private InputManager _inputManager;
@@ -13,7 +13,7 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
     private Texture2D _background;
 
-    public Game1()
+    public Last_Hope()
     {
         _graphics = new GraphicsDeviceManager(this);
 
