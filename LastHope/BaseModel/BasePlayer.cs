@@ -17,11 +17,6 @@ public abstract class BasePlayer : GameObject
         _Speed = speed;
     }
 
-    public override void OnCollision(GameObject gameObject)
-    {
-
-    }
-
     public override void Update(GameTime gameTime)
     {
 

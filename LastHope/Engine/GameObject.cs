@@ -50,7 +50,7 @@ namespace Last_Hope.Engine;
         /// <returns></returns>
         public bool CheckCollision(GameObject other)
         {
-            if (collider == null)
+            if (collider == null || other == null || other.collider == null)
                 return false;
             return collider.CheckIntersection(other.collider);
         }
