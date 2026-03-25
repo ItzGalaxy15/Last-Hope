@@ -1,67 +1,101 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope.Engine;
-    
-    internal class AnimationManager
+internal class AnimationManager
+{
+    int numFrames;
+    int numColumns;
+    Vector2 size;
+
+    int counter;
+    int activeFrame;
+    int interval; // speed
+
+    int rowPos;
+    int colPos;
+
+    bool loop;
+    public bool isFinished;
+
+    int offsetX;
+    int offsetY;
+
+
+    public AnimationManager(int numFrames, int numColumns, Vector2 size, int interval = 30, bool loop = false, int offsetX = 0, int offsetY = 0)
     {
-        int numFrames;
-        int numColumns;
-        Vector2 size;
+        this.numFrames = numFrames;
+        this.numColumns = numColumns;
+        this.size = size;
 
-        float counter;
-        int activeFrame;
-        int interval;
+        this.counter = 0;
+        this.activeFrame = 0;
+        this.interval = interval;
 
-        int rowPos;
-        int colPos;
+        this.rowPos = 0;
+        this.colPos = 0;
 
-        public float speed {get; set; } = 5f;
+        this.loop = loop;
+        this.isFinished = false;
 
-        public bool IsDone { get; private set; } = false;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+    }
 
-        public AnimationManager(int numFrames, int numColumns, Vector2 size)
+
+    public void Update()
+    {
+        if (isFinished) return;
+        counter++;
+        if (counter > interval)
         {
-            this.numFrames = numFrames;
-            this.numColumns = numColumns;
-            this.size = size;
-
             counter = 0;
-            activeFrame = 0;
-            interval = 30;
-
-            rowPos = 0;
-            colPos = 0;
-
+            NextFrame();
         }
+    }
 
-        public void Update()
+    private void NextFrame()
+    {
+        activeFrame++;
+        colPos++;
+
+        // Check if the animation has reached the end of the frames
+        if (activeFrame >= numFrames)
         {
-            counter += speed;
-            if (counter > interval) {counter = 0; NextFrame();}
-
-        }
-
-        public void NextFrame()
-        {
-            activeFrame++;
-            colPos++;
-
-            if (activeFrame >= numFrames) { IsDone = true; activeFrame = 0; colPos = 0; rowPos = 0; }
-
-            if (colPos >= numColumns)
+            if (loop)
             {
-                colPos = 0;
-                rowPos++;
+                ResetAnimation();
+            }
+            else
+            {
+                //activeFrame = numFrames - 1;
+                //colPos = numColumns - 1;
+                //isFinished = true;
+                //return;
+                activeFrame = numFrames - 1;
+                colPos = activeFrame % numColumns;
+                rowPos = activeFrame / numColumns;
+                isFinished = true;
+                return;
             }
         }
 
-        public Rectangle GetFrame()
+        if (colPos >= numColumns)
         {
-            return new Rectangle(
-                colPos * (int)size.X, 
-                rowPos * (int)size.Y, 
-                (int)size.X, (int)size.Y);
+            colPos = 0;
+            rowPos++;
         }
     }
+
+    public Rectangle GetSourceRect()
+    {
+        return new Rectangle(
+            (colPos * (int)size.X) + offsetX, (rowPos * (int)size.Y) + offsetY, (int)size.X, (int)size.Y);
+    }
+
+    private void ResetAnimation()
+    {
+        activeFrame = 0;
+        colPos = 0;
+        rowPos = 0;
+    }
+}
