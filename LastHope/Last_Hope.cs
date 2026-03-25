@@ -1,3 +1,4 @@
+using Last_Hope.Classes.Camera;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -12,14 +13,16 @@ public class Last_Hope : Game
     private GameManager _gameManager;
     private SpriteBatch _spriteBatch;
     private Texture2D _background;
+    private Camera _camera;
+    private Warrior _player;
 
     public Last_Hope()
     {
         _graphics = new GraphicsDeviceManager(this);
 
-        _graphics.PreferredBackBufferWidth = 1080;
+        _graphics.PreferredBackBufferWidth = 1920;
         _graphics.PreferredBackBufferHeight = 1080;
-        _graphics.IsFullScreen = false;
+        _graphics.IsFullScreen = true;
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
@@ -43,6 +46,16 @@ public class Last_Hope : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        _background = Content.Load<Texture2D>("Newbackground1");
+
+        _camera = new Camera(
+            new Point(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
+            new Point(_background.Width, _background.Height),
+            1.2f);
+
+        _player = new Warrior(new Vector2(100, 100));
+        gm.AddGameObject(_player);
+        gm.AddGameObject(new Goblin(new Point(200, 160)));
         _background = Content.Load<Texture2D>("background");
     }
 
@@ -51,6 +64,8 @@ public class Last_Hope : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
+        gm.Update(gameTime);
+        _camera.Update(_player.Position);
         _gameManager.Update(gameTime);
         base.Update(gameTime);
     }
@@ -59,13 +74,11 @@ public class Last_Hope : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        _spriteBatch.Begin(samplerState: SamplerState.LinearWrap);
-        _spriteBatch.Draw(_background,
-            new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight),
-            new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight),
-            Color.White);
+        _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.LinearClamp);
+        _spriteBatch.Draw(_background, Vector2.Zero, Color.White);
         _spriteBatch.End();
 
+        gm.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
         _gameManager.Draw(gameTime, _spriteBatch);
 
         base.Draw(gameTime);

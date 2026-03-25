@@ -109,8 +109,8 @@ public class Warrior : BasePlayer
             ? new Vector2(scaledWarriorW - scaledAxeW - 40f, 5f)
             : new Vector2(40f, 5f);
 
-        spriteBatch.Draw(WarriorSprite, Position, null, Color.White, 0f, Vector2.Zero, 2f, flip, 0f);
-        spriteBatch.Draw(AxeSprite, Position + axeOffset, null, Color.White, 0f, Vector2.Zero, 2f, flip, 0f);
+        spriteBatch.Draw(WarriorSprite, Position, null, Color.White, 0f, Vector2.Zero, 1f, flip, 0f);
+        spriteBatch.Draw(AxeSprite, Position + axeOffset, null, Color.White, 0f, Vector2.Zero, 1f, flip, 0f);
 
         base.Draw(gameTime, spriteBatch);
     }

@@ -134,9 +134,9 @@ namespace Last_Hope.Engine;
             _toBeRemoved.Clear();
         }
 
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
         {
-            spriteBatch.Begin();
+            spriteBatch.Begin(transformMatrix: transformMatrix);
             foreach (GameObject gameObject in _gameObjects)
             {
                 gameObject.Draw(gameTime, spriteBatch);

@@ -9,7 +9,7 @@ namespace Last_Hope;
 
 public class Goblin : BaseEnemy
 {
-    private const float SpriteScale = 5f;
+    private const float SpriteScale = 3f;
 
     public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100)
     {
