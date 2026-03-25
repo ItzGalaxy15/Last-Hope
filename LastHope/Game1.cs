@@ -10,6 +10,7 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private InputManager _inputManager;
     private SpriteBatch _spriteBatch;
+    private Texture2D _background;
 
     public Game1()
     {
@@ -37,6 +38,7 @@ public class Game1 : Game
     {
         var gm = GameManager.GetGameManager();
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        _background = Content.Load<Texture2D>("background");
         gm.AddGameObject(new Warrior(new Vector2(100, 100)));
         gm.AddGameObject(new Goblin(new Point(200, 160)));
     }
@@ -55,6 +57,13 @@ public class Game1 : Game
     {
         var gm = GameManager.GetGameManager();
         GraphicsDevice.Clear(Color.CornflowerBlue);
+
+        _spriteBatch.Begin(samplerState: SamplerState.LinearWrap);
+        _spriteBatch.Draw(_background,
+            new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight),
+            new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight),
+            Color.White);
+        _spriteBatch.End();
 
         gm.Draw(gameTime, _spriteBatch);
 
