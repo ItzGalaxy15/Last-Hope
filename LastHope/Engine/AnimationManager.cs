@@ -46,7 +46,7 @@ internal class AnimationManager
     {
         if (isFinished) return;
         counter++;
-        if (counter > interval)
+        if (counter >= interval)
         {
             counter = 0;
             NextFrame();
@@ -67,10 +67,6 @@ internal class AnimationManager
             }
             else
             {
-                //activeFrame = numFrames - 1;
-                //colPos = numColumns - 1;
-                //isFinished = true;
-                //return;
                 activeFrame = numFrames - 1;
                 colPos = activeFrame % numColumns;
                 rowPos = activeFrame / numColumns;

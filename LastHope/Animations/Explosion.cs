@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Last_Hope.Engine;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Last_Hope.Animations;
 
