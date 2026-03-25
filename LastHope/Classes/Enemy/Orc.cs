@@ -30,7 +30,29 @@ public class Orc : BaseEnemy
 
     public override void Update(GameTime gameTime)
     {
-        // Move towards the player
+        var gameManager = GameManager.GetGameManager();
+        var player = gameManager._player;
+
+        if (player == null)
+        {
+            return;
+        }
+
+        // Get positions (center-based is important)
+        Vector2 playerPos = player.GetPosition();
+
+        // Direction towards player
+        Vector2 direction = playerPos - GetPosition();
+        if (direction != Vector2.Zero)
+        {
+            direction.Normalize();
+        }
+            
+        // Move Orc
+        Vector2 movement = direction * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        _collider.shape.Location += movement.ToPoint();
+        base.Update(gameTime);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -41,5 +63,10 @@ public class Orc : BaseEnemy
 
     public override void OnCollision(GameObject other)
     {
+    }
+
+    public override Vector2 GetPosition()
+    {
+        return _collider.shape.Center.ToVector2();
     }
 }

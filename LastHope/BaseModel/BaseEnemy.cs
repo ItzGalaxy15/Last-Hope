@@ -50,4 +50,6 @@ public abstract class BaseEnemy : GameObject
     {
         CurrentHealth -= amount;
     }
+
+    public abstract Vector2 GetPosition();
 }

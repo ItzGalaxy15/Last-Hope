@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
@@ -31,7 +30,32 @@ public class Goblin : BaseEnemy
 
     public override void Update(GameTime gameTime)
     {
-        // Move towards the player
+        base.Update(gameTime);
+
+        var gameManager = GameManager.GetGameManager();
+        var player = gameManager._player;
+
+        if (player == null)
+        {
+            return;
+        } 
+
+        // Get positions (center-based is important)
+        Vector2 playerPos = player.GetPosition();
+
+        // Direction towards player
+        Vector2 direction = playerPos - GetPosition();
+
+        if (direction != Vector2.Zero)
+        {
+            direction.Normalize();
+        }
+
+        // Move goblin
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        Vector2 movement = direction * Speed * deltaTime;
+
+        _collider.shape.Location += movement.ToPoint();
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -42,5 +66,10 @@ public class Goblin : BaseEnemy
 
     public override void OnCollision(GameObject other)
     {
+    }
+
+    public override Vector2 GetPosition()
+    {
+        return _collider.shape.Center.ToVector2();
     }
 }

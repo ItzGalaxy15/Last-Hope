@@ -175,16 +175,4 @@ namespace Last_Hope.Engine;
                 RNG.Next(0, Game.GraphicsDevice.Viewport.Width),
                 RNG.Next(0, Game.GraphicsDevice.Viewport.Height));
         }
-
-        // public void Reset(ContentManager content, Game game, Ship player)
-        // {
-        //     _gameObjects.Clear();
-        //     _toBeAdded.Clear();
-        //     _toBeRemoved.Clear();
-        //     playerAlive = true;
-        //     _spawnTimer = 0f;
-        //     _spawnInterval = 5f;
-        //     Score = 0;
-        //     Initialize(content, game, player);
-        // }
     }
