@@ -59,7 +59,8 @@ public class Goblin : BaseEnemy
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        spriteBatch.Draw(_texture, _collider.shape.Location.ToVector2(), null, Color.White, 0f, new Vector2(_texture.Width * 0.5f, _texture.Height * 0.5f), SpriteScale, SpriteEffects.None, 0f);
+        Vector2 center = _collider.shape.Center.ToVector2();
+        spriteBatch.Draw(_texture, center, null, Color.White, 0f, new Vector2(_texture.Width * 0.5f, _texture.Height * 0.5f), SpriteScale, SpriteEffects.None, 0f);
         base.Draw(gameTime, spriteBatch);
     }
 

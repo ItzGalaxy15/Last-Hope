@@ -22,7 +22,7 @@ public class Last_Hope : Game
 
         _graphics.PreferredBackBufferWidth = 1920;
         _graphics.PreferredBackBufferHeight = 1080;
-        _graphics.IsFullScreen = true;
+        _graphics.IsFullScreen = false;
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
@@ -60,7 +60,8 @@ public class Last_Hope : Game
             Exit();
 
         _gameManager.Update(gameTime);
-        _camera.Update(_player.Position);
+        if (_gameManager.playerAlive)
+            _camera.Update(_player.Position);
         base.Update(gameTime);
     }
 

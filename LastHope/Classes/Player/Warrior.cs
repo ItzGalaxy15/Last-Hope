@@ -1,4 +1,6 @@
+using System;
 using Last_Hope.BaseModel;
+using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -15,15 +17,22 @@ public class Warrior : BasePlayer
     public InputManager _inputManager {get; private set;}
 
     private const float AttackCooldown = 1f;  // 0.5 seconds between attacks
+    private const float EnemyContactDamage = 10f;
+    private const float EnemyContactHurtInterval = 0.5f;
     private double timeSinceLastAttack = 0;
     private Vector2 _moveInput;
     private bool _facingLeft;
+    private RectangleCollider _collider;
+    private float _hurtCooldown;
 
 
     public Warrior(Vector2 startPosition)
-        : base(hp: 100f, weapon: new Weapon("Sword", attack: 20, critChance: 1.0f), speed: 220f)
+        : base(hp: 10f, weapon: new Weapon("Sword", attack: 20, critChance: 1.0f), speed: 220f)
     {
         Position = startPosition;
+        var origin = new Point((int)startPosition.X, (int)startPosition.Y);
+        _collider = new RectangleCollider(new Rectangle(origin, Point.Zero));
+        SetCollider(_collider);
     }
 
     public override Vector2 GetPosition()
@@ -46,6 +55,9 @@ public class Warrior : BasePlayer
         AxeSprite = content.Load<Texture2D>("Axe");
         WarriorSprite = content.Load<Texture2D>("Warrior");
         _inputManager = GameManager.GetGameManager().InputManager;
+
+        SyncColliderToPosition();
+        SetCollider(_collider);
     }
 
     public override void HandleInput(InputManager inputManager)
@@ -63,7 +75,14 @@ public class Warrior : BasePlayer
 
     public override void Update(GameTime gameTime)
     {
+        if (!GameManager.GetGameManager().playerAlive || _Hp <= 0f)
+            return;
+
         Move(_moveInput, gameTime);
+        SyncColliderToPosition();
+
+        if (_hurtCooldown > 0f)
+            _hurtCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         if (_moveInput.X < 0f)
             _facingLeft = true;
@@ -113,6 +132,36 @@ public class Warrior : BasePlayer
         spriteBatch.Draw(AxeSprite, Position + axeOffset, null, Color.White, 0f, Vector2.Zero, 1f, flip, 0f);
 
         base.Draw(gameTime, spriteBatch);
+    }
+
+    public override void OnCollision(GameObject other)
+    {
+        if (other is not BaseEnemy || _hurtCooldown > 0f)
+            return;
+
+        _Hp -= EnemyContactDamage;
+        _hurtCooldown = EnemyContactHurtInterval;
+        if (_Hp <= 0f)
+        {
+            _Hp = 0f;
+            GameManager.GetGameManager().playerAlive = false;
+        }
+    }
+
+    private void SyncColliderToPosition()
+    {
+        const int pad = 4;
+        // Union of warrior + axe (draw scale 1f); offsets match Draw().
+        float axeOx = _facingLeft ? WarriorSprite.Width - AxeSprite.Width - 40f : 40f;
+        float minX = Math.Min(0f, axeOx);
+        float maxX = Math.Max(WarriorSprite.Width, axeOx + AxeSprite.Width);
+        float minY = Math.Min(0f, 5f);
+        float maxY = Math.Max(WarriorSprite.Height, 5f + AxeSprite.Height);
+
+        _collider.shape.X = (int)Math.Floor(Position.X + minX) - pad;
+        _collider.shape.Y = (int)Math.Floor(Position.Y + minY) - pad;
+        _collider.shape.Width = (int)Math.Ceiling(maxX - minX) + pad * 2;
+        _collider.shape.Height = (int)Math.Ceiling(maxY - minY) + pad * 2;
     }
 
 }
