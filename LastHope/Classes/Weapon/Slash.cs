@@ -72,7 +72,7 @@ namespace Last_Hope.Classes.Weapon
             // Roll for crit
             if (GameManager.GetGameManager().RNG.NextSingle() < critChance)
             {
-                return (int)(attackDamage * 1.5f);  // 1.5x damage on crit
+                return (int)(attackDamage * 3.5f);  // 1.5x damage on crit
             }
             return attackDamage;
         }
