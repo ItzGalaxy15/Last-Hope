@@ -36,7 +36,7 @@ public class Last_Hope : Game
  
         _gameManager.AddGameObject(player);
         _gameManager.AddGameObject(new Goblin(new Point(600, 660)));
-        _gameManager.AddGameObject(new Orc(new Point(300, 360)));
+        _gameManager.AddGameObject(new Orc(new Point(600, 660)));
         _gameManager.Initialize(Content, this, player);
     }
 

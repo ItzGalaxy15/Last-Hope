@@ -10,6 +10,7 @@ namespace Last_Hope;
 public class Orc : BaseEnemy
 {
     private const float SpriteScale = 1f;
+    private Vector2 _precisePosition;
 
     public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50)
     {
@@ -25,6 +26,7 @@ public class Orc : BaseEnemy
         var scaledSize = new Point((int)(_texture.Width * SpriteScale), (int)(_texture.Height * SpriteScale));
         _collider.shape.Size = scaledSize;
         _collider.shape.Location -= new Point(scaledSize.X / 2, scaledSize.Y / 2);
+        _precisePosition = _collider.shape.Location.ToVector2();
         SetCollider(_collider);
     }
 
@@ -38,11 +40,9 @@ public class Orc : BaseEnemy
             return;
         }
 
-        // Get positions (center-based is important)
         Vector2 playerPos = player.GetPosition();
-
-        // Direction towards player
         Vector2 direction = playerPos - GetPosition();
+        
         if (direction != Vector2.Zero)
         {
             direction.Normalize();
@@ -51,7 +51,8 @@ public class Orc : BaseEnemy
         // Move Orc
         Vector2 movement = direction * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        _collider.shape.Location += movement.ToPoint();
+        _precisePosition += movement;
+        _collider.shape.Location = _precisePosition.ToPoint();
         base.Update(gameTime);
     }
 
