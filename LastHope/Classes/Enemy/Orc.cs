@@ -9,7 +9,7 @@ namespace Last_Hope;
 
 public class Orc : BaseEnemy
 {
-    private const float SpriteScale = 5f;
+    private const float SpriteScale = 1f;
 
     public Orc(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100)
     {
