@@ -6,16 +6,17 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope;
 
-public class Game1 : Game
+public class Last_Hope : Game
 {
     private GraphicsDeviceManager _graphics;
     private InputManager _inputManager;
+    private GameManager _gameManager;
     private SpriteBatch _spriteBatch;
     private Texture2D _background;
     private Camera _camera;
     private Warrior _player;
 
-    public Game1()
+    public Last_Hope()
     {
         _graphics = new GraphicsDeviceManager(this);
 
@@ -25,21 +26,25 @@ public class Game1 : Game
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
-
     }
 
     protected override void Initialize()
     {
-        var gm = GameManager.GetGameManager();
+        // Initialize managers
         _inputManager = new InputManager();
-
-        gm.Initialize(Content, this);
+        _gameManager = GameManager.GetGameManager();
         base.Initialize();
+
+        var player = new Warrior(new Vector2(100, 100));
+ 
+        _gameManager.AddGameObject(player);
+        _gameManager.AddGameObject(new Goblin(new Point(600, 660)));
+        _gameManager.AddGameObject(new Orc(new Point(300, 360)));
+        _gameManager.Initialize(Content, this, player);
     }
 
     protected override void LoadContent()
     {
-        var gm = GameManager.GetGameManager();
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _background = Content.Load<Texture2D>("Newbackground1");
 
@@ -51,22 +56,22 @@ public class Game1 : Game
         _player = new Warrior(new Vector2(100, 100));
         gm.AddGameObject(_player);
         gm.AddGameObject(new Goblin(new Point(200, 160)));
+        _background = Content.Load<Texture2D>("background");
     }
 
     protected override void Update(GameTime gameTime)
     {
-        var gm = GameManager.GetGameManager();
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
         gm.Update(gameTime);
         _camera.Update(_player.Position);
+        _gameManager.Update(gameTime);
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        var gm = GameManager.GetGameManager();
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.LinearClamp);
@@ -74,6 +79,7 @@ public class Game1 : Game
         _spriteBatch.End();
 
         gm.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
+        _gameManager.Draw(gameTime, _spriteBatch);
 
         base.Draw(gameTime);
     }

@@ -1,5 +1,4 @@
 using Last_Hope.BaseModel;
-using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -25,6 +24,11 @@ public class Warrior : BasePlayer
         : base(hp: 100f, weapon: new Weapon("Sword", attack: 20, critChance: 1.0f), speed: 220f)
     {
         Position = startPosition;
+    }
+
+    public override Vector2 GetPosition()
+    {
+        return Position;
     }
 
     public void Move(Vector2 direction, GameTime gameTime)

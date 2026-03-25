@@ -1,7 +1,5 @@
-using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.BaseModel;
@@ -34,5 +32,5 @@ public abstract class BasePlayer : GameObject
 
     }
 
-
+    public abstract Vector2 GetPosition();
 }

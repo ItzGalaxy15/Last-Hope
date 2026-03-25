@@ -1,6 +1,5 @@
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope;
 

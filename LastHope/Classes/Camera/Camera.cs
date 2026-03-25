@@ -13,8 +13,8 @@ namespace Last_Hope.Classes.Camera
         public Matrix ViewMatrix { get; private set; }
         public float Zoom { get; }
 
-        private readonly Point _viewportSize;
-        private readonly Point _worldSize;
+    private readonly Point _viewportSize;
+    private readonly Point _worldSize;
 
         public Camera(Point viewportSize, Point worldSize, float zoom = 1f)
         {

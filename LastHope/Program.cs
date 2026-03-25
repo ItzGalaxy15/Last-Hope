@@ -1,2 +1,2 @@
-﻿using var game = new Last_Hope.Game1();
+﻿using var game = new Last_Hope.Last_Hope();
 game.Run();
