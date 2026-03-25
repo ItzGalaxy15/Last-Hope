@@ -34,5 +34,5 @@ public abstract class BasePlayer : GameObject
 
     }
 
-
+    public abstract Vector2 GetPosition();
 }

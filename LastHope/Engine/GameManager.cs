@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
+using Last_Hope.BaseModel;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope.Engine;
     public class GameManager
@@ -22,7 +20,7 @@ namespace Last_Hope.Engine;
         private const float MinSpawnInterval = 0.5f;  // fastest possible rate
 
         public Random RNG { get; private set; }
-        // public Player _player { get; private set; }
+        public BasePlayer _player { get; private set; }
         public InputManager InputManager { get; private set; }
         public Game Game { get; private set; }
         public bool playerAlive = true;
@@ -50,10 +48,11 @@ namespace Last_Hope.Engine;
             // Camera = new Camera();
         }
 
-        public void Initialize(ContentManager content, Game game)
+        public void Initialize(ContentManager content, Game game, BasePlayer player)
         {
             Game = game;
             _content = content;
+            _player = player;
             Pixel = new Texture2D(Game.GraphicsDevice, 1,1);
             Pixel.SetData(new[] {Color.White});
         }

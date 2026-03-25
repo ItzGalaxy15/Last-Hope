@@ -25,6 +25,11 @@ public class Warrior : BasePlayer
         Position = startPosition;
     }
 
+    public override Vector2 GetPosition()
+    {
+        return Position;
+    }
+
     public void Move(Vector2 direction, GameTime gameTime)
     {
         if (direction == Vector2.Zero)

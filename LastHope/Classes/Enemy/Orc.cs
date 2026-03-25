@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
@@ -8,11 +7,11 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope;
 
-public class Goblin : BaseEnemy
+public class Orc : BaseEnemy
 {
     private const float SpriteScale = 5f;
 
-    public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100)
+    public Orc(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100)
     {
         _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
         SetCollider(_collider);
@@ -21,7 +20,7 @@ public class Goblin : BaseEnemy
     public override void Load(ContentManager content)
     {
         base.Load(content);
-        _texture = content.Load<Texture2D>("Goblin");
+        _texture = content.Load<Texture2D>("Orc");
 
         var scaledSize = new Point((int)(_texture.Width * SpriteScale), (int)(_texture.Height * SpriteScale));
         _collider.shape.Size = scaledSize;
