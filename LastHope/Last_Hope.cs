@@ -35,7 +35,7 @@ public class Last_Hope : Game
         _gameManager = GameManager.GetGameManager();
         base.Initialize();
 
-        _player = new Warrior(new Vector2(100, 100));
+        _player = new Warrior(new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2));
  
         _gameManager.AddGameObject(_player);
         _gameManager.AddGameObject(new Goblin(new Point(600, 660)));
