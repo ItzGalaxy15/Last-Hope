@@ -37,6 +37,13 @@
 /processorParam:TextureFormat=Color
 /build:Explosion1.jpg
 
+#begin Fonts/font.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/font.spritefont
+
 #begin Goblin.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -48,18 +55,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Goblin.png
-
-#begin Newbackground1.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Newbackground1.png
 
 #begin Newbackground1.png
 /importer:TextureImporter

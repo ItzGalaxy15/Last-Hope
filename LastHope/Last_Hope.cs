@@ -52,16 +52,18 @@ public class Last_Hope : Game
             new Point(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
             new Point(_background.Width, _background.Height),
             1.2f);
+
+        _gameManager.Load(Content);
     }
 
     protected override void Update(GameTime gameTime)
     {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
+        //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+        //    Exit();
 
         _gameManager.Update(gameTime);
-        if (_gameManager.playerAlive)
-            _camera.Update(_player.Position);
+        if (_gameManager.playerAlive && _gameManager._player != null)
+            _camera.Update(_gameManager._player.GetPosition());
         base.Update(gameTime);
     }
 
