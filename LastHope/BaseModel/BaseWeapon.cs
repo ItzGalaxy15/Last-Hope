@@ -6,17 +6,17 @@ namespace Last_Hope;
 public abstract class BaseWeapon : GameObject
 {
     public string Name { get; set; }
-    public int Attack { get; set; }
+    public int Damage { get; set; }
     public float CritChance { get; set; }
 
-    protected BaseWeapon(string name, int attack, float critChance)
+    protected BaseWeapon(string name, int damage, float critChance)
     {
         Name = name;
-        Attack = attack;
+        Damage = damage;
         CritChance = critChance;
     }
 
-    public abstract void Slash(Vector2 direction, Vector2 origin);
+    public abstract void Attack(Vector2 direction, Vector2 origin);
 
     public override void Update(GameTime gameTime)
     {
