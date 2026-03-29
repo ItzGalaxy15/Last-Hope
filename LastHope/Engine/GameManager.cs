@@ -136,7 +136,7 @@ namespace Last_Hope.Engine;
 
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
         {
-            spriteBatch.Begin(transformMatrix: transformMatrix);
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: transformMatrix ?? Matrix.Identity);
             foreach (GameObject gameObject in _gameObjects)
             {
                 gameObject.Draw(gameTime, spriteBatch);
