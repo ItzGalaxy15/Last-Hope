@@ -9,15 +9,17 @@ namespace Last_Hope;
 
 public class Orc : BaseEnemy
 {
-    private const float SpriteScale = 1f;
+    private const float SpriteScale = 3f;
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
+    private AnimationManager _attackAnimation;
     private bool _isAttacking = false;
     private bool _isFacingLeft = false;
-    private const float AttackDistance = 50f;
+    private float _attackCooldownTimer = 0f;
+    private const float AttackCooldownSeconds = 2f;
     private const int OrcRowOffset = 7;
 
-    public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50)
+    public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 20)
     {
         _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
         SetCollider(_collider);
@@ -39,6 +41,16 @@ public class Orc : BaseEnemy
             offsetY: OrcRowOffset * 32
         );
 
+        _attackAnimation = new AnimationManager(
+            numFrames: 2,
+            numColumns: 8,
+            size: new Vector2(32, 32),
+            interval: 8,
+            loop: false,
+            offsetX: 6 * 32,
+            offsetY: OrcRowOffset * 32
+        );
+
         var scaledSize = new Point((int)(32 * SpriteScale), (int)(32 * SpriteScale));
         _collider.shape.Size = scaledSize;
         _collider.shape.Location -= new Point(scaledSize.X / 2, scaledSize.Y / 2);
@@ -50,23 +62,31 @@ public class Orc : BaseEnemy
     {
         var gameManager = GameManager.GetGameManager();
         var player = gameManager._player;
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         if (player == null)
         {
             return;
         }
 
-        Vector2 playerPos = player.GetPosition();
-        Vector2 direction = playerPos - GetPosition();
-        float distanceToPlayer = direction.Length();
+        if (_attackCooldownTimer > 0f)
+        {
+            _attackCooldownTimer -= dt;
+            if (_attackCooldownTimer < 0f)
+                _attackCooldownTimer = 0f;
+        }
+
+        var playerCollider = player.GetCollider();
+        Vector2 playerTarget = playerCollider != null
+            ? playerCollider.GetBoundingBox().Center.ToVector2()
+            : player.GetPosition();
+
+        Vector2 direction = playerTarget - GetPosition();
 
         if (direction.X != 0)
         {
             _isFacingLeft = direction.X < 0;
         }
-        
-        // Check if should switch to attack mode
-        _isAttacking = distanceToPlayer < AttackDistance;
         
         if (direction != Vector2.Zero)
         {
@@ -80,9 +100,26 @@ public class Orc : BaseEnemy
         _collider.shape.Location = _precisePosition.ToPoint();
         
         // Update walking animation
-        if (!_isAttacking)
+        if (!_isAttacking && player != null)
         {
             _walkingAnimation.Update();
+        }
+        else if (_isAttacking)
+        {
+            _attackAnimation.Update();
+            if (_attackAnimation.isFinished)
+            {
+                _isAttacking = false;
+                _walkingAnimation = new AnimationManager(
+                    numFrames: 3,
+                    numColumns: 8,
+                    size: new Vector2(32, 32),
+                    interval: 10,
+                    loop: true,
+                    offsetX: 4 * 32,
+                    offsetY: OrcRowOffset * 32
+                );
+            }
         }
         
         base.Update(gameTime);
@@ -97,8 +134,8 @@ public class Orc : BaseEnemy
 
         if (_isAttacking)
         {
-            // Draw attack frame (column 3, row 4)
-            sourceRect = new Rectangle(7 * 32, currentRowOffset * 32, 32, 32);
+            sourceRect = _attackAnimation.GetSourceRect();
+            sourceRect.Y = currentRowOffset * 32;
         }
         else
         {
@@ -113,6 +150,20 @@ public class Orc : BaseEnemy
 
     public override void OnCollision(GameObject other)
     {
+        if (other is not BasePlayer || _isAttacking || _attackCooldownTimer > 0f)
+            return;
+
+        _isAttacking = true;
+        _attackCooldownTimer = AttackCooldownSeconds;
+        _attackAnimation = new AnimationManager(
+            numFrames: 2,
+            numColumns: 8,
+            size: new Vector2(32, 32),
+            interval: 8,
+            loop: false,
+            offsetX: 6 * 32,
+            offsetY: OrcRowOffset * 32
+        );
     }
 
     public override Vector2 GetPosition()

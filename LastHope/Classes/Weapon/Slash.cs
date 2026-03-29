@@ -59,9 +59,11 @@ namespace Last_Hope.Classes.Weapon
                 enemy.Damage(damage);
                 if (enemy.CurrentHealth <= 0)
                 {
+                    GameManager.GetGameManager()._player.AddExperience(enemy.ExperienceValue);
                     GameManager.GetGameManager().RemoveGameObject(enemy);
                 }
             }
+
 
             // TODO: Implement when you have an enemy/health system
 
