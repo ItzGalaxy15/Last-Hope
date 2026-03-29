@@ -9,12 +9,16 @@ public abstract class BasePlayer : GameObject
     public float _Hp { get; protected set; }
     public BaseWeapon _Weapon { get; protected set; }
     public float _Speed { get; protected set; }
+
+    public float _DashDistance {get; protected set; }
+    protected abstract void ApplyDashOffset(Vector2 delta);
+
+    // Level EXP
     public int _Level { get; protected set; }
     public float _Experience { get; protected set; }
     private const float XpPerLevel = 10f;
     private const float LevelUpFlashDuration = 0.45f;
     private float _levelUpFlashTimer;
-
     public int Level => _Level;
     public float LevelUpFlashProgress => MathHelper.Clamp(_levelUpFlashTimer / LevelUpFlashDuration, 0f, 1f);
 
@@ -27,13 +31,14 @@ public abstract class BasePlayer : GameObject
         }
     }
 
-    protected BasePlayer(float hp, BaseWeapon weapon, float speed, int level, int experience)
+    protected BasePlayer(float hp, BaseWeapon weapon, float speed, int level, int experience, float dashDistance)
     {
         _Hp = hp;
         _Weapon = weapon;
         _Speed = speed;
         _Level = level;
         _Experience = experience;
+        _DashDistance = dashDistance;
     }
 
     public void AddExperience(float amount)
@@ -57,6 +62,15 @@ public abstract class BasePlayer : GameObject
         _levelUpFlashTimer = LevelUpFlashDuration;
         // Override in subclasses to handle level up effects
     }
+
+    protected void Dash(Vector2 direction, float distance)
+    {
+        if (direction == Vector2.Zero)
+            return;
+        direction.Normalize();
+        ApplyDashOffset(direction * distance);
+    }
+
 
     public override void Update(GameTime gameTime)
     {
