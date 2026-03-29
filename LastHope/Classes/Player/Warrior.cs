@@ -14,11 +14,13 @@ public class Warrior : BasePlayer
     public Vector2 Position { get; private set; }
     public Texture2D AxeSprite;
     public Texture2D WarriorSprite;
-    public InputManager _inputManager {get; private set;}
+    public InputManager _inputManager { get; private set; }
 
     private const float AttackCooldown = 1f;  // 0.5 seconds between attacks
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
+    private const bool DebugDrawHitbox = true;
+
     private double timeSinceLastAttack = 0;
     private Vector2 _moveInput;
     private bool _facingLeft;
@@ -131,6 +133,9 @@ public class Warrior : BasePlayer
         spriteBatch.Draw(WarriorSprite, Position, null, Color.White, 0f, Vector2.Zero, 1f, flip, 0f);
         spriteBatch.Draw(AxeSprite, Position + axeOffset, null, Color.White, 0f, Vector2.Zero, 1f, flip, 0f);
 
+        if (DebugDrawHitbox && _collider is not null)
+            DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
+
         base.Draw(gameTime, spriteBatch);
     }
 
@@ -150,18 +155,24 @@ public class Warrior : BasePlayer
 
     private void SyncColliderToPosition()
     {
-        const int pad = 4;
-        // Union of warrior + axe (draw scale 1f); offsets match Draw().
-        float axeOx = _facingLeft ? WarriorSprite.Width - AxeSprite.Width - 40f : 40f;
-        float minX = Math.Min(0f, axeOx);
-        float maxX = Math.Max(WarriorSprite.Width, axeOx + AxeSprite.Width);
-        float minY = Math.Min(0f, 5f);
-        float maxY = Math.Max(WarriorSprite.Height, 5f + AxeSprite.Height);
+        if (WarriorSprite is null)
+            return;
 
-        _collider.shape.X = (int)Math.Floor(Position.X + minX) - pad;
-        _collider.shape.Y = (int)Math.Floor(Position.Y + minY) - pad;
-        _collider.shape.Width = (int)Math.Ceiling(maxX - minX) + pad * 2;
-        _collider.shape.Height = (int)Math.Ceiling(maxY - minY) + pad * 2;
+        _collider.shape.X = (int)Math.Floor(Position.X);
+        _collider.shape.Y = (int)Math.Floor(Position.Y);
+        _collider.shape.Width = WarriorSprite.Width;
+        _collider.shape.Height = WarriorSprite.Height;
+    }
+
+    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
+    {
+        Texture2D pixel = GameManager.GetGameManager().Pixel;
+        const int thickness = 2;
+
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
     public override void Damage(float amount)

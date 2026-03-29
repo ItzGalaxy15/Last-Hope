@@ -10,6 +10,7 @@ namespace Last_Hope;
 public class Orc : BaseEnemy
 {
     private const float SpriteScale = 1f;
+    private const bool DebugDrawHitbox = true;
     private Vector2 _precisePosition;
 
     public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 20)
@@ -42,12 +43,12 @@ public class Orc : BaseEnemy
 
         Vector2 playerPos = player.GetPosition();
         Vector2 direction = playerPos - GetPosition();
-        
+
         if (direction != Vector2.Zero)
         {
             direction.Normalize();
         }
-            
+
         // Move Orc
         Vector2 movement = direction * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -60,7 +61,22 @@ public class Orc : BaseEnemy
     {
         Vector2 center = _collider.shape.Center.ToVector2();
         spriteBatch.Draw(_texture, center, null, Color.White, 0f, new Vector2(_texture.Width * 0.5f, _texture.Height * 0.5f), SpriteScale, SpriteEffects.None, 0f);
+
+        if (DebugDrawHitbox && _collider is not null)
+            DrawHitbox(spriteBatch, _collider.shape, Color.Red);
+
         base.Draw(gameTime, spriteBatch);
+    }
+
+    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
+    {
+        Texture2D pixel = GameManager.GetGameManager().Pixel;
+        const int thickness = 2;
+
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
     public override void OnCollision(GameObject other)
