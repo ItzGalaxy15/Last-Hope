@@ -27,7 +27,7 @@ public class Warrior : BasePlayer
 
 
     public Warrior(Vector2 startPosition)
-        : base(hp: 10f, weapon: new Weapon("Sword", attack: 20, critChance: 1.0f), speed: 220f)
+        : base(hp: 10f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f)
     {
         Position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
@@ -116,7 +116,7 @@ public class Warrior : BasePlayer
         Vector2 slashOrigin = spriteCenter + direction * slashDistance;
 
         System.Console.WriteLine($"Creating slash at {slashOrigin} in direction {direction}");
-        _Weapon.Slash(direction, slashOrigin);
+        _Weapon.Attack(direction, slashOrigin);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -164,4 +164,8 @@ public class Warrior : BasePlayer
         _collider.shape.Height = (int)Math.Ceiling(maxY - minY) + pad * 2;
     }
 
+    public override void Damage(float amount)
+    {
+        _Hp -= amount;
+    }
 }
