@@ -11,6 +11,10 @@ public class Orc : BaseEnemy
 {
     private const float SpriteScale = 1f;
     private Vector2 _precisePosition;
+    private AnimationManager _walkingAnimation;
+    private bool _isAttacking = false;
+    private const float AttackDistance = 50f;
+    private const int OrcRowOffset = 7;
 
     public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50)
     {
@@ -21,9 +25,20 @@ public class Orc : BaseEnemy
     public override void Load(ContentManager content)
     {
         base.Load(content);
-        _texture = content.Load<Texture2D>("Orc");
+        _texture = content.Load<Texture2D>("spritesheet");
 
-        var scaledSize = new Point((int)(_texture.Width * SpriteScale), (int)(_texture.Height * SpriteScale));
+        // Initialize walking animation: 3 frames, 8 columns, 32x32 sprites
+        _walkingAnimation = new AnimationManager(
+            numFrames: 3,
+            numColumns: 8,
+            size: new Vector2(32, 32),
+            interval: 10,
+            loop: true,
+            offsetX: 4 * 32, 
+            offsetY: OrcRowOffset * 32
+        );
+
+        var scaledSize = new Point((int)(32 * SpriteScale), (int)(32 * SpriteScale));
         _collider.shape.Size = scaledSize;
         _collider.shape.Location -= new Point(scaledSize.X / 2, scaledSize.Y / 2);
         _precisePosition = _collider.shape.Location.ToVector2();
@@ -42,6 +57,10 @@ public class Orc : BaseEnemy
 
         Vector2 playerPos = player.GetPosition();
         Vector2 direction = playerPos - GetPosition();
+        float distanceToPlayer = direction.Length();
+        
+        // Check if should switch to attack mode
+        _isAttacking = distanceToPlayer < AttackDistance;
         
         if (direction != Vector2.Zero)
         {
@@ -53,13 +72,33 @@ public class Orc : BaseEnemy
 
         _precisePosition += movement;
         _collider.shape.Location = _precisePosition.ToPoint();
+        
+        // Update walking animation
+        if (!_isAttacking)
+        {
+            _walkingAnimation.Update();
+        }
+        
         base.Update(gameTime);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Vector2 center = _collider.shape.Center.ToVector2();
-        spriteBatch.Draw(_texture, center, null, Color.White, 0f, new Vector2(_texture.Width * 0.5f, _texture.Height * 0.5f), SpriteScale, SpriteEffects.None, 0f);
+        
+        Rectangle sourceRect;
+        if (_isAttacking)
+        {
+            // Draw attack frame (column 3, row 4)
+            sourceRect = new Rectangle(7 * 32, OrcRowOffset * 32, 32, 32);
+        }
+        else
+        {
+            // Draw current walking animation frame
+            sourceRect = _walkingAnimation.GetSourceRect();
+        }
+        
+        spriteBatch.Draw(_texture, center, sourceRect, Color.White, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
         base.Draw(gameTime, spriteBatch);
     }
 
