@@ -17,7 +17,7 @@ public class Goblin : BaseEnemy
     private float _attackTimer = 0f;
     private float _attackRange = 300f;
 
-    public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100)
+    public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 12)
     {
         _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
         SetCollider(_collider);
