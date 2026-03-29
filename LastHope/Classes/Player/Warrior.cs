@@ -17,9 +17,11 @@ public class Warrior : BasePlayer
     public InputManager _inputManager {get; private set;}
 
     private const float AttackCooldown = 1f;  // 0.5 seconds between attacks
+    private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private double timeSinceLastAttack = 0;
+    private float _dashCooldown;
     private Vector2 _moveInput;
     private bool _facingLeft;
     private RectangleCollider _collider;
@@ -27,7 +29,7 @@ public class Warrior : BasePlayer
 
 
     public Warrior(Vector2 startPosition)
-        : base(hp: 10f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0)
+        : base(hp: 10f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
         Position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
@@ -95,6 +97,29 @@ public class Warrior : BasePlayer
             UseWeapon();
             timeSinceLastAttack = 0;
         }
+
+        //*Dash Ability*\\
+        //----------------------------------------------------------------------------------------\\
+        if (_dashCooldown > 0f)
+            _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (_inputManager.IsKeyPress(Keys.LeftShift) && _dashCooldown <= 0f)
+        {
+            Vector2 mousePosition = _inputManager.CurrentMouseState.Position.ToVector2();
+            Vector2 towardMouse = mousePosition - Position;
+            if (towardMouse != Vector2.Zero)
+            {
+                Dash(towardMouse, _DashDistance);
+                if (towardMouse.X < 0f)
+                    _facingLeft = true;
+                else if (towardMouse.X > 0f)
+                    _facingLeft = false;
+                _dashCooldown = DashCooldown;
+            }
+        }
+        //----------------------------------------------------------------------------------------\\
+
+
         base.Update(gameTime);
     }
 
@@ -167,5 +192,11 @@ public class Warrior : BasePlayer
     public override void Damage(float amount)
     {
         _Hp -= amount;
+    }
+
+    protected override void ApplyDashOffset(Vector2 delta)
+    {
+        Position += delta;
+        SyncColliderToPosition();
     }
 }
