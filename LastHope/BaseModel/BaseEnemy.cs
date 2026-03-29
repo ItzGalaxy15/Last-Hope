@@ -17,14 +17,17 @@ public abstract class BaseEnemy : GameObject
     public virtual float CurrentHealth { get; protected set; }
 
     public virtual int Speed { get; protected set; }
+    public virtual float ExperienceValue { get; protected set; }
 
     //public abstract BaseWeapon Weapon { get; protected set; }
 
-    public BaseEnemy(float maxHealth, float currentHealth, int speed)
+    public BaseEnemy(float maxHealth, float currentHealth, int speed, float experienceValue)
     {
         MaxHealth = maxHealth;
         CurrentHealth = currentHealth;
         Speed = speed;
+        ExperienceValue = experienceValue;
+
     }
 
     public override void Load(ContentManager content)

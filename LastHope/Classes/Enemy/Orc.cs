@@ -12,7 +12,7 @@ public class Orc : BaseEnemy
     private const float SpriteScale = 1f;
     private Vector2 _precisePosition;
 
-    public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50)
+    public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 20)
     {
         _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
         SetCollider(_collider);

@@ -27,7 +27,7 @@ public class Warrior : BasePlayer
 
 
     public Warrior(Vector2 startPosition)
-        : base(hp: 10f, weapon: new Weapon("Sword", attack: 20, critChance: 1.0f), speed: 220f)
+        : base(hp: 10f, weapon: new Weapon("Sword", attack: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0)
     {
         Position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);

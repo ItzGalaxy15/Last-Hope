@@ -12,7 +12,7 @@ public class Goblin : BaseEnemy
     private const float SpriteScale = 3f;
     private Vector2 _precisePosition;
 
-    public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100)
+    public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 12)
     {
         _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
         SetCollider(_collider);

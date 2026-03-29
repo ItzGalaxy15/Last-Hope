@@ -1,5 +1,6 @@
 using Last_Hope.Classes.Camera;
 using Last_Hope.Engine;
+using Last_Hope.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -15,6 +16,7 @@ public class Last_Hope : Game
     private Texture2D _background;
     private Camera _camera;
     private Warrior _player;
+    private Hud _hud;
 
     public Last_Hope()
     {
@@ -33,9 +35,9 @@ public class Last_Hope : Game
         // Initialize managers
         _inputManager = new InputManager();
         _gameManager = GameManager.GetGameManager();
-        base.Initialize();
-
         _player = new Warrior(new Vector2(100, 100));
+
+        base.Initialize();
  
         _gameManager.AddGameObject(_player);
         _gameManager.AddGameObject(new Goblin(new Point(600, 660)));
@@ -52,6 +54,8 @@ public class Last_Hope : Game
             new Point(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
             new Point(_background.Width, _background.Height),
             1.2f);
+
+        _hud = new Hud(_player, _gameManager.Pixel);
     }
 
     protected override void Update(GameTime gameTime)
@@ -62,6 +66,8 @@ public class Last_Hope : Game
         _gameManager.Update(gameTime);
         if (_gameManager.playerAlive)
             _camera.Update(_player.Position);
+
+        _hud?.Update(gameTime, GraphicsDevice.Viewport);
         base.Update(gameTime);
     }
 
@@ -74,6 +80,11 @@ public class Last_Hope : Game
         _spriteBatch.End();
 
         _gameManager.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
+
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _hud?.Draw(gameTime, _spriteBatch);
+        _spriteBatch.End();
+
         base.Draw(gameTime);
     }
 }
