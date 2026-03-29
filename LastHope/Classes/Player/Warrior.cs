@@ -40,6 +40,9 @@ public class Warrior : BasePlayer
     private RectangleCollider _collider;
     private float _hurtCooldown;
 
+    private const float SlashDistance = 80f;
+    private const float SlashCastHeightOffset = 10f;
+
 
     public Warrior(Vector2 startPosition)
         : base(hp: 10f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -149,18 +152,20 @@ public class Warrior : BasePlayer
     public void UseWeapon()
     {
         System.Console.WriteLine("UseWeapon called");
+
+        // Anchor at warrior center, then lift upward.
+        Vector2 castAnchor = Position + new Vector2(
+            WarriorSprite.Width * 0.5f,
+            WarriorSprite.Height * 0.5f - SlashCastHeightOffset);
+
         Vector2 mousePosition = _inputManager.CurrentMouseState.Position.ToVector2();
-        Vector2 direction = mousePosition - Position;
+        Vector2 direction = mousePosition - castAnchor;
         if (direction == Vector2.Zero)
             return;
 
         direction.Normalize();
 
-        Vector2 spriteCenter = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-
-        // Offset slash from center
-        const float slashDistance = 80f;
-        Vector2 slashOrigin = spriteCenter + direction * slashDistance;
+        Vector2 slashOrigin = castAnchor + direction * SlashDistance;
 
         System.Console.WriteLine($"Creating slash at {slashOrigin} in direction {direction}");
         _Weapon.Attack(direction, slashOrigin);
