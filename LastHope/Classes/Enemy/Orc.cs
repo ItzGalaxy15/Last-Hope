@@ -13,6 +13,7 @@ public class Orc : BaseEnemy
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
     private bool _isAttacking = false;
+    private bool _isFacingLeft = false;
     private const float AttackDistance = 50f;
     private const int OrcRowOffset = 7;
 
@@ -58,6 +59,11 @@ public class Orc : BaseEnemy
         Vector2 playerPos = player.GetPosition();
         Vector2 direction = playerPos - GetPosition();
         float distanceToPlayer = direction.Length();
+
+        if (direction.X != 0)
+        {
+            _isFacingLeft = direction.X < 0;
+        }
         
         // Check if should switch to attack mode
         _isAttacking = distanceToPlayer < AttackDistance;
@@ -87,15 +93,18 @@ public class Orc : BaseEnemy
         Vector2 center = _collider.shape.Center.ToVector2();
         
         Rectangle sourceRect;
+        int currentRowOffset = _isFacingLeft ? OrcRowOffset + 1 : OrcRowOffset;
+
         if (_isAttacking)
         {
             // Draw attack frame (column 3, row 4)
-            sourceRect = new Rectangle(7 * 32, OrcRowOffset * 32, 32, 32);
+            sourceRect = new Rectangle(7 * 32, currentRowOffset * 32, 32, 32);
         }
         else
         {
             // Draw current walking animation frame
             sourceRect = _walkingAnimation.GetSourceRect();
+            sourceRect.Y = currentRowOffset * 32;
         }
         
         spriteBatch.Draw(_texture, center, sourceRect, Color.White, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
