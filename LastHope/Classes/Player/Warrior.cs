@@ -45,7 +45,7 @@ public class Warrior : BasePlayer
 
 
     public Warrior(Vector2 startPosition)
-        : base(hp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
         Position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
@@ -93,7 +93,7 @@ public class Warrior : BasePlayer
 
     public override void Update(GameTime gameTime)
     {
-        if (!GameManager.GetGameManager().playerAlive || _Hp <= 0f)
+        if (!GameManager.GetGameManager().playerAlive || _currentHp <= 0f)
             return;
 
         Move(_moveInput, gameTime);
@@ -210,11 +210,11 @@ public class Warrior : BasePlayer
         if (other is not BaseEnemy || _hurtCooldown > 0f)
             return;
 
-        _Hp -= EnemyContactDamage;
+        _currentHp -= EnemyContactDamage;
         _hurtCooldown = EnemyContactHurtInterval;
-        if (_Hp <= 0f)
+        if (_currentHp <= 0f)
         {
-            _Hp = 0f;
+            _currentHp = 0f;
             GameManager.GetGameManager().playerAlive = false;
         }
     }
@@ -253,7 +253,7 @@ public class Warrior : BasePlayer
 
     public override void Damage(float amount)
     {
-        _Hp -= amount;
+        _currentHp -= amount;
     }
 
     protected override void ApplyDashOffset(Vector2 delta)
