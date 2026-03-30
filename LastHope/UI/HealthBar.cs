@@ -1,5 +1,6 @@
 ﻿using System;
 using Last_Hope.BaseModel;
+using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -22,6 +23,11 @@ public class HealthBar : UIElement
 	{
 		_player = player;
 		_pixel = pixel;
+	}
+
+	private BasePlayer? GetActivePlayer()
+	{
+		return GameManager.GetGameManager()._player ?? _player;
 	}
 
 	public override void Update(GameTime gameTime, Viewport viewport)
@@ -48,7 +54,8 @@ public class HealthBar : UIElement
 
         _healthFrameRect = new Rectangle(healthX, healthY, healthWidth, healthHeight);
 
-        float progress = _player?.HealthProgress ?? 0f;
+		BasePlayer? player = GetActivePlayer();
+		float progress = player?.HealthProgress ?? 0f;
 
         int fillWidth = (int)MathF.Round((_healthFrameRect.Width - 4) * progress);
         fillWidth = Math.Clamp(fillWidth, 0, _healthFrameRect.Width - 4);
@@ -63,8 +70,8 @@ public class HealthBar : UIElement
 	public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Texture2D pixel = GetPixel(spriteBatch);
-
-        float healthProgress = _player?.HealthProgress ?? 0f;
+		BasePlayer? player = GetActivePlayer();
+		float healthProgress = player?.HealthProgress ?? 0f;
 
         Color frame = new Color(210, 210, 210, 245);
         Color background = new Color(20, 20, 20, 245);
