@@ -53,6 +53,7 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 Last-Hope.slnx
+.vs/
 .vs/slnx.sqlite
 .vs/Last-Hope/CopilotIndices/18.4.106.63888/CodeChunks.db
 .vs/Last-Hope/CopilotIndices/18.4.106.63888/CodeChunks.db-shm
