@@ -246,7 +246,7 @@ public class GameManager
         //Rectangle quitRect = GetTextRectangle(quitText, quitPos);
 
         float scale = 0.5f;
-        Vector2 topLeft = new Vector2(20, 20);
+        Vector2 topLeft = new Vector2(20, 100);
 
         string pauseText = "Pause Game";
         Vector2 pausePos = topLeft + new Vector2(10, 5);
