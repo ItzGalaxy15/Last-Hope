@@ -144,7 +144,7 @@ public class Orc : BaseEnemy
             sourceRect.Y = currentRowOffset * 32;
         }
         
-        spriteBatch.Draw(_texture, center, sourceRect, Color.White, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
+        spriteBatch.Draw(_texture, center, sourceRect, DrawTint, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
         base.Draw(gameTime, spriteBatch);
     }
 
