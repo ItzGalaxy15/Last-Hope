@@ -11,6 +11,8 @@ namespace Last_Hope;
 public class Goblin : BaseEnemy
 {
     private const float SpriteScale = 3f;
+    private const bool DebugDrawHitbox = true;
+
     private Vector2 _precisePosition;
     private Bow _bow;
     private float _attackCooldown = 2f;
@@ -52,20 +54,16 @@ public class Goblin : BaseEnemy
             direction.Normalize();
         }
 
-        // Only move if outside attack range
         if (distanceToPlayer > _attackRange)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             float moveAmount = Speed * dt;
-
-            // Don't overshoot the attack range boundary
             moveAmount = Math.Min(moveAmount, distanceToPlayer - _attackRange);
 
             _precisePosition += direction * moveAmount;
             _collider.shape.Location = _precisePosition.ToPoint();
         }
 
-        // Attack if in range and cooldown is ready
         _attackTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         if (distanceToPlayer <= _attackRange && _attackTimer <= 0f)
         {
@@ -80,7 +78,22 @@ public class Goblin : BaseEnemy
     {
         Vector2 center = _collider.shape.Center.ToVector2();
         spriteBatch.Draw(_texture, center, null, Color.White, 0f, new Vector2(_texture.Width * 0.5f, _texture.Height * 0.5f), SpriteScale, SpriteEffects.None, 0f);
+
+        if (DebugDrawHitbox && _collider is not null)
+            DrawHitbox(spriteBatch, _collider.shape, Color.Yellow);
+
         base.Draw(gameTime, spriteBatch);
+    }
+
+    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
+    {
+        Texture2D pixel = GameManager.GetGameManager().Pixel;
+        const int thickness = 2;
+
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
     public override void OnCollision(GameObject other)
