@@ -17,7 +17,7 @@ public class Orc : BaseEnemy
     private bool _isAttacking = false;
     private bool _isFacingLeft = false;
     private float _attackCooldownTimer = 0f;
-    private const float AttackCooldownSeconds = 2f;
+    private const float AttackCooldownSeconds = 0.5f;
     private const int OrcRowOffset = 7;
 
     public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 20)
