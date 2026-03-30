@@ -216,6 +216,7 @@ public class Warrior : BasePlayer
         {
             _Hp = 0f;
             GameManager.GetGameManager().playerAlive = false;
+            GameManager.GetGameManager()._state = GameState.GameOver;
         }
     }
 

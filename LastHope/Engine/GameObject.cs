@@ -88,7 +88,7 @@ namespace Last_Hope.Engine;
         /// Called when the GameObject is removed from the GameManager.
         /// </summary>
         public virtual void Destroy() 
-        { 
-        
+        {
+
         }
     }
