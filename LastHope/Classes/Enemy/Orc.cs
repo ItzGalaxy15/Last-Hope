@@ -10,6 +10,7 @@ namespace Last_Hope;
 public class Orc : BaseEnemy
 {
     private const float SpriteScale = 3f;
+    private const bool DebugDrawHitbox = true;
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
     private AnimationManager _attackAnimation;
@@ -92,7 +93,7 @@ public class Orc : BaseEnemy
         {
             direction.Normalize();
         }
-            
+
         // Move Orc
         Vector2 movement = direction * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -128,7 +129,10 @@ public class Orc : BaseEnemy
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Vector2 center = _collider.shape.Center.ToVector2();
-        
+
+        if (DebugDrawHitbox && _collider is not null)
+            DrawHitbox(spriteBatch, _collider.shape, Color.Red);
+
         Rectangle sourceRect;
         int currentRowOffset = _isFacingLeft ? OrcRowOffset + 1 : OrcRowOffset;
 
@@ -146,6 +150,17 @@ public class Orc : BaseEnemy
         
         spriteBatch.Draw(_texture, center, sourceRect, DrawTint, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
         base.Draw(gameTime, spriteBatch);
+    }
+
+    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
+    {
+        Texture2D pixel = GameManager.GetGameManager().Pixel;
+        const int thickness = 2;
+
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
     public override void OnCollision(GameObject other)
