@@ -35,9 +35,9 @@ public class Last_Hope : Game
         // Initialize managers
         _inputManager = new InputManager();
         _gameManager = GameManager.GetGameManager();
-        _player = new Warrior(new Vector2(100, 100));
-
         base.Initialize();
+
+        _player = new Warrior(new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2));
  
         _gameManager.AddGameObject(_player);
         _gameManager.AddGameObject(new Goblin(new Point(600, 660)));
@@ -49,6 +49,7 @@ public class Last_Hope : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _background = Content.Load<Texture2D>("Newbackground1");
+        _gameManager.Load(Content);
 
         _camera = new Camera(
             new Point(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
@@ -60,12 +61,12 @@ public class Last_Hope : Game
 
     protected override void Update(GameTime gameTime)
     {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
+        //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+        //    Exit();
 
         _gameManager.Update(gameTime);
-        if (_gameManager.playerAlive)
-            _camera.Update(_player.Position);
+        if (_gameManager.playerAlive && _gameManager._player != null)
+            _camera.Update(_gameManager._player.GetPosition());
 
         _hud?.Update(gameTime, GraphicsDevice.Viewport);
         base.Update(gameTime);

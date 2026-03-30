@@ -45,7 +45,7 @@ public class Warrior : BasePlayer
     private const float SlashCastHeightOffset = 10f;
 
     public Warrior(Vector2 startPosition)
-        : base(hp: 10f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(hp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
         Position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
@@ -228,6 +228,7 @@ public class Warrior : BasePlayer
         {
             _Hp = 0f;
             GameManager.GetGameManager().playerAlive = false;
+            GameManager.GetGameManager()._state = GameState.GameOver;
         }
     }
 
