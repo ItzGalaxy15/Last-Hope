@@ -14,16 +14,17 @@ public class Goblin : BaseEnemy
     private const bool DebugDrawHitbox = true;
 
     private Vector2 _precisePosition;
-    private Bow _bow;
+    private BaseWeapon _weapon;
     private float _attackCooldown = 2f;
     private float _attackTimer = 0f;
     private float _attackRange = 300f;
 
-    public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 12)
+    public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 12)
     {
         _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
         SetCollider(_collider);
-        _bow = new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: this);
+        _weapon = weapon;
+        _weapon.SetOwner(this);
     }
 
     public override void Load(ContentManager content)
@@ -67,7 +68,7 @@ public class Goblin : BaseEnemy
         _attackTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         if (distanceToPlayer <= _attackRange && _attackTimer <= 0f)
         {
-            _bow.Attack(direction, GetPosition());
+            _weapon.Attack(direction, GetPosition());
             _attackTimer = _attackCooldown;
         }
 

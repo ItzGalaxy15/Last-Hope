@@ -13,7 +13,8 @@ public class Hud
 	{
 		_elements = new List<UIElement>
 		{
-			new ExperienceBar(player, pixel)
+			new ExperienceBar(player, pixel),
+			new HealthBar(player, pixel)
 		};
 	}
 

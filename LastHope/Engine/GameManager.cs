@@ -645,7 +645,7 @@ public class GameManager
         _player = player;
 
         AddGameObject(_player);
-        AddGameObject(new Goblin(new Point(600, 660)));
+        AddGameObject(new Goblin(new Point(600, 660), new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
         AddGameObject(new Orc(new Point(300, 360)));
     }
 }

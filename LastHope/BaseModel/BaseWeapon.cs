@@ -21,4 +21,6 @@ public abstract class BaseWeapon : GameObject
     public override void Update(GameTime gameTime)
     {
     }
+
+    public abstract void SetOwner(GameObject owner);
 }
