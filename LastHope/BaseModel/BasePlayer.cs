@@ -7,6 +7,7 @@ namespace Last_Hope.BaseModel;
 public abstract class BasePlayer : GameObject
 {
     public float _Hp { get; protected set; }
+    public float _MaxHp { get; protected set; }
     public BaseWeapon _Weapon { get; protected set; }
     public float _Speed { get; protected set; }
 
@@ -28,6 +29,15 @@ public abstract class BasePlayer : GameObject
         {
             float progress = (_Experience % XpPerLevel) / XpPerLevel;
             return MathHelper.Clamp(progress, 0f, 1f);
+        }
+    }
+
+    public float HealthProgress
+    {
+        get
+        {
+            float HealthProgress = (_Hp / _MaxHp);
+            return MathHelper.Clamp(HealthProgress, 0f, 1f);
         }
     }
 

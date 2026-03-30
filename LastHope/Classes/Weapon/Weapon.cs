@@ -7,6 +7,7 @@ namespace Last_Hope;
 
 public class Weapon : BaseWeapon
 {
+    public GameObject _owner { get; private set; }
     private const float SlashRadius = 100f;
     private const float SlashWidth = 60f;
 
@@ -21,5 +22,10 @@ public class Weapon : BaseWeapon
         var slash = new Slash(arcCollider, Damage, CritChance, origin, direction);
         GameManager.GetGameManager().AddGameObject(slash);
         System.Console.WriteLine("Slash added to GameManager");
+    }
+
+    public override void SetOwner(GameObject owner)
+    {
+        _owner = owner;
     }
 }
