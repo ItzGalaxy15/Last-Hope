@@ -17,7 +17,7 @@ public class Orc : BaseEnemy
     private bool _isAttacking = false;
     private bool _isFacingLeft = false;
     private float _attackCooldownTimer = 0f;
-    private const float AttackCooldownSeconds = 2f;
+    private const float AttackCooldownSeconds = 0.5f;
     private const int OrcRowOffset = 7;
 
     public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 20)
@@ -148,7 +148,7 @@ public class Orc : BaseEnemy
             sourceRect.Y = currentRowOffset * 32;
         }
         
-        spriteBatch.Draw(_texture, center, sourceRect, Color.White, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
+        spriteBatch.Draw(_texture, center, sourceRect, DrawTint, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
         base.Draw(gameTime, spriteBatch);
     }
 

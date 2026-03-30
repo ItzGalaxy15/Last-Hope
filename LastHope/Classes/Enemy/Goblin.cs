@@ -83,6 +83,7 @@ public class Goblin : BaseEnemy
         if (DebugDrawHitbox && _collider is not null)
             DrawHitbox(spriteBatch, _collider.shape, Color.Yellow);
 
+        spriteBatch.Draw(_texture, center, null, DrawTint, 0f, new Vector2(_texture.Width * 0.5f, _texture.Height * 0.5f), SpriteScale, SpriteEffects.None, 0f);
         base.Draw(gameTime, spriteBatch);
     }
 
