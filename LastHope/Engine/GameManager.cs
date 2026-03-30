@@ -312,7 +312,7 @@ public class GameManager
         //Rectangle quitRect = GetTextRectangle(quitText, quitPos);
 
         float scale = 0.5f;
-        Vector2 topLeft = new Vector2(20, 20);
+        Vector2 topLeft = new Vector2(20, 100);
 
         string pauseText = "Pause Game";
         Vector2 pausePos = topLeft + new Vector2(10, 5);
@@ -584,6 +584,12 @@ public class GameManager
     {
         Viewport viewport = Game.GraphicsDevice.Viewport;
         Vector2 center = new Vector2(viewport.Width / 2f, viewport.Height / 2f);
+        if (_font == null)
+        {
+            // Safe fallback until content is loaded.
+            return center;
+        }
+
         Vector2 textSize = _font.MeasureString(text);
         Vector2 position = new Vector2(center.X - textSize.X / 2f, center.Y - textSize.Y / 2f);
         return position;

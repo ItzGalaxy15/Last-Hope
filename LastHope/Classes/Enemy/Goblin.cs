@@ -1,3 +1,4 @@
+using System;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
@@ -11,11 +12,16 @@ public class Goblin : BaseEnemy
 {
     private const float SpriteScale = 3f;
     private Vector2 _precisePosition;
+    private Bow _bow;
+    private float _attackCooldown = 2f;
+    private float _attackTimer = 0f;
+    private float _attackRange = 300f;
 
-    public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100)
+    public Goblin(Point position) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 12)
     {
         _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
         SetCollider(_collider);
+        _bow = new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: this);
     }
 
     public override void Load(ContentManager content)
@@ -35,24 +41,37 @@ public class Goblin : BaseEnemy
         var gameManager = GameManager.GetGameManager();
         var player = gameManager._player;
 
-        if (player == null)
-        {
-            return;
-        } 
+        if (player == null) return;
 
         Vector2 playerPos = player.GetPosition();
         Vector2 direction = playerPos - GetPosition();
+        float distanceToPlayer = direction.Length();
 
         if (direction != Vector2.Zero)
         {
             direction.Normalize();
         }
 
-        // Move goblin
-        Vector2 movement = direction * Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        // Only move if outside attack range
+        if (distanceToPlayer > _attackRange)
+        {
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            float moveAmount = Speed * dt;
 
-        _precisePosition += movement;
-        _collider.shape.Location = _precisePosition.ToPoint();
+            // Don't overshoot the attack range boundary
+            moveAmount = Math.Min(moveAmount, distanceToPlayer - _attackRange);
+
+            _precisePosition += direction * moveAmount;
+            _collider.shape.Location = _precisePosition.ToPoint();
+        }
+
+        // Attack if in range and cooldown is ready
+        _attackTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (distanceToPlayer <= _attackRange && _attackTimer <= 0f)
+        {
+            _bow.Attack(direction, GetPosition());
+            _attackTimer = _attackCooldown;
+        }
 
         base.Update(gameTime);
     }

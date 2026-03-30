@@ -10,15 +10,15 @@ public class Weapon : BaseWeapon
     private const float SlashRadius = 100f;
     private const float SlashWidth = 60f;
 
-    public Weapon(string name, int attack, float critChance) : base(name, attack, critChance)
+    public Weapon(string name, int damage, float critChance) : base(name, damage, critChance)
     {
     }
 
-    public override void Slash(Vector2 direction, Vector2 origin)
+    public override void Attack(Vector2 direction, Vector2 origin)
     {
         System.Console.WriteLine("Weapon.Slash called");
         ArcCollider arcCollider = new ArcCollider(origin, direction, SlashRadius, SlashWidth);
-        var slash = new Slash(arcCollider, Attack, CritChance, origin, direction);
+        var slash = new Slash(arcCollider, Damage, CritChance, origin, direction);
         GameManager.GetGameManager().AddGameObject(slash);
         System.Console.WriteLine("Slash added to GameManager");
     }
