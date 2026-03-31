@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 
 using Last_Hope.BaseModel;
+using Last_Hope.Classes.Camera;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -30,7 +31,7 @@ public class GameManager
 
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
-    //public Camera Camera { get; private set; }
+    public Camera Camera { get; set; }
     public Texture2D Pixel {get; private set; }
 
 
@@ -406,6 +407,16 @@ public class GameManager
     //}
 
 
+
+    public Vector2 GetWorldMousePosition()
+    {
+        Vector2 screenMousePos = InputManager.CurrentMouseState.Position.ToVector2();
+        if (Camera != null)
+        {
+            return Vector2.Transform(screenMousePos, Matrix.Invert(Camera.ViewMatrix));
+        }
+        return screenMousePos;
+    }
 
     public void UpdatePaused(GameTime gameTime)
     {

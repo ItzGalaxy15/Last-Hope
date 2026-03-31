@@ -56,6 +56,8 @@ public class Last_Hope : Game
             new Point(_background.Width, _background.Height),
             1.2f);
 
+        _gameManager.Camera = _camera;
+
         _hud = new Hud(_player, _gameManager.Pixel);
     }
 

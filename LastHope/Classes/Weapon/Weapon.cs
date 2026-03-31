@@ -18,7 +18,8 @@ public class Weapon : BaseWeapon
     public override void Attack(Vector2 direction, Vector2 origin)
     {
         System.Console.WriteLine("Weapon.Slash called");
-        ArcCollider arcCollider = new ArcCollider(origin, direction, SlashRadius, SlashWidth);
+        Vector2 pivot = origin - direction * (SlashRadius + SlashWidth / 2f);
+        ArcCollider arcCollider = new ArcCollider(pivot, direction, SlashRadius, SlashWidth);
         var slash = new Slash(arcCollider, Damage, CritChance, origin, direction);
         GameManager.GetGameManager().AddGameObject(slash);
         System.Console.WriteLine("Slash added to GameManager");

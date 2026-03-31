@@ -134,7 +134,7 @@ public class Warrior : BasePlayer
 
             if (_inputManager.IsKeyPress(Keys.LeftShift) && _dashCooldown <= 0f)
             {
-                Vector2 mousePosition = _inputManager.CurrentMouseState.Position.ToVector2();
+                Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
                 Vector2 towardMouse = mousePosition - Position;
                 if (towardMouse != Vector2.Zero)
                 {
@@ -167,7 +167,7 @@ public class Warrior : BasePlayer
         // Anchor at warrior body center, then lift upward.
         Vector2 castAnchor = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
 
-        Vector2 mousePosition = _inputManager.CurrentMouseState.Position.ToVector2();
+        Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
         Vector2 direction = mousePosition - castAnchor;
         if (direction == Vector2.Zero)
             return;
