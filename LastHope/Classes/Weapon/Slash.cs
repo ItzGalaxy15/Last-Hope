@@ -87,7 +87,7 @@ namespace Last_Hope.Classes.Weapon
             float rotation = (float)Math.Atan2(direction.Y, direction.X);
             Rectangle sourceRect = animation.GetSourceRect();
             spriteBatch.Draw(sprite, origin, sourceRect, Color.White, rotation,
-                new Vector2(sourceRect.Width * 0.5f, sourceRect.Height * 0.5f), 3f, SpriteEffects.None, 0);
+                new Vector2(sourceRect.Width * 0.5f, sourceRect.Height * 0.5f), 3.3f, SpriteEffects.None, 0);
 
             base.Draw(gameTime, spriteBatch);
         }

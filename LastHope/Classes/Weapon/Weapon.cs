@@ -8,8 +8,8 @@ namespace Last_Hope;
 public class Weapon : BaseWeapon
 {
     public GameObject _owner { get; private set; }
-    private const float SlashRadius = 100f;
-    private const float SlashWidth = 60f;
+    private const float SlashRadius = 110f;
+    private const float SlashWidth = 66f;
 
     public Weapon(string name, int damage, float critChance) : base(name, damage, critChance)
     {

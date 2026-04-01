@@ -41,7 +41,7 @@ public class Warrior : BasePlayer
     private RectangleCollider _collider;
     private float _hurtCooldown;
 
-    private const float SlashDistance = 80f;
+    private const float SlashDistance = 105f;
     private const float SlashCastHeightOffset = 10f;
 
     public Warrior(Vector2 startPosition)
