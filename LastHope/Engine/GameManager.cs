@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 
 using Last_Hope.BaseModel;
+using Last_Hope.UI;
 using Last_Hope.Classes.Camera;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -13,10 +14,10 @@ public class GameManager
 {
     private static GameManager gameManager;
 
-    private List<GameObject> _gameObjects;
-    private List<GameObject> _toBeRemoved;
-    private List<GameObject> _toBeAdded;
-    private ContentManager _content;
+    public List<GameObject> _gameObjects;
+    public List<GameObject> _toBeRemoved;
+    public List<GameObject> _toBeAdded;
+    public ContentManager _content;
 
     // private float _spawnTimer = 0f;
     // private float _spawnInterval = 5f;   // seconds between spawns (starts at 5 s)
@@ -36,7 +37,8 @@ public class GameManager
 
 
     public GameState _state;
-    private SpriteFont _font;
+    public SpriteFont _font;
+    public Menu Menu { get; private set; }
 
 
     public static GameManager GetGameManager()
@@ -53,6 +55,8 @@ public class GameManager
         InputManager = new InputManager();
         RNG = new Random();
         // Camera = new Camera();
+
+        Menu = new Menu();
 
         _state = GameState.StartMenu;
     }
@@ -125,16 +129,16 @@ public class GameManager
         switch (_state)
         {
             case GameState.StartMenu:
-                UpdateStartMenu(gameTime);
+                Menu.UpdateStartMenu(gameTime);
                 break;
             case GameState.Running:
-                UpdateRunning(gameTime);
+                Menu.UpdateRunningMenu(gameTime);
                 break;
             case GameState.Paused:
-                UpdatePaused(gameTime);
+                Menu.UpdatePausedMenu(gameTime);
                 break;
             case GameState.GameOver:
-                UpdateGameOver(gameTime);
+                Menu.UpdateGameOverMenu(gameTime);
                 break;
         }
     }
@@ -145,16 +149,16 @@ public class GameManager
         switch (_state)
         {
             case GameState.StartMenu:
-                DrawStartMenu(gameTime, spriteBatch);
+                Menu.DrawStartMenu(gameTime, spriteBatch);
                 break;
             case GameState.Running:
-                DrawRunning(gameTime, spriteBatch, transformMatrix);
+                Menu.DrawRunningMenu(gameTime, spriteBatch, transformMatrix);
                 break;
             case GameState.Paused:
-                DrawPaused(gameTime, spriteBatch, transformMatrix);
+                Menu.DrawPausedMenu(gameTime, spriteBatch, transformMatrix);
                 break;
             case GameState.GameOver:
-                DrawGameOver(gameTime, spriteBatch, transformMatrix);
+                Menu.DrawGameOverMenu(gameTime, spriteBatch, transformMatrix);
                 break;
         }
     }
