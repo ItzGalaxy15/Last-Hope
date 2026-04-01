@@ -1,5 +1,6 @@
 ﻿using System;
 using Last_Hope.BaseModel;
+using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -21,6 +22,11 @@ public class ExperienceBar : UIElement
 	{
 		_player = player;
 		_pixel = pixel;
+	}
+
+	private BasePlayer? GetActivePlayer()
+	{
+		return GameManager.GetGameManager()._player ?? _player;
 	}
 
 	public override void Update(GameTime gameTime, Viewport viewport)
@@ -45,7 +51,8 @@ public class ExperienceBar : UIElement
 
 		_frameRect = new Rectangle(startX, topMargin, barWidth, barHeight);
 
-		float progress = _player?.ExperienceProgress ?? 0f;
+		BasePlayer? player = GetActivePlayer();
+		float progress = player?.ExperienceProgress ?? 0f;
 		int fillWidth = (int)MathF.Round((_frameRect.Width - 4) * progress);
 		fillWidth = Math.Clamp(fillWidth, 0, _frameRect.Width - 4);
 		_fillRect = new Rectangle(_frameRect.X + 2, _frameRect.Y + 2, fillWidth, _frameRect.Height - 4);
@@ -57,7 +64,8 @@ public class ExperienceBar : UIElement
 	public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
 	{
 		Texture2D pixel = GetPixel(spriteBatch);
-		float flash = _player?.LevelUpFlashProgress ?? 0f;
+		BasePlayer? player = GetActivePlayer();
+		float flash = player?.LevelUpFlashProgress ?? 0f;
 
 		Color frame = new Color(210, 210, 210, 245);
 		Color background = new Color(28, 28, 28, 245);
@@ -83,7 +91,7 @@ public class ExperienceBar : UIElement
 
 		DrawFilledCircle(spriteBatch, _badgeCenter, _badgeRadius, badgeBase);
 		DrawCircleOutline(spriteBatch, _badgeCenter, _badgeRadius, 2, badgeRing);
-		DrawLevelNumber(spriteBatch, _badgeCenter, _player?.Level ?? 0, levelColor);
+		DrawLevelNumber(spriteBatch, _badgeCenter, player?.Level ?? 0, levelColor);
 	}
 
 	private void DrawLevelNumber(SpriteBatch spriteBatch, Point center, int level, Color color)

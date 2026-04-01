@@ -14,7 +14,7 @@ public class Warrior : BasePlayer
     public Vector2 Position { get; private set; }
     public Texture2D AxeSprite;
     public Texture2D WarriorSprite;
-    public InputManager _inputManager {get; private set;}
+    public InputManager _inputManager { get; private set; }
 
     private const int FrameSize = 32;
     private const float WarriorDrawScale = 3f;
@@ -22,17 +22,18 @@ public class Warrior : BasePlayer
     private const float WalkFrameDuration = 0.12f;
 
     private int _walkRow;
-
     private int _walkFrameIndex;
     private float _walkFrameTimer;
     private float _bodyWidth => FrameSize * WarriorDrawScale;
     private float _axePixelSize => FrameSize * AxeDrawScale;
     private float AxeOffsetY => (_bodyWidth - _axePixelSize) * 0.5f;
 
-    private const float AttackCooldown = 1f;  // 0.5 seconds between attacks
+    private const float AttackCooldown = 1f;
     private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
+    private const bool DebugDrawHitbox = true;
+
     private double timeSinceLastAttack = 0;
     private float _dashCooldown;
     private Vector2 _moveInput;
@@ -43,9 +44,8 @@ public class Warrior : BasePlayer
     private const float SlashDistance = 80f;
     private const float SlashCastHeightOffset = 10f;
 
-
     public Warrior(Vector2 startPosition)
-        : base(hp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
         Position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
@@ -93,7 +93,7 @@ public class Warrior : BasePlayer
 
     public override void Update(GameTime gameTime)
     {
-        if (!GameManager.GetGameManager().playerAlive || _Hp <= 0f)
+        if (!GameManager.GetGameManager().playerAlive || _currentHp <= 0f)
             return;
 
         Move(_moveInput, gameTime);
@@ -120,43 +120,52 @@ public class Warrior : BasePlayer
             _walkFrameIndex = 0;
         }
 
-        timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-        if (_inputManager.IsKeyPress(Keys.B) && timeSinceLastAttack >= AttackCooldown)
+        if (_inputManager is not null)
         {
-            UseWeapon();
-            timeSinceLastAttack = 0;
-        }
-
-        //*Dash Ability*\\
-        //----------------------------------------------------------------------------------------\\
-        if (_dashCooldown > 0f)
-            _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_inputManager.IsKeyPress(Keys.LeftShift) && _dashCooldown <= 0f)
-        {
-            Vector2 mousePosition = _inputManager.CurrentMouseState.Position.ToVector2();
-            Vector2 towardMouse = mousePosition - Position;
-            if (towardMouse != Vector2.Zero)
+            timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
+            if (_inputManager.IsKeyPress(Keys.B) && timeSinceLastAttack >= AttackCooldown)
             {
-                Dash(towardMouse, _DashDistance);
-                SetWalkRowFromDirection(towardMouse);
-                _dashCooldown = DashCooldown;
+                UseWeapon();
+                timeSinceLastAttack = 0;
+            }
+
+            if (_dashCooldown > 0f)
+                _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (_inputManager.IsKeyPress(Keys.LeftShift) && _dashCooldown <= 0f)
+            {
+                Vector2 mousePosition = _inputManager.CurrentMouseState.Position.ToVector2();
+                Vector2 towardMouse = mousePosition - Position;
+                if (towardMouse != Vector2.Zero)
+                {
+                    Dash(towardMouse, _DashDistance);
+                    SetWalkRowFromDirection(towardMouse);
+                    _dashCooldown = DashCooldown;
+                }
             }
         }
-        //----------------------------------------------------------------------------------------\\
-
 
         base.Update(gameTime);
     }
 
+    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
+    {
+        Texture2D pixel = GameManager.GetGameManager().Pixel;
+        const int thickness = 2;
+
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
+    }
+
     public void UseWeapon()
     {
-        System.Console.WriteLine("UseWeapon called");
+        if (_inputManager is null)
+            return;
 
-        // Anchor at warrior center, then lift upward.
-        Vector2 castAnchor = Position + new Vector2(
-            WarriorSprite.Width * 0.5f,
-            WarriorSprite.Height * 0.5f - SlashCastHeightOffset);
+        // Anchor at warrior body center, then lift upward.
+        Vector2 castAnchor = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
 
         Vector2 mousePosition = _inputManager.CurrentMouseState.Position.ToVector2();
         Vector2 direction = mousePosition - castAnchor;
@@ -166,8 +175,6 @@ public class Warrior : BasePlayer
         direction.Normalize();
 
         Vector2 slashOrigin = castAnchor + direction * SlashDistance;
-
-        System.Console.WriteLine($"Creating slash at {slashOrigin} in direction {direction}");
         _Weapon.Attack(direction, slashOrigin);
     }
 
@@ -186,6 +193,9 @@ public class Warrior : BasePlayer
 
         spriteBatch.Draw(AxeSprite, Position + axeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, axeFlip, 0f);
 
+        if (DebugDrawHitbox && _collider is not null)
+            DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
+
         base.Draw(gameTime, spriteBatch);
     }
 
@@ -194,6 +204,7 @@ public class Warrior : BasePlayer
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal)
             return new Rectangle(FrameSize, 0, FrameSize, FrameSize);
+
         return new Rectangle(0, FrameSize, FrameSize, FrameSize);
     }
 
@@ -202,6 +213,7 @@ public class Warrior : BasePlayer
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal && _facingLeft)
             return SpriteEffects.FlipHorizontally;
+
         return SpriteEffects.None;
     }
 
@@ -210,11 +222,11 @@ public class Warrior : BasePlayer
         if (other is not BaseEnemy || _hurtCooldown > 0f)
             return;
 
-        _Hp -= EnemyContactDamage;
+        _currentHp -= EnemyContactDamage;
         _hurtCooldown = EnemyContactHurtInterval;
-        if (_Hp <= 0f)
+        if (_currentHp <= 0f)
         {
-            _Hp = 0f;
+            _currentHp = 0f;
             GameManager.GetGameManager().playerAlive = false;
             GameManager.GetGameManager()._state = GameState.GameOver;
         }
@@ -224,10 +236,14 @@ public class Warrior : BasePlayer
     {
         if (dir == Vector2.Zero)
             return;
+
         float ax = Math.Abs(dir.X);
         float ay = Math.Abs(dir.Y);
+
         if (ay >= ax)
+        {
             _walkRow = dir.Y > 0f ? 0 : 1;
+        }
         else
         {
             _walkRow = dir.X > 0f ? 2 : 3;
@@ -237,24 +253,32 @@ public class Warrior : BasePlayer
 
     private void SyncColliderToPosition()
     {
-        const int pad = 4;
-        float axeDrawSize = _axePixelSize;
-        float axeOx = _facingLeft ? _bodyWidth - axeDrawSize - 40f : 40f;
-        float axeOy = AxeOffsetY;
-        float minX = Math.Min(0f, axeOx);
-        float maxX = Math.Max(_bodyWidth, axeOx + axeDrawSize);
-        float minY = Math.Min(0f, axeOy);
-        float maxY = Math.Max(FrameSize * WarriorDrawScale, axeOy + axeDrawSize);
+        if (_collider is null)
+            return;
 
-        _collider.shape.X = (int)Math.Floor(Position.X + minX) - pad;
-        _collider.shape.Y = (int)Math.Floor(Position.Y + minY) - pad;
-        _collider.shape.Width = (int)Math.Ceiling(maxX - minX) + pad * 2;
-        _collider.shape.Height = (int)Math.Ceiling(maxY - minY) + pad * 2;
+        const int pad = 4;
+
+        // Match Draw() footprint: warrior body + axe with current facing.
+        float axeOffsetX = _facingLeft ? _bodyWidth - _axePixelSize - 40f : 40f;
+        float axeOffsetY = AxeOffsetY;
+
+        float minX = MathF.Min(0f, axeOffsetX);
+        float maxX = MathF.Max(_bodyWidth, axeOffsetX + _axePixelSize);
+        float minY = MathF.Min(0f, axeOffsetY);
+        float maxY = MathF.Max(_bodyWidth, axeOffsetY + _axePixelSize);
+
+        int left = (int)MathF.Floor(Position.X + minX) - pad;
+        int top = (int)MathF.Floor(Position.Y + minY) - pad;
+        int right = (int)MathF.Ceiling(Position.X + maxX) + pad;
+        int bottom = (int)MathF.Ceiling(Position.Y + maxY) + pad;
+
+        _collider.shape = new Rectangle(left, top, right - left, bottom - top);
+        SetCollider(_collider);
     }
 
     public override void Damage(float amount)
     {
-        _Hp -= amount;
+        _currentHp -= amount;
     }
 
     protected override void ApplyDashOffset(Vector2 delta)

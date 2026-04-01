@@ -55,6 +55,7 @@ namespace Last_Hope.Classes.Weapon
 
             if (other is BaseEnemy enemy)
             {
+                
                 hitEnemies.Add(other);
                 enemy.Damage(damage);
                 if (enemy.CurrentHealth <= 0)

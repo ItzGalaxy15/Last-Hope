@@ -20,4 +20,9 @@ public class Bow : BaseWeapon
         var arrow = new Arrow(origin, direction, _speed, _owner, Damage, CritChance);
         GameManager.GetGameManager().AddGameObject(arrow);
     }
+
+    public override void SetOwner(GameObject owner)
+    {
+        _owner = owner;
+    }
 }

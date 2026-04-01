@@ -40,7 +40,7 @@ public class Last_Hope : Game
         _player = new Warrior(new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2));
  
         _gameManager.AddGameObject(_player);
-        _gameManager.AddGameObject(new Goblin(new Point(600, 660)));
+        _gameManager.AddGameObject(new Goblin(new Point(600, 660), new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
         _gameManager.AddGameObject(new Orc(new Point(300, 360)));
         _gameManager.Initialize(Content, this, _player);
     }

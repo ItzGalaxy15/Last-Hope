@@ -74,7 +74,7 @@ namespace Last_Hope.Classes.Weapon
                     if (other is BasePlayer player)
                     {
                         player.Damage(damage);
-                        if (player._Hp <= 0)
+                        if (player._currentHp <= 0)
                         {
                             GameManager.GetGameManager().RemoveGameObject(player);
                         }
