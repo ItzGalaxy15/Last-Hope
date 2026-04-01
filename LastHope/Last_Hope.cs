@@ -64,6 +64,8 @@ public class Last_Hope : Game
             new Point(_levelGenerator.MapWidthInTiles * _levelGenerator.TileSize, _levelGenerator.MapHeightInTiles * _levelGenerator.TileSize),
             1.2f);
 
+        _gameManager.Camera = _camera;
+
         _hud = new Hud(_player, _gameManager.Pixel);
     }
 

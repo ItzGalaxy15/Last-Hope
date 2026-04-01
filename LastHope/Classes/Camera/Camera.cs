@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Last_Hope.Classes.Camera
 {
-    internal class Camera
+    public class Camera
     {
         public Vector2 Position { get; private set; }
         public Matrix ViewMatrix { get; private set; }
