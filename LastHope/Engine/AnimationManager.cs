@@ -16,6 +16,8 @@ internal class AnimationManager
 
     bool loop;
     public bool isFinished;
+    public int ActiveFrame => activeFrame;
+    public float FrameProgress => (float)counter / interval;
 
     int offsetX;
     int offsetY;
