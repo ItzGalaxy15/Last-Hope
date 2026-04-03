@@ -8,8 +8,10 @@ namespace Last_Hope;
 public class Weapon : BaseWeapon
 {
     public GameObject _owner { get; private set; }
-    private const float SlashRadius = 110f;
-    private const float SlashWidth = 66f;
+    private const float SlashRadius = 20f;
+    private const float SlashWidth = 20f;
+    private const float SlashVisualExpand = 45f;
+    private const float SlashHitboxExpand = 55f;
 
     public Weapon(string name, int damage, float critChance) : base(name, damage, critChance)
     {
@@ -20,7 +22,7 @@ public class Weapon : BaseWeapon
         System.Console.WriteLine("Weapon.Slash called");
         Vector2 pivot = origin - direction * (SlashRadius + SlashWidth / 2f);
         ArcCollider arcCollider = new ArcCollider(pivot, direction, SlashRadius, SlashWidth);
-        var slash = new Slash(arcCollider, Damage, CritChance, origin, direction);
+        var slash = new Slash(arcCollider, Damage, CritChance, origin, direction, SlashVisualExpand, SlashHitboxExpand);
         GameManager.GetGameManager().AddGameObject(slash);
         System.Console.WriteLine("Slash added to GameManager");
     }
