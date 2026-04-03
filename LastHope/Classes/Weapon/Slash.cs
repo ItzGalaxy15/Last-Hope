@@ -20,6 +20,7 @@ namespace Last_Hope.Classes.Weapon
         private Vector2 origin;
         private Vector2 direction;
         private Vector2 lastOffset = Vector2.Zero;
+        private Vector2 lastPlayerPos;
         private float visualExpand;
         private float hitboxExpand;
         private const bool DebugDrawHitbox = false;
@@ -33,6 +34,7 @@ namespace Last_Hope.Classes.Weapon
             this.direction = direction;
             this.visualExpand = visualExpand;
             this.hitboxExpand = hitboxExpand;
+            this.lastPlayerPos = GameManager.GetGameManager()._player.GetPosition();
             SetCollider(collider);
         }
 
@@ -48,19 +50,25 @@ namespace Last_Hope.Classes.Weapon
             base.Update(gameTime);
             animation.Update();
 
+            Vector2 playerPos = GameManager.GetGameManager()._player.GetPosition();
+            Vector2 playerDelta = playerPos - lastPlayerPos;
+            lastPlayerPos = playerPos;
+            origin += playerDelta;
+
             float t = (animation.ActiveFrame + animation.FrameProgress) / 4f;
             Vector2 currentOffset = direction * (t * hitboxExpand);
-            Vector2 delta = currentOffset - lastOffset;
+            Vector2 expansionDelta = currentOffset - lastOffset;
             lastOffset = currentOffset;
 
-            if (collider is ArcCollider arc && delta != Vector2.Zero)
+            Vector2 totalDelta = playerDelta + expansionDelta;
+            if (collider is ArcCollider arc && totalDelta != Vector2.Zero)
             {
                 foreach (var segment in arc.ArcSegments)
                 {
-                    segment.Start += delta;
-                    segment.End += delta;
+                    segment.Start += totalDelta;
+                    segment.End += totalDelta;
                 }
-                arc.Center += delta;
+                arc.Center += totalDelta;
             }
 
             if (animation.isFinished)
