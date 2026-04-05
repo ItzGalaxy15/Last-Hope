@@ -34,6 +34,7 @@ public class GameManager
     public bool playerAlive = true;
     public int Score { get; set; } = 0;
     public Decoy ActiveDecoy { get; set; }
+    public int SelectedItemSlot { get; private set; } = 0;
 
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
@@ -64,6 +65,7 @@ public class GameManager
         Menu = new Menu();
 
         _state = GameState.StartMenu;
+        SelectedItemSlot = 0;
     }
 
     public void Initialize(ContentManager content, Game game, BasePlayer player)
@@ -201,6 +203,10 @@ public class GameManager
             RNG.Next(0, Game.GraphicsDevice.Viewport.Height));
     }
 
+    public void SetSelectedItemSlot(int slotIndex)
+    {
+        SelectedItemSlot = Math.Clamp(slotIndex, 0, 1);
+    }
 
     public void ResetGame()
     {
@@ -212,6 +218,7 @@ public class GameManager
         playerAlive = true;
         Score = 0;
         ActiveDecoy = null;
+        SelectedItemSlot = 0;
 
         Warrior player = new Warrior(new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2));
         _player = player;
