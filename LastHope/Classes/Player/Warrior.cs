@@ -49,6 +49,8 @@ public class Warrior : BasePlayer
     private const float BombActionCooldown = 0.25f;
     private float _bombActionCooldown;
 
+    private const float DecoyThrowSpeed = 420f;
+
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
@@ -140,14 +142,14 @@ public class Warrior : BasePlayer
             // G = place bomb at feet
             if (_inputManager.IsKeyPress(Keys.G) && _bombActionCooldown <= 0f)
             {
-                PlaceBomb();
+                PlaceSelectedItem();
                 _bombActionCooldown = BombActionCooldown;
             }
 
             // T = throw bomb toward mouse
             if (_inputManager.IsKeyPress(Keys.T) && _bombActionCooldown <= 0f)
             {
-                ThrowBombTowardMouse();
+                ThrowSelectedItemTowardMouse();
                 _bombActionCooldown = BombActionCooldown;
             }
 
@@ -309,21 +311,49 @@ public class Warrior : BasePlayer
         SyncColliderToPosition();
     }
 
-    private void PlaceBomb()
+    private void PlaceSelectedItem()
     {
+        GameManager gm = GameManager.GetGameManager();
         Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        GameManager.GetGameManager().AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
+
+        if (gm.SelectedItemSlot == 1) // slot 2 = decoy
+        {
+            SpawnDecoy(gm, spawnPosition, Vector2.Zero);
+            return;
+        }
+
+        // slot 1 = bomb
+        gm.AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
     }
 
-    private void ThrowBombTowardMouse()
+    private void ThrowSelectedItemTowardMouse()
     {
+        GameManager gm = GameManager.GetGameManager();
         Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        Vector2 mouseWorld = GameManager.GetGameManager().GetWorldMousePosition();
+        Vector2 mouseWorld = gm.GetWorldMousePosition();
         Vector2 direction = mouseWorld - spawnPosition;
         if (direction == Vector2.Zero)
             return;
 
         direction.Normalize();
-        GameManager.GetGameManager().AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
+
+        if (gm.SelectedItemSlot == 1) // slot 2 = decoy
+        {
+            SpawnDecoy(gm, spawnPosition, direction * DecoyThrowSpeed);
+            return;
+        }
+
+        // slot 1 = bomb
+        gm.AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
+    }
+
+    private static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
+    {
+        if (gm.ActiveDecoy is not null)
+            gm.RemoveGameObject(gm.ActiveDecoy);
+
+        Decoy decoy = new Decoy(spawnPosition, initialVelocity, lifetimeSeconds: 5f);
+        gm.AddGameObject(decoy);
+        gm.ActiveDecoy = decoy;
     }
 }

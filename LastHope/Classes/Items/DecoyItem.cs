@@ -1,5 +1,6 @@
 using Last_Hope.BaseModel;
 using Last_Hope.Engine;
+using Microsoft.Xna.Framework;
 
 namespace Last_Hope.Classes.Items;
 
@@ -12,7 +13,7 @@ public class DecoyItem : BaseItem
 
     protected override void OnUse(BasePlayer player)
     {
-        var decoy = new Decoy(player.GetPosition());
+        var decoy = new Decoy(player.GetPosition(), Vector2.Zero, 100f);
         GameManager.GetGameManager().AddGameObject(decoy);
         GameManager.GetGameManager().ActiveDecoy = decoy;
     }

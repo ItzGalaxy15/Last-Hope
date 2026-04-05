@@ -1,26 +1,61 @@
 using Last_Hope.Engine;
 using Last_Hope.Collision;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Items;
 
 public class Decoy : GameObject
 {
-    private Vector2 _position;
-    public float Health = 100f;
-    private float _lifetime = 10f;
+    private const int DecoySize = 30;
+    private const float ThrowDragPerFrame = 0.92f;
+    private const float SettleSpeed = 8f;
+    private static readonly Rectangle FoodBoxSourceRect = new Rectangle(0, 32, 32, 32);
 
-    public Decoy(Vector2 position)
+    private Vector2 _position;
+    private Vector2 _velocity;
+    public float Health = 100f;
+    private float _lifetime;
+    private readonly RectangleCollider _collider;
+    private Texture2D? _itemSpriteSheet;
+
+    public Decoy(Vector2 position, Vector2 initialVelocity, float lifetimeSeconds = 5f)
     {
         _position = position;
-        // Adding a collider so it can receive melee hits like from the Orc
-        SetCollider(new RectangleCollider(new Rectangle((int)position.X - 15, (int)position.Y - 15, 30, 30)));
+        _velocity = initialVelocity;
+        _lifetime = lifetimeSeconds;
+
+        _collider = new RectangleCollider(new Rectangle((int)position.X - (DecoySize / 2), (int)position.Y - (DecoySize / 2), DecoySize, DecoySize));
+        SetCollider(_collider);
+    }
+
+    public override void Load(ContentManager content)
+    {
+        try
+        {
+            _itemSpriteSheet = content.Load<Texture2D>("itemSpriteSheet");
+        }
+        catch (ContentLoadException)
+        {
+            _itemSpriteSheet = null;
+        }
+
+        base.Load(content);
     }
 
     public override void Update(GameTime gameTime)
     {
-        _lifetime -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        _position += _velocity * dt;
+        _velocity *= ThrowDragPerFrame;
+        if (_velocity.LengthSquared() < SettleSpeed * SettleSpeed)
+            _velocity = Vector2.Zero;
+
+        _collider.shape.Location = new Point((int)_position.X - (DecoySize / 2), (int)_position.Y - (DecoySize / 2));
+
+        _lifetime -= dt;
         if (_lifetime <= 0f || Health <= 0f)
         {
             GameManager.GetGameManager().RemoveGameObject(this);
@@ -29,7 +64,7 @@ public class Decoy : GameObject
                 GameManager.GetGameManager().ActiveDecoy = null;
             }
         }
-        
+
         base.Update(gameTime);
     }
 
@@ -40,10 +75,18 @@ public class Decoy : GameObject
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        Texture2D pixel = GameManager.GetGameManager().Pixel;
-        // Draw a simple brown square as a placeholder for the decoy
-        spriteBatch.Draw(pixel, new Rectangle((int)_position.X - 15, (int)_position.Y - 15, 30, 30), Color.Brown);
-        
+        Rectangle destinationRect = new Rectangle((int)_position.X - (DecoySize / 2), (int)_position.Y - (DecoySize / 2), DecoySize, DecoySize);
+
+        if (_itemSpriteSheet is not null)
+        {
+            spriteBatch.Draw(_itemSpriteSheet, destinationRect, FoodBoxSourceRect, Color.White);
+        }
+        else
+        {
+            Texture2D pixel = GameManager.GetGameManager().Pixel;
+            spriteBatch.Draw(pixel, destinationRect, Color.Brown);
+        }
+
         base.Draw(gameTime, spriteBatch);
     }
 
@@ -51,7 +94,7 @@ public class Decoy : GameObject
     {
         return _position;
     }
-    
+
     public override void Destroy()
     {
         if (GameManager.GetGameManager().ActiveDecoy == this)
