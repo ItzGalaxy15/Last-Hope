@@ -43,30 +43,40 @@ public class Goblin : BaseEnemy
     {
         var gameManager = GameManager.GetGameManager();
         var player = gameManager._player;
+        var decoy = gameManager.ActiveDecoy;
 
-        if (player == null) return;
+        if (player == null && decoy == null) return;
 
-        Vector2 playerPos = player.GetPosition();
-        Vector2 direction = playerPos - GetPosition();
-        float distanceToPlayer = direction.Length();
+        Vector2 targetPos;
+        if (decoy != null)
+        {
+            targetPos = decoy.GetPosition();
+        }
+        else
+        {
+            targetPos = player.GetPosition();
+        }
+
+        Vector2 direction = targetPos - GetPosition();
+        float distanceToTarget = direction.Length();
 
         if (direction != Vector2.Zero)
         {
             direction.Normalize();
         }
 
-        if (distanceToPlayer > _attackRange)
+        if (distanceToTarget > _attackRange)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             float moveAmount = Speed * dt;
-            moveAmount = Math.Min(moveAmount, distanceToPlayer - _attackRange);
+            moveAmount = Math.Min(moveAmount, distanceToTarget - _attackRange);
 
             _precisePosition += direction * moveAmount;
             _collider.shape.Location = _precisePosition.ToPoint();
         }
 
         _attackTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (distanceToPlayer <= _attackRange && _attackTimer <= 0f)
+        if (distanceToTarget <= _attackRange && _attackTimer <= 0f)
         {
             _weapon.Attack(direction, GetPosition());
             _attackTimer = _attackCooldown;

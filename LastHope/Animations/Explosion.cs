@@ -41,7 +41,7 @@ public class Explosion : GameObject
     {
         base.Load(content);
 
-        _explosionTexture = content.Load<Texture2D>(_textureName);
+        _explosionTexture = content.Load<Texture2D>("TempExplosion");
         int explosionFrameWidth = _explosionTexture.Width / _explosionColumns;
         int explosionFrameHeight = _explosionTexture.Height / _explosionRows;
 

@@ -1,6 +1,7 @@
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Classes.Items;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -63,9 +64,10 @@ public class Orc : BaseEnemy
     {
         var gameManager = GameManager.GetGameManager();
         var player = gameManager._player;
+        var decoy = gameManager.ActiveDecoy;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (player == null)
+        if (player == null && decoy == null)
         {
             return;
         }
@@ -77,12 +79,20 @@ public class Orc : BaseEnemy
                 _attackCooldownTimer = 0f;
         }
 
-        var playerCollider = player.GetCollider();
-        Vector2 playerTarget = playerCollider != null
-            ? playerCollider.GetBoundingBox().Center.ToVector2()
-            : player.GetPosition();
+        Vector2 targetPos;
+        if (decoy != null)
+        {
+            targetPos = decoy.GetPosition();
+        }
+        else
+        {
+            var playerCollider = player.GetCollider();
+            targetPos = playerCollider != null
+                ? playerCollider.GetBoundingBox().Center.ToVector2()
+                : player.GetPosition();
+        }
 
-        Vector2 direction = playerTarget - GetPosition();
+        Vector2 direction = targetPos - GetPosition();
 
         if (direction.X != 0)
         {
@@ -165,8 +175,13 @@ public class Orc : BaseEnemy
 
     public override void OnCollision(GameObject other)
     {
-        if (other is not BasePlayer || _isAttacking || _attackCooldownTimer > 0f)
+        if ((other is not BasePlayer && other is not Decoy) || _isAttacking || _attackCooldownTimer > 0f)
             return;
+
+        if (other is Decoy decoy)
+        {
+            decoy.Damage(10f); // Orc damages the decoy
+        }
 
         _isAttacking = true;
         _attackCooldownTimer = AttackCooldownSeconds;
