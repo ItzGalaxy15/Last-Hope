@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Last_Hope.Classes.Items;
 
 namespace Last_Hope;
 
@@ -43,6 +44,10 @@ public class Warrior : BasePlayer
 
     private const float SlashDistance = 105f;
     private const float SlashCastHeightOffset = 10f;
+
+    private const float BombThrowSpeed = 520f;
+    private const float BombActionCooldown = 0.25f;
+    private float _bombActionCooldown;
 
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -102,6 +107,9 @@ public class Warrior : BasePlayer
         if (_hurtCooldown > 0f)
             _hurtCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+        if (_bombActionCooldown > 0f)
+            _bombActionCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         bool moving = _moveInput != Vector2.Zero;
         if (moving)
         {
@@ -127,6 +135,20 @@ public class Warrior : BasePlayer
             {
                 UseWeapon();
                 timeSinceLastAttack = 0;
+            }
+
+            // G = place bomb at feet
+            if (_inputManager.IsKeyPress(Keys.G) && _bombActionCooldown <= 0f)
+            {
+                PlaceBomb();
+                _bombActionCooldown = BombActionCooldown;
+            }
+
+            // T = throw bomb toward mouse
+            if (_inputManager.IsKeyPress(Keys.T) && _bombActionCooldown <= 0f)
+            {
+                ThrowBombTowardMouse();
+                _bombActionCooldown = BombActionCooldown;
             }
 
             if (_dashCooldown > 0f)
@@ -285,5 +307,23 @@ public class Warrior : BasePlayer
     {
         Position += delta;
         SyncColliderToPosition();
+    }
+
+    private void PlaceBomb()
+    {
+        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        GameManager.GetGameManager().AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
+    }
+
+    private void ThrowBombTowardMouse()
+    {
+        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 mouseWorld = GameManager.GetGameManager().GetWorldMousePosition();
+        Vector2 direction = mouseWorld - spawnPosition;
+        if (direction == Vector2.Zero)
+            return;
+
+        direction.Normalize();
+        GameManager.GetGameManager().AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
     }
 }

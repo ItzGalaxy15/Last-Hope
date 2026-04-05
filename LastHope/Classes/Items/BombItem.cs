@@ -1,5 +1,6 @@
 using Last_Hope.BaseModel;
 using Last_Hope.Engine;
+using Microsoft.Xna.Framework;
 
 namespace Last_Hope.Classes.Items;
 
@@ -12,7 +13,7 @@ public class BombItem : BaseItem
 
     protected override void OnUse(BasePlayer player)
     {
-        var bomb = new Bomb(player.GetPosition());
+        var bomb = new Bomb(player.GetPosition(), Vector2.Zero);
         GameManager.GetGameManager().AddGameObject(bomb);
     }
 }
