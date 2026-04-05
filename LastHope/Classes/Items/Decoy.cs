@@ -1,4 +1,5 @@
 using Last_Hope.Engine;
+using Last_Hope.Collision;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -14,7 +15,7 @@ public class Decoy : GameObject
     {
         _position = position;
         // Adding a collider so it can receive melee hits like from the Orc
-        SetCollider(new Last_Hope.Collision.RectangleCollider(new Rectangle((int)position.X - 15, (int)position.Y - 15, 30, 30)));
+        SetCollider(new RectangleCollider(new Rectangle((int)position.X - 15, (int)position.Y - 15, 30, 30)));
     }
 
     public override void Update(GameTime gameTime)

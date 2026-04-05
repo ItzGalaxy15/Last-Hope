@@ -1,6 +1,7 @@
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Classes.Items;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -174,10 +175,10 @@ public class Orc : BaseEnemy
 
     public override void OnCollision(GameObject other)
     {
-        if ((other is not BasePlayer && other is not Last_Hope.Classes.Items.Decoy) || _isAttacking || _attackCooldownTimer > 0f)
+        if ((other is not BasePlayer && other is not Decoy) || _isAttacking || _attackCooldownTimer > 0f)
             return;
 
-        if (other is Last_Hope.Classes.Items.Decoy decoy)
+        if (other is Decoy decoy)
         {
             decoy.Damage(10f); // Orc damages the decoy
         }
