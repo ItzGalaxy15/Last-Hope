@@ -28,7 +28,7 @@ public class Warrior : BasePlayer
     private float _axePixelSize => FrameSize * AxeDrawScale;
     private float AxeOffsetY => (_bodyWidth - _axePixelSize) * 0.5f;
 
-    private const float AttackCooldown = 1f;
+    private const float AttackCooldown = 0.7f;
     private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
