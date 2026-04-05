@@ -8,18 +8,26 @@ namespace Last_Hope.UI;
 public class ItemSlotsBar : UIElement
 {
 	private readonly Texture2D? _pixel;
+	private readonly Texture2D? _itemSpriteSheet;
 	private Texture2D? _fallbackPixel;
 
 	private Rectangle _panelRect;
 	private readonly Rectangle[] _slotFrameRects = new Rectangle[2];
 	private readonly Rectangle[] _slotInnerRects = new Rectangle[2];
 	private readonly Rectangle[] _slotItemRects = new Rectangle[2];
+	private readonly Rectangle[] _slotSourceRects = new Rectangle[2];
 	private int _selectedSlot;
 
-	public ItemSlotsBar(Texture2D? pixel)
+	public ItemSlotsBar(Texture2D? pixel, Texture2D? itemSpriteSheet)
 	{
 		_pixel = pixel;
+		_itemSpriteSheet = itemSpriteSheet;
 		_selectedSlot = 0;
+
+		// 512x512 sheet, 32x32 cells:
+		// bomb at (0,0), decoy one row below at (0,32), health pot at (0,64)
+		_slotSourceRects[0] = new Rectangle(0, 0, 32, 32);   // slot 1: bomb
+		_slotSourceRects[1] = new Rectangle(0, 32, 32, 32);  // slot 2: decoy
 	}
 
 	public override void Update(GameTime gameTime, Viewport viewport)
@@ -39,7 +47,7 @@ public class ItemSlotsBar : UIElement
 		const int slotSize = 48;
 		const int gap = 12;
 		const int panelPadding = 10;
-		const int itemInset = 9;
+		const int itemInset = 8;
 
 		int totalSlotsWidth = (slotSize * 2) + gap;
 		int slotsX = viewport.Width - sideMargin - totalSlotsWidth;
@@ -77,7 +85,7 @@ public class ItemSlotsBar : UIElement
 		Color panel = new Color(0, 0, 0, 110);
 		Color frame = new Color(210, 210, 210, 245);
 		Color background = new Color(28, 28, 28, 245);
-		Color itemColor = new Color(232, 189, 52, 255);
+		Color placeholder = new Color(232, 189, 52, 255);
 		Color selectedRing = new Color(255, 240, 170, 255);
 
 		spriteBatch.Draw(pixel, _panelRect, panel);
@@ -86,7 +94,15 @@ public class ItemSlotsBar : UIElement
 		{
 			spriteBatch.Draw(pixel, _slotFrameRects[i], frame);
 			spriteBatch.Draw(pixel, _slotInnerRects[i], background);
-			spriteBatch.Draw(pixel, _slotItemRects[i], itemColor);
+
+			if (_itemSpriteSheet is not null)
+			{
+				spriteBatch.Draw(_itemSpriteSheet, _slotItemRects[i], _slotSourceRects[i], Color.White);
+			}
+			else
+			{
+				spriteBatch.Draw(pixel, _slotItemRects[i], placeholder);
+			}
 
 			if (i == _selectedSlot)
 				DrawOutline(spriteBatch, pixel, _slotFrameRects[i], 3, selectedRing);
