@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Last_Hope.BaseModel;
 using Last_Hope.UI;
+using Last_Hope.Classes.Items;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -32,6 +33,7 @@ public class GameManager
     public Game Game { get; private set; }
     public bool playerAlive = true;
     public int Score { get; set; } = 0;
+    public Decoy ActiveDecoy { get; set; }
 
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
@@ -209,6 +211,7 @@ public class GameManager
         // Reset player state
         playerAlive = true;
         Score = 0;
+        ActiveDecoy = null;
 
         Warrior player = new Warrior(new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2));
         _player = player;

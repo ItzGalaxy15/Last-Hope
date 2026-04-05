@@ -14,6 +14,8 @@ public abstract class BasePlayer : GameObject
     public float _DashDistance {get; protected set; }
     protected abstract void ApplyDashOffset(Vector2 delta);
 
+    public int ExtraLives { get; protected set; } = 0;
+
     // Level EXP
     public int _Level { get; protected set; }
     public float _Experience { get; protected set; }
@@ -50,6 +52,20 @@ public abstract class BasePlayer : GameObject
         _Level = level;
         _Experience = experience;
         _DashDistance = dashDistance;
+    }
+
+    public void Heal(float amount)
+    {
+        _currentHp += amount;
+        if (_currentHp > _maxHp)
+        {
+            _currentHp = _maxHp;
+        }
+    }
+
+    public void AddLife(int count = 1)
+    {
+        ExtraLives += count;
     }
 
     public void AddExperience(float amount)
