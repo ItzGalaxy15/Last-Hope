@@ -34,11 +34,11 @@ namespace Last_Hope.Engine.LevelGenerator
         }
 
         // ── Flower field ─────────────────────────────────────────────
-        // Stamps a single small rectangle of flower tiles (row 5 of the
-        // terrain sheet) somewhere on the grass. Size is randomly 2×2,
-        // 2×3, or 3×2 — "4 or 6 tiles in a square". Placement is only
-        // accepted if every cell under the stamp is currently grass so
-        // walkways stay intact.
+        // Stamps a single rectangle of flower tiles (row 5 of the
+        // terrain sheet) somewhere on the grass. Size is randomly 4×4,
+        // 4×6, or 6×4 — twice the footprint of the original 2×2 / 2×3
+        // stamp. Placement is only accepted if every cell under the
+        // stamp is currently grass so walkways stay intact.
         private void ApplyFlowerField(int[,] map)
         {
             List<int> flowerTiles = GetTerrainTileIndicesForRowsOneBased(5);
@@ -49,10 +49,10 @@ namespace Last_Hope.Engine.LevelGenerator
             if (grassSet.Count == 0)
                 return;
 
-            // Pick 2×2, 2×3, or 3×2.
+            // Pick 4×4, 4×6, or 6×4.
             int shape = _random.Next(3);
-            int fieldW = shape == 2 ? 3 : 2;
-            int fieldH = shape == 1 ? 3 : 2;
+            int fieldW = shape == 2 ? 12 : 6;
+            int fieldH = shape == 1 ? 12 : 6;
 
             int width = map.GetLength(0);
             int height = map.GetLength(1);
