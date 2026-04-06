@@ -9,25 +9,29 @@ namespace Last_Hope.Engine.LevelGenerator
     {
         private void ApplyDecorations(int[,] baseMap, int[,] overlayMap)
         {
-            List<int> grassTiles = GetTileIndicesForRowsOneBased(1, 3);
-            List<int> stoneTiles = GetTileIndicesForRowsOneBased(2);
+            // Grass is rows 1 and 3 of the terrain sheet; stone walkways
+            // live on rows 2 and 4. Decorations only land on grass.
+            HashSet<int> grassSet = new HashSet<int>(GetTerrainTileIndicesForRowsOneBased(1, 3));
 
-            int weedTile = GetTileIndexOneBased(5, 1);
-            int rockTile = GetTileIndexOneBased(5, 2);
-            int pebble1 = GetTileIndexOneBased(5, 3);
-            int pebble2 = GetTileIndexOneBased(5, 4);
+            // All decoration indices below are into the decorations sheet.
+            int weedTile = GetDecorationTileIndexOneBased(1, 1);
+            int rockTile = GetDecorationTileIndexOneBased(1, 2);
+            int pebble1 = GetDecorationTileIndexOneBased(1, 3);
+            int pebble2 = GetDecorationTileIndexOneBased(1, 4);
 
-            // Bunny animations live on rows 6-7, columns 5-8 of the sprite sheet.
+            // Bunny animations live on rows 2-3 cols 5-8 of decorations.png
+            // (two 4-frame animations, duplicates allowed on the map).
             List<(int firstFrame, int lastFrame)> bunnyRanges = new List<(int firstFrame, int lastFrame)>();
-            AddValidAnimationRange(bunnyRanges, GetTileIndexOneBased(6, 5), GetTileIndexOneBased(6, 8));
-            AddValidAnimationRange(bunnyRanges, GetTileIndexOneBased(7, 5), GetTileIndexOneBased(7, 8));
+            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndexOneBased(2, 5), GetDecorationTileIndexOneBased(2, 8));
+            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndexOneBased(3, 5), GetDecorationTileIndexOneBased(3, 8));
 
-            // Snail animations live on rows 6-9, columns 1-4.
+            // Snail animations live on rows 2-5 cols 1-4 of decorations.png
+            // (four 4-frame animations, each variant only appears once).
             List<(int firstFrame, int lastFrame)> snailRanges = new List<(int firstFrame, int lastFrame)>();
-            AddValidAnimationRange(snailRanges, GetTileIndexOneBased(6, 1), GetTileIndexOneBased(6, 4));
-            AddValidAnimationRange(snailRanges, GetTileIndexOneBased(7, 1), GetTileIndexOneBased(7, 4));
-            AddValidAnimationRange(snailRanges, GetTileIndexOneBased(8, 1), GetTileIndexOneBased(8, 4));
-            AddValidAnimationRange(snailRanges, GetTileIndexOneBased(9, 1), GetTileIndexOneBased(9, 4));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(2, 1), GetDecorationTileIndexOneBased(2, 4));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(3, 1), GetDecorationTileIndexOneBased(3, 4));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(4, 1), GetDecorationTileIndexOneBased(4, 4));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(5, 1), GetDecorationTileIndexOneBased(5, 4));
 
             List<int> pebbleTiles = new List<int>();
             if (pebble1 >= 0)
@@ -41,11 +45,9 @@ namespace Last_Hope.Engine.LevelGenerator
             bool hasBunnies = bunnyRanges.Count > 0;
             bool hasSnails = snailRanges.Count > 0;
 
-            if ((!hasWeed && !hasRock && !hasPebbles && !hasBunnies && !hasSnails) || grassTiles.Count == 0)
+            if ((!hasWeed && !hasRock && !hasPebbles && !hasBunnies && !hasSnails) || grassSet.Count == 0)
                 return;
 
-            HashSet<int> grassSet = new HashSet<int>(grassTiles);
-            HashSet<int> stoneSet = new HashSet<int>(stoneTiles);
             HashSet<int> usedSnailStartFrames = new HashSet<int>();
 
             int width = baseMap.GetLength(0);
@@ -55,11 +57,9 @@ namespace Last_Hope.Engine.LevelGenerator
             {
                 for (int x = 0; x < width; x++)
                 {
-                    // Only place decorations on grass, not on stone walkways.
+                    // Only place decorations on plain grass — flowers,
+                    // stone walkways and anything else get skipped.
                     if (!grassSet.Contains(baseMap[x, y]))
-                        continue;
-
-                    if (stoneSet.Contains(baseMap[x, y]))
                         continue;
 
                     // Enforce minimum spacing between decorations.
@@ -137,7 +137,7 @@ namespace Last_Hope.Engine.LevelGenerator
         // range and registers it so the Draw loop can render it.
         private bool TryAddAnimatedDecoration(List<(int firstFrame, int lastFrame)> ranges, int x, int y)
         {
-            if (ranges.Count == 0 || _columns <= 0)
+            if (ranges.Count == 0 || _decorationColumns <= 0)
                 return false;
 
             (int firstFrame, int lastFrame) range = ranges[_random.Next(ranges.Count)];
@@ -145,13 +145,13 @@ namespace Last_Hope.Engine.LevelGenerator
             if (frameCount <= 0)
                 return false;
 
-            int startRow = range.firstFrame / _columns;
-            int startColumn = range.firstFrame % _columns;
+            int startRow = range.firstFrame / _decorationColumns;
+            int startColumn = range.firstFrame % _decorationColumns;
 
             int interval = _random.Next(10, 20);
             AnimationManager animation = new AnimationManager(
                 frameCount,
-                _columns,
+                _decorationColumns,
                 new Vector2(TileSize, TileSize),
                 interval,
                 true,
@@ -173,7 +173,7 @@ namespace Last_Hope.Engine.LevelGenerator
                     availableRanges.Add(ranges[i]);
             }
 
-            if (availableRanges.Count == 0 || _columns <= 0)
+            if (availableRanges.Count == 0 || _decorationColumns <= 0)
                 return false;
 
             (int firstFrame, int lastFrame) range = availableRanges[_random.Next(availableRanges.Count)];
@@ -181,13 +181,13 @@ namespace Last_Hope.Engine.LevelGenerator
             if (frameCount <= 0)
                 return false;
 
-            int startRow = range.firstFrame / _columns;
-            int startColumn = range.firstFrame % _columns;
+            int startRow = range.firstFrame / _decorationColumns;
+            int startColumn = range.firstFrame % _decorationColumns;
 
             int interval = _random.Next(10, 20);
             AnimationManager animation = new AnimationManager(
                 frameCount,
-                _columns,
+                _decorationColumns,
                 new Vector2(TileSize, TileSize),
                 interval,
                 true,

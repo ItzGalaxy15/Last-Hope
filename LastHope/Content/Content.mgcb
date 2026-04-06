@@ -49,6 +49,18 @@
 /processorParam:TextureFormat=Color
 /build:AxeSheet.png
 
+#begin decorations.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:decorations.png
+
 #begin Explosion1.jpg
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -92,7 +104,7 @@
 /processorParam:TextureFormat=Color
 /build:ItemSpriteSheet.png
 
-#begin Newbackground1.png
+#begin orc.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -102,19 +114,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Newbackground1.png
-
-#begin Orc.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Orc.png
+/build:orc.png
 
 #begin Slash-sheet.png
 /importer:TextureImporter
@@ -128,30 +128,6 @@
 /processorParam:TextureFormat=Color
 /build:Slash-sheet.png
 
-#begin Slash.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Slash.png
-
-#begin spritesheet.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:spritesheet.png
-
 #begin TempExplosion.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -164,7 +140,7 @@
 /processorParam:TextureFormat=Color
 /build:TempExplosion.png
 
-#begin Warrior.png
+#begin terrain.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -174,7 +150,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Warrior.png
+/build:terrain.png
 
 #begin WarriorSheet.png
 /importer:TextureImporter
