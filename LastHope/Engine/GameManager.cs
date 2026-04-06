@@ -275,10 +275,7 @@ public class GameManager
 
         Warrior player = new Warrior(new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2));
         _player = player;
-
         AddGameObject(_player);
-        AddGameObject(new Goblin(new Point(600, 660), new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
-        AddGameObject(new Orc(new Point(300, 360)));
     }
 
     public Vector2 GetWorldMousePosition()
