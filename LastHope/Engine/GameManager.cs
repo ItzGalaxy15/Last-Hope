@@ -182,7 +182,7 @@ public class GameManager
 
             for (int i = 0; i < enemiesToSpawn; i++)
             {
-                Point spawnPosition = RandomScreenLocation().ToPoint();
+                Point spawnPosition = RandomOffScreenLocation().ToPoint();
                 if (RNG.NextDouble() < 0.5)
                     AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
                 else
@@ -250,6 +250,32 @@ public class GameManager
         return new Vector2(
             RNG.Next(0, Game.GraphicsDevice.Viewport.Width),
             RNG.Next(0, Game.GraphicsDevice.Viewport.Height));
+    }
+
+    /// <summary>
+    /// Gets a random location off the screen relative to the player position, within World bounds.
+    /// </summary>
+    public Vector2 RandomOffScreenLocation()
+    {
+        if (_player == null) return RandomScreenLocation();
+
+        Vector2 playerPos = _player.GetPosition();
+
+        // Pick a random angle (0 to 360 degrees)
+        float angle = (float)(RNG.NextDouble() * Math.PI * 2);
+
+        float distance = RNG.Next(1200, 1500);
+
+        Vector2 spawnPos = playerPos + new Vector2(
+            (float)Math.Cos(angle) * distance, 
+            (float)Math.Sin(angle) * distance
+        );
+
+        // Keep enemies inside world boundaries
+        spawnPos.X = MathHelper.Clamp(spawnPos.X, 0, WorldWidth);
+        spawnPos.Y = MathHelper.Clamp(spawnPos.Y, 0, WorldHeight);
+
+        return spawnPos;
     }
 
     public void SetSelectedItemSlot(int slotIndex)
