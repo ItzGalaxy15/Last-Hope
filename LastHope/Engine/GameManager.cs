@@ -46,6 +46,9 @@ public class GameManager
     public SpriteFont _font;
     public Menu Menu { get; private set; }
 
+    private float spawnTimer = 0f;
+    private float spawnInterval = 5f;
+    private int spawnCount = 1;
 
     public static GameManager GetGameManager()
     {
@@ -139,6 +142,7 @@ public class GameManager
                 Menu.UpdateStartMenu(gameTime);
                 break;
             case GameState.Running:
+                SpawnEnemies(gameTime);
                 Menu.UpdateRunningMenu(gameTime);
                 break;
             case GameState.Paused:
@@ -147,6 +151,51 @@ public class GameManager
             case GameState.GameOver:
                 Menu.UpdateGameOverMenu(gameTime);
                 break;
+        }
+    }
+
+    private void SpawnEnemies(GameTime gameTime)
+    {
+        // How many enemies are active now
+        int currentEnemyCount = 0;
+        foreach (var gameObject in _gameObjects)
+        {
+            if (gameObject is BaseEnemy) currentEnemyCount++;
+        }
+        foreach (var gameObject in _toBeAdded)
+        {
+            if (gameObject is BaseEnemy) currentEnemyCount++;
+        }
+
+        if (currentEnemyCount >= 20)
+        {
+            return;
+        }
+
+        spawnTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (spawnTimer >= spawnInterval)
+        {
+            spawnTimer = 0f;
+
+            // spawn up to the limit 
+            int enemiesToSpawn = Math.Min(spawnCount, 20 - currentEnemyCount);
+
+            for (int i = 0; i < enemiesToSpawn; i++)
+            {
+                Point spawnPosition = RandomScreenLocation().ToPoint();
+                if (RNG.NextDouble() < 0.5)
+                    AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
+                else
+                    AddGameObject(new Orc(spawnPosition));
+            }
+
+            spawnInterval -= 0.5f;
+
+            if (spawnInterval < MinSpawnInterval)
+            {
+                spawnInterval = MinSpawnInterval;
+                spawnCount++;
+            }
         }
     }
 
@@ -219,6 +268,10 @@ public class GameManager
         Score = 0;
         ActiveDecoy = null;
         SelectedItemSlot = 0;
+
+        spawnTimer = 0f;
+        spawnInterval = 5f;
+        spawnCount = 1;
 
         Warrior player = new Warrior(new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2));
         _player = player;
