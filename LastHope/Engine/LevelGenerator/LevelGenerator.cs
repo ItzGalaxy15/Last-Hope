@@ -14,15 +14,19 @@ namespace Last_Hope.Engine.LevelGenerator
         private const int Left = 3;
 
         private readonly Random _random;
-        private readonly List<Rectangle> _sourceTiles;
+        private readonly List<Rectangle> _terrainTiles;
+        private readonly List<Rectangle> _decorationTiles;
         private readonly List<AnimatedDecoration> _animatedDecorations;
 
-        private Texture2D? _spriteSheet;
+        private Texture2D? _terrainSheet;
+        private Texture2D? _decorationsSheet;
         private int[,]? _map;
         private int[,]? _overlayMap;
         private float[]? _weights;
-        private int _columns;
-        private int _rows;
+        private int _terrainColumns;
+        private int _terrainRows;
+        private int _decorationColumns;
+        private int _decorationRows;
 
         // ── Public properties ────────────────────────────────────────
         public int TileSize { get; }
@@ -34,8 +38,8 @@ namespace Last_Hope.Engine.LevelGenerator
         public int MaxGenerationAttempts { get; set; } = 20;
         public float WeedChance { get; set; } = 0.4f;
         public float RockChance { get; set; } = 0.03f;
-        public float PebbleChance { get; set; } = 0.12f;
-        public float BunnyChance { get; set; } = 0.008f;
+        public float PebbleChance { get; set; } = 0.18f;
+        public float BunnyChance { get; set; } = 0.015f;
         public float SnailChance { get; set; } = 0.015f;
         public float DecorationChance
         {
@@ -48,29 +52,40 @@ namespace Last_Hope.Engine.LevelGenerator
         {
             TileSize = tileSize;
             _random = seed.HasValue ? new Random(seed.Value) : new Random();
-            _sourceTiles = new List<Rectangle>();
+            _terrainTiles = new List<Rectangle>();
+            _decorationTiles = new List<Rectangle>();
             _animatedDecorations = new List<AnimatedDecoration>();
         }
 
         // ── Sprite-sheet loading ─────────────────────────────────────
-        // Slices the sprite sheet into TileSize × TileSize source
-        // rectangles and pre-computes which tiles can sit next to each
-        // other (see BuildCompatibility in the WFC file).
-        public void LoadSpriteSheet(Texture2D spriteSheet, int usableRows = 4)
+        // Slices both sheets into TileSize × TileSize source rectangles.
+        // The terrain sheet feeds the WFC solver (and drives the
+        // compatibility table), the decorations sheet feeds the overlay
+        // layer — weed, rocks, pebbles, snails, bunnies.
+        public void LoadSpriteSheets(Texture2D terrainSheet, Texture2D decorationsSheet, int terrainUsableRows = 5)
         {
-            _spriteSheet = spriteSheet;
-            _sourceTiles.Clear();
+            _terrainSheet = terrainSheet;
+            _decorationsSheet = decorationsSheet;
 
-            int columns = spriteSheet.Width / TileSize;
-            int rows = Math.Min(usableRows, spriteSheet.Height / TileSize);
-            _columns = columns;
-            _rows = rows;
-
-            for (int y = 0; y < rows; y++)
+            _terrainTiles.Clear();
+            _terrainColumns = terrainSheet.Width / TileSize;
+            _terrainRows = Math.Min(terrainUsableRows, terrainSheet.Height / TileSize);
+            for (int y = 0; y < _terrainRows; y++)
             {
-                for (int x = 0; x < columns; x++)
+                for (int x = 0; x < _terrainColumns; x++)
                 {
-                    _sourceTiles.Add(new Rectangle(x * TileSize, y * TileSize, TileSize, TileSize));
+                    _terrainTiles.Add(new Rectangle(x * TileSize, y * TileSize, TileSize, TileSize));
+                }
+            }
+
+            _decorationTiles.Clear();
+            _decorationColumns = decorationsSheet.Width / TileSize;
+            _decorationRows = decorationsSheet.Height / TileSize;
+            for (int y = 0; y < _decorationRows; y++)
+            {
+                for (int x = 0; x < _decorationColumns; x++)
+                {
+                    _decorationTiles.Add(new Rectangle(x * TileSize, y * TileSize, TileSize, TileSize));
                 }
             }
 
@@ -79,15 +94,15 @@ namespace Last_Hope.Engine.LevelGenerator
         }
 
         // ── Tile weights ─────────────────────────────────────────────
-        // Optional per-tile weights so some tiles show up more often
-        // during WFC selection and the random fallback.
+        // Optional per-terrain-tile weights so some tiles show up more
+        // often during WFC selection and the random fallback.
         public void SetTileWeights(IReadOnlyList<float> weights)
         {
-            if (_sourceTiles.Count == 0)
-                throw new InvalidOperationException("Call LoadSpriteSheet before setting weights.");
+            if (_terrainTiles.Count == 0)
+                throw new InvalidOperationException("Call LoadSpriteSheets before setting weights.");
 
-            if (weights.Count != _sourceTiles.Count)
-                throw new ArgumentException($"Expected {_sourceTiles.Count} weights, got {weights.Count}.", nameof(weights));
+            if (weights.Count != _terrainTiles.Count)
+                throw new ArgumentException($"Expected {_terrainTiles.Count} weights, got {weights.Count}.", nameof(weights));
 
             _weights = new float[weights.Count];
             for (int i = 0; i < weights.Count; i++)
@@ -102,12 +117,13 @@ namespace Last_Hope.Engine.LevelGenerator
         // 2. Attempts to fill the tile map with the WFC solver.
         // 3. Falls back to random grass placement on failure.
         // 4. Carves stone walkways on top of the WFC output.
-        // 5. Scatters decorations (weeds, rocks, pebbles, critters)
-        //    onto the overlay layer.
+        // 5. Stamps a single flower-field square somewhere on the grass.
+        // 6. Scatters decorations (weed, rocks, pebbles, critters) from
+        //    the decorations sheet onto the overlay layer.
         public void GenerateMap(int pixelWidth, int pixelHeight)
         {
-            if (_sourceTiles.Count == 0)
-                throw new InvalidOperationException("Call LoadSpriteSheet before generating a map.");
+            if (_terrainTiles.Count == 0)
+                throw new InvalidOperationException("Call LoadSpriteSheets before generating a map.");
 
             if (_compatibility == null)
                 BuildCompatibility();
@@ -126,7 +142,7 @@ namespace Last_Hope.Engine.LevelGenerator
             }
 
             // WFC only places grass tiles — stone is reserved for walkways.
-            List<int> grassTiles = GetTileIndicesForRowsOneBased(1, 3);
+            List<int> grassTiles = GetTerrainTileIndicesForRowsOneBased(1, 3);
             HashSet<int> grassSet = new HashSet<int>(grassTiles);
 
             if (!TryGenerateWfc(_map, grassSet))
@@ -136,15 +152,17 @@ namespace Last_Hope.Engine.LevelGenerator
 
             _animatedDecorations.Clear();
             ApplyWalkways(_map);
+            ApplyFlowerField(_map);
             ApplyDecorations(_map, _overlayMap);
         }
 
         // ── Drawing ──────────────────────────────────────────────────
-        // Renders the base tile layer, then the overlay layer (static
-        // decorations), and finally any animated decorations on top.
+        // Renders the base tile layer (terrain sheet), then the overlay
+        // layer (decorations sheet), and finally any animated decorations
+        // on top (also decorations sheet).
         public void Draw(SpriteBatch spriteBatch, Vector2 origin)
         {
-            if (_spriteSheet == null || _map == null)
+            if (_terrainSheet == null || _decorationsSheet == null || _map == null)
                 return;
 
             for (int y = 0; y < _map.GetLength(1); y++)
@@ -152,15 +170,15 @@ namespace Last_Hope.Engine.LevelGenerator
                 for (int x = 0; x < _map.GetLength(0); x++)
                 {
                     int tileIndex = _map[x, y];
-                    Rectangle source = _sourceTiles[tileIndex];
+                    Rectangle source = _terrainTiles[tileIndex];
                     Vector2 position = origin + new Vector2(x * TileSize, y * TileSize);
 
-                    spriteBatch.Draw(_spriteSheet, position, source, Color.White);
+                    spriteBatch.Draw(_terrainSheet, position, source, Color.White);
 
                     if (_overlayMap != null && _overlayMap[x, y] >= 0)
                     {
-                        Rectangle overlaySource = _sourceTiles[_overlayMap[x, y]];
-                        spriteBatch.Draw(_spriteSheet, position, overlaySource, Color.White);
+                        Rectangle overlaySource = _decorationTiles[_overlayMap[x, y]];
+                        spriteBatch.Draw(_decorationsSheet, position, overlaySource, Color.White);
                     }
                 }
             }
@@ -169,7 +187,7 @@ namespace Last_Hope.Engine.LevelGenerator
             {
                 decoration.Animation.Update();
                 Vector2 position = origin + new Vector2(decoration.TileX * TileSize, decoration.TileY * TileSize);
-                spriteBatch.Draw(_spriteSheet, position, decoration.Animation.GetSourceRect(), Color.White);
+                spriteBatch.Draw(_decorationsSheet, position, decoration.Animation.GetSourceRect(), Color.White);
             }
         }
     }
