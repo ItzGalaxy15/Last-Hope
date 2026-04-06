@@ -23,10 +23,6 @@ public class GameManager
 
     public ContentManager _content;
 
-    // private float _spawnTimer = 0f;
-    // private float _spawnInterval = 5f;   // seconds between spawns (starts at 5 s)
-    private const float MinSpawnInterval = 0.5f;  // fastest possible rate
-
     public Random RNG { get; private set; }
     public BasePlayer _player { get; private set; }
     public InputManager InputManager { get; private set; }
@@ -45,10 +41,7 @@ public class GameManager
     public GameState _state;
     public SpriteFont _font;
     public Menu Menu { get; private set; }
-
-    private float spawnTimer = 0f;
-    private float spawnInterval = 5f;
-    private int spawnCount = 1;
+    public EnemySpawner EnemySpawner { get; private set; }
 
     public static GameManager GetGameManager()
     {
@@ -66,6 +59,7 @@ public class GameManager
         // Camera = new Camera();
 
         Menu = new Menu();
+        EnemySpawner = new EnemySpawner();
 
         _state = GameState.StartMenu;
         SelectedItemSlot = 0;
@@ -142,7 +136,7 @@ public class GameManager
                 Menu.UpdateStartMenu(gameTime);
                 break;
             case GameState.Running:
-                SpawnEnemies(gameTime);
+                EnemySpawner.Update(gameTime);
                 Menu.UpdateRunningMenu(gameTime);
                 break;
             case GameState.Paused:
@@ -153,52 +147,6 @@ public class GameManager
                 break;
         }
     }
-
-    private void SpawnEnemies(GameTime gameTime)
-    {
-        // How many enemies are active now
-        int currentEnemyCount = 0;
-        foreach (var gameObject in _gameObjects)
-        {
-            if (gameObject is BaseEnemy) currentEnemyCount++;
-        }
-        foreach (var gameObject in _toBeAdded)
-        {
-            if (gameObject is BaseEnemy) currentEnemyCount++;
-        }
-
-        if (currentEnemyCount >= 20)
-        {
-            return;
-        }
-
-        spawnTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (spawnTimer >= spawnInterval)
-        {
-            spawnTimer = 0f;
-
-            // spawn up to the limit 
-            int enemiesToSpawn = Math.Min(spawnCount, 20 - currentEnemyCount);
-
-            for (int i = 0; i < enemiesToSpawn; i++)
-            {
-                Point spawnPosition = RandomOffScreenLocation().ToPoint();
-                if (RNG.NextDouble() < 0.5)
-                    AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
-                else
-                    AddGameObject(new Orc(spawnPosition));
-            }
-
-            spawnInterval -= 0.5f;
-
-            if (spawnInterval < MinSpawnInterval)
-            {
-                spawnInterval = MinSpawnInterval;
-                spawnCount++;
-            }
-        }
-    }
-
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
@@ -252,32 +200,6 @@ public class GameManager
             RNG.Next(0, Game.GraphicsDevice.Viewport.Height));
     }
 
-    /// <summary>
-    /// Gets a random location off the screen relative to the player position, within World bounds.
-    /// </summary>
-    public Vector2 RandomOffScreenLocation()
-    {
-        if (_player == null) return RandomScreenLocation();
-
-        Vector2 playerPos = _player.GetPosition();
-
-        // Pick a random angle (0 to 360 degrees)
-        float angle = (float)(RNG.NextDouble() * Math.PI * 2);
-
-        float distance = RNG.Next(1200, 1500);
-
-        Vector2 spawnPos = playerPos + new Vector2(
-            (float)Math.Cos(angle) * distance, 
-            (float)Math.Sin(angle) * distance
-        );
-
-        // Keep enemies inside world boundaries
-        spawnPos.X = MathHelper.Clamp(spawnPos.X, 0, WorldWidth);
-        spawnPos.Y = MathHelper.Clamp(spawnPos.Y, 0, WorldHeight);
-
-        return spawnPos;
-    }
-
     public void SetSelectedItemSlot(int slotIndex)
     {
         SelectedItemSlot = Math.Clamp(slotIndex, 0, 1);
@@ -295,9 +217,7 @@ public class GameManager
         ActiveDecoy = null;
         SelectedItemSlot = 0;
 
-        spawnTimer = 0f;
-        spawnInterval = 5f;
-        spawnCount = 1;
+        EnemySpawner.Reset();
 
         Warrior player = new Warrior(new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2));
         _player = player;
