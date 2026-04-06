@@ -205,7 +205,7 @@ public class Warrior : BasePlayer
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         var warriorSource = new Rectangle(_walkFrameIndex * FrameSize, _walkRow * FrameSize, FrameSize, FrameSize);
-        spriteBatch.Draw(WarriorSprite, Position, warriorSource, Color.White, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
+        spriteBatch.Draw(WarriorSprite, Position, warriorSource, DrawTint, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
         Rectangle axeSource = GetAxeSourceRect();
         var axeFlip = GetAxeSpriteEffects();
@@ -246,14 +246,8 @@ public class Warrior : BasePlayer
         if (other is not BaseEnemy || _hurtCooldown > 0f)
             return;
 
-        _currentHp -= EnemyContactDamage;
         _hurtCooldown = EnemyContactHurtInterval;
-        if (_currentHp <= 0f)
-        {
-            _currentHp = 0f;
-            GameManager.GetGameManager().playerAlive = false;
-            GameManager.GetGameManager()._state = GameState.GameOver;
-        }
+        Damage(EnemyContactDamage);
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)
@@ -303,6 +297,14 @@ public class Warrior : BasePlayer
     public override void Damage(float amount)
     {
         _currentHp -= amount;
+        TriggerHurtFlash();
+
+        if (_currentHp <= 0f)
+        {
+            _currentHp = 0f;
+            GameManager.GetGameManager().playerAlive = false;
+            GameManager.GetGameManager()._state = GameState.GameOver;
+        }
     }
 
     protected override void ApplyDashOffset(Vector2 delta)

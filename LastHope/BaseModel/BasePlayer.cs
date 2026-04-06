@@ -103,6 +103,8 @@ public abstract class BasePlayer : GameObject
     {
         if (_levelUpFlashTimer > 0f)
             _levelUpFlashTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        base.Update(gameTime);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
