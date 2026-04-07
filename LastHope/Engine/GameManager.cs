@@ -23,10 +23,6 @@ public class GameManager
 
     public ContentManager _content;
 
-    // private float _spawnTimer = 0f;
-    // private float _spawnInterval = 5f;   // seconds between spawns (starts at 5 s)
-    private const float MinSpawnInterval = 0.5f;  // fastest possible rate
-
     public Random RNG { get; private set; }
     public BasePlayer _player { get; private set; }
     public InputManager InputManager { get; private set; }
@@ -45,7 +41,7 @@ public class GameManager
     public GameState _state;
     public SpriteFont _font;
     public Menu Menu { get; private set; }
-
+    public EnemySpawner EnemySpawner { get; private set; }
 
     public static GameManager GetGameManager()
     {
@@ -63,6 +59,7 @@ public class GameManager
         // Camera = new Camera();
 
         Menu = new Menu();
+        EnemySpawner = new EnemySpawner();
 
         _state = GameState.StartMenu;
         SelectedItemSlot = 0;
@@ -139,6 +136,7 @@ public class GameManager
                 Menu.UpdateStartMenu(gameTime);
                 break;
             case GameState.Running:
+                EnemySpawner.Update(gameTime);
                 Menu.UpdateRunningMenu(gameTime);
                 break;
             case GameState.Paused:
@@ -149,7 +147,6 @@ public class GameManager
                 break;
         }
     }
-
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
@@ -220,12 +217,11 @@ public class GameManager
         ActiveDecoy = null;
         SelectedItemSlot = 0;
 
+        EnemySpawner.Reset();
+
         Warrior player = new Warrior(new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2));
         _player = player;
-
         AddGameObject(_player);
-        AddGameObject(new Goblin(new Point(600, 660), new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
-        AddGameObject(new Orc(new Point(300, 360)));
     }
 
     public Vector2 GetWorldMousePosition()
