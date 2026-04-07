@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Camera;
+using Last_Hope.Engine.Pathfinding;
 
 namespace Last_Hope.Engine;
 
@@ -42,6 +43,11 @@ public class GameManager
     public SpriteFont _font;
     public Menu Menu { get; private set; }
     public EnemySpawner EnemySpawner { get; private set; }
+
+    /// <summary>
+    /// Tile grid for enemy pathfinding; set after level generation. Mark cells non-walkable when adding blocking collision.
+    /// </summary>
+    public NavigationGrid? NavigationGrid { get; set; }
 
     public static GameManager GetGameManager()
     {

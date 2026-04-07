@@ -133,7 +133,7 @@ public class Warrior : BasePlayer
         if (_inputManager is not null)
         {
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.IsKeyPress(Keys.B) && timeSinceLastAttack >= AttackCooldown)
+            if (_inputManager.LeftMousePress() && timeSinceLastAttack >= AttackCooldown)
             {
                 UseWeapon();
                 timeSinceLastAttack = 0;
