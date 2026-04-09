@@ -62,6 +62,11 @@ public class ItemDrop : GameObject
         GameManager gm = GameManager.GetGameManager();
         if (gm._player is not Warrior player) return;
 
+        // Prevent rare items from being sucked in and destroyed for XP if inventory is full
+        bool isInventoryFull = player.Inventory[0] != ItemType.None && player.Inventory[1] != ItemType.None;
+        if (isInventoryFull && (_type == ItemType.OneUp || _type == ItemType.HealingPotion))
+            return;
+
         Vector2 playerPos = player.GetPosition();
         float distance = Vector2.Distance(_position, playerPos);
 

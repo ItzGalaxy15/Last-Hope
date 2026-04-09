@@ -321,6 +321,7 @@ public class Warrior : BasePlayer
                 _currentHp = 0.1f; // Prevent death
                 Heal(9999f); // Restore to Max HP
                 _greenGlowTimer = 1.5f;
+                _hurtCooldown = 1.5f; // Grant 1.5 seconds of invincibility to escape
             }
             else
             {
