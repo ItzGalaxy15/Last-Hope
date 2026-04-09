@@ -12,6 +12,9 @@ namespace Last_Hope;
 
 public class Last_Hope : Game
 {
+    private const int MapWidthInTiles = 100;
+    private const int MapHeightInTiles = 50;
+
     private GraphicsDeviceManager _graphics;
     private InputManager _inputManager;
     private GameManager _gameManager;
@@ -67,7 +70,7 @@ public class Last_Hope : Game
         }
 
         _levelGenerator.LoadSpriteSheets(_terrainSheet, _decorationsSheet, terrainUsableRows: 5);
-        _levelGenerator.GenerateMap(1920, 1080);
+        _levelGenerator.GenerateMap(MapWidthInTiles * _levelGenerator.TileSize, MapHeightInTiles * _levelGenerator.TileSize);
 
         _gameManager.NavigationGrid = new NavigationGrid(
             _levelGenerator.MapWidthInTiles,
