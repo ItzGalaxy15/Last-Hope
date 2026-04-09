@@ -72,6 +72,22 @@ public class Warrior : BasePlayer
 
         direction.Normalize();
         Position += direction * _Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        ClampToMapBounds();
+    }
+
+    private void ClampToMapBounds()
+    {
+        var grid = GameManager.GetGameManager().NavigationGrid;
+        if (grid == null)
+            return;
+
+        float mapW = grid.WidthInTiles * grid.TileSize;
+        float mapH = grid.HeightInTiles * grid.TileSize;
+
+        Position = new Vector2(
+            MathHelper.Clamp(Position.X, 0f, mapW - _bodyWidth),
+            MathHelper.Clamp(Position.Y, 0f, mapH - _bodyWidth)
+        );
     }
 
     public override void Load(ContentManager content)
@@ -310,6 +326,7 @@ public class Warrior : BasePlayer
     protected override void ApplyDashOffset(Vector2 delta)
     {
         Position += delta;
+        ClampToMapBounds();
         SyncColliderToPosition();
     }
 
