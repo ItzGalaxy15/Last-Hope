@@ -52,6 +52,8 @@ public class Warrior : BasePlayer
     private const float DecoyThrowSpeed = 420f;
 
     public ItemType[] Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
+    public int ExtraLives { get; private set; } = 0;
+    private float _greenGlowTimer = 0f;
 
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -113,6 +115,9 @@ public class Warrior : BasePlayer
 
         if (_bombActionCooldown > 0f)
             _bombActionCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (_greenGlowTimer > 0f)
+            _greenGlowTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         bool moving = _moveInput != Vector2.Zero;
         if (moving)
@@ -207,7 +212,14 @@ public class Warrior : BasePlayer
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         var warriorSource = new Rectangle(_walkFrameIndex * FrameSize, _walkRow * FrameSize, FrameSize, FrameSize);
-        spriteBatch.Draw(WarriorSprite, Position, warriorSource, DrawTint, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
+        
+        Color drawColor = DrawTint;
+        if (_greenGlowTimer > 0f)
+        {
+            drawColor = Color.Lerp(drawColor, Color.LimeGreen, 0.5f);
+        }
+        
+        spriteBatch.Draw(WarriorSprite, Position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
         Rectangle axeSource = GetAxeSourceRect();
         var axeFlip = GetAxeSpriteEffects();
@@ -303,9 +315,19 @@ public class Warrior : BasePlayer
 
         if (_currentHp <= 0f)
         {
-            _currentHp = 0f;
-            GameManager.GetGameManager().playerAlive = false;
-            GameManager.GetGameManager()._state = GameState.GameOver;
+            if (ExtraLives > 0)
+            {
+                ExtraLives--;
+                _currentHp = 0.1f; // Prevent death
+                Heal(9999f); // Restore to Max HP
+                _greenGlowTimer = 1.5f;
+            }
+            else
+            {
+                _currentHp = 0f;
+                GameManager.GetGameManager().playerAlive = false;
+                GameManager.GetGameManager()._state = GameState.GameOver;
+            }
         }
     }
 
@@ -351,6 +373,9 @@ public class Warrior : BasePlayer
         else if (currentItem == ItemType.OneUp)
         {
             AddLife(1);
+            ExtraLives++;
+            _greenGlowTimer = 1.5f;
+            gm.HasUsedOneUp = true;
         }
         
         Inventory[gm.SelectedItemSlot] = ItemType.None;
@@ -385,6 +410,9 @@ public class Warrior : BasePlayer
         else if (currentItem == ItemType.OneUp)
         {
             AddLife(1);
+            ExtraLives++;
+            _greenGlowTimer = 1.5f;
+            gm.HasUsedOneUp = true;
         }
         
         Inventory[gm.SelectedItemSlot] = ItemType.None;

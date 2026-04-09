@@ -20,6 +20,7 @@ public class ItemDrop : GameObject
 {
     private Vector2 _position;
     private ItemType _type;
+    public ItemType Type => _type;
     private RectangleCollider _collider;
     private Texture2D? _itemSpriteSheet;
     private Texture2D? _hearthSprite;
@@ -48,7 +49,7 @@ public class ItemDrop : GameObject
 
         try
         {
-            _hearthSprite = content.Load<Texture2D>("Hearth");
+            _hearthSprite = content.Load<Texture2D>("Heart");
         }
         catch (ContentLoadException)
         {

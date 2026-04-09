@@ -31,6 +31,7 @@ public class GameManager
     public bool playerAlive = true;
     public int Score { get; set; } = 0;
     public Decoy ActiveDecoy { get; set; }
+    public bool HasUsedOneUp { get; set; } = false;
     public int SelectedItemSlot { get; private set; } = 0;
 
     public const int WorldWidth = 4000;
@@ -186,6 +187,33 @@ public class GameManager
         _toBeAdded.Add(gameObject);
     }
 
+    private bool IsOneUpAlreadyActive()
+    {
+        if (HasUsedOneUp) return true;
+
+        if (_player is Warrior warrior)
+        {
+            if (warrior.ExtraLives > 0) return true;
+            
+            foreach (ItemType item in warrior.Inventory)
+            {
+                if (item == ItemType.OneUp) return true;
+            }
+        }
+
+        foreach (var obj in _gameObjects)
+        {
+            if (obj is ItemDrop item && item.Type == ItemType.OneUp) return true;
+        }
+
+        foreach (var obj in _toBeAdded)
+        {
+            if (obj is ItemDrop item && item.Type == ItemType.OneUp) return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Remove GameObject from the GameManager.
     /// The GameObject will be removed at the start of the next Update step and its Destroy() mehtod will be called.
@@ -204,6 +232,12 @@ public class GameManager
                 {
                     int typeRoll = RNG.Next(4);
                     ItemType type = typeRoll == 0 ? ItemType.Bomb : typeRoll == 1 ? ItemType.Decoy : typeRoll == 2 ? ItemType.HealingPotion : ItemType.OneUp;
+                    
+                    if (type == ItemType.OneUp && IsOneUpAlreadyActive())
+                    {
+                        type = ItemType.HealingPotion;
+                    }
+                    
                     AddGameObject(new ItemDrop(enemy.GetPosition(), type));
                 }
             }
@@ -236,6 +270,7 @@ public class GameManager
         Score = 0;
         ActiveDecoy = null;
         SelectedItemSlot = 0;
+        HasUsedOneUp = false;
 
         EnemySpawner.Reset();
 

@@ -103,7 +103,7 @@ public class ItemSlotsBar : UIElement
 			            if (!_triedLoadingHearth && _hearthSprite == null)
 			            {
 			                _triedLoadingHearth = true;
-			                try { _hearthSprite = gm._content.Load<Texture2D>("Hearth"); } catch { }
+			                try { _hearthSprite = gm._content.Load<Texture2D>("Heart"); } catch { }
 			            }
 			            if (_hearthSprite != null)
 			            {
