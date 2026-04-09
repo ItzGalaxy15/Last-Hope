@@ -21,13 +21,29 @@ public abstract class BaseEnemy : GameObject
 
     //public abstract BaseWeapon Weapon { get; protected set; }
 
+    // Fraction of (frameSize * spriteScale) used as the hitbox side length.
+    // Override per-enemy to tune without touching hitbox math.
+    protected virtual float HitboxFraction => 0.5f;
+
     public BaseEnemy(float maxHealth, float currentHealth, int speed, float experienceValue)
     {
         MaxHealth = maxHealth;
         CurrentHealth = currentHealth;
         Speed = speed;
         ExperienceValue = experienceValue;
+    }
 
+    // Centers a square hitbox on `center`, sized as frameSize * spriteScale * HitboxFraction.
+    protected void InitHitbox(Vector2 center, int frameSize, float spriteScale)
+    {
+        float hitboxSize = frameSize * spriteScale * HitboxFraction;
+        _collider.shape = new Rectangle(
+            (int)(center.X - hitboxSize / 2f),
+            (int)(center.Y - hitboxSize / 2f),
+            (int)hitboxSize,
+            (int)hitboxSize
+        );
+        SetCollider(_collider);
     }
 
     public override void Load(ContentManager content)

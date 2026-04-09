@@ -78,12 +78,9 @@ public class Goblin : BaseEnemy
             offsetY: AttackRow * FrameSize
         );
 
-        // Use a single frame size (32x32) scaled, not the full texture dimensions
-        var scaledSize = new Point((int)(FrameSize * SpriteScale), (int)(FrameSize * SpriteScale));
-        _collider.shape.Size = scaledSize;
-        _collider.shape.Location -= new Point(scaledSize.X / 2, scaledSize.Y / 2);
+        Vector2 spawnCenter = _collider.shape.Location.ToVector2();
+        InitHitbox(spawnCenter, FrameSize, SpriteScale);
         _precisePosition = _collider.shape.Location.ToVector2();
-        SetCollider(_collider);
     }
 
     public override void Update(GameTime gameTime)
