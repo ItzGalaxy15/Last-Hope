@@ -80,15 +80,23 @@ public class ItemDrop : GameObject
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
+        float bounceOffset = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4f) * 6f;
+        Vector2 drawPos = _position + new Vector2(0, bounceOffset);
+
         if (_itemSpriteSheet != null)
         {
             Rectangle sourceRect = _type == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : new Rectangle(0, 32, 32, 32);
-            spriteBatch.Draw(_itemSpriteSheet, _position, sourceRect, Color.White, 0f, new Vector2(16, 16), 1f, SpriteEffects.None, 0f);
+            
+            // Draw red glow behind the item
+            spriteBatch.Draw(_itemSpriteSheet, drawPos, sourceRect, Color.Red * 0.5f, 0f, new Vector2(16, 16), 1.4f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(_itemSpriteSheet, drawPos, sourceRect, Color.White, 0f, new Vector2(16, 16), 1f, SpriteEffects.None, 0f);
         }
         else
         {
             Texture2D pixel = GameManager.GetGameManager().Pixel;
-            spriteBatch.Draw(pixel, new Rectangle((int)_position.X - 8, (int)_position.Y - 8, 16, 16), _type == ItemType.Bomb ? Color.Black : Color.Brown);
+            
+            spriteBatch.Draw(pixel, new Rectangle((int)drawPos.X - 12, (int)drawPos.Y - 12, 24, 24), Color.Red * 0.5f);
+            spriteBatch.Draw(pixel, new Rectangle((int)drawPos.X - 8, (int)drawPos.Y - 8, 16, 16), _type == ItemType.Bomb ? Color.Black : Color.Brown);
         }
     }
 }

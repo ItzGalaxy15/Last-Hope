@@ -36,6 +36,7 @@ public class GameManager
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
     //public Camera Camera { get; private set; }
+    public const double ItemDropChance = 0.3;
     public Texture2D Pixel { get; private set; }
 
 
@@ -199,7 +200,7 @@ public class GameManager
 
             if (gameObject is BaseEnemy enemy && enemy.CurrentHealth <= 0)
             {
-                if (RNG.NextDouble() < 0.3) // 30% drop chance
+                if (RNG.NextDouble() < ItemDropChance)
                 {
                     ItemType type = RNG.Next(2) == 0 ? ItemType.Bomb : ItemType.Decoy;
                     AddGameObject(new ItemDrop(enemy.GetPosition(), type));
