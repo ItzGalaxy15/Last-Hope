@@ -269,28 +269,23 @@ public class Warrior : BasePlayer
         }
     }
 
+    // Fraction of the body size used as the hitbox — tune this to adjust fairness.
+    private const float HitboxFraction = 0.55f;
+
     private void SyncColliderToPosition()
     {
         if (_collider is null)
             return;
 
-        const int pad = 4;
+        float hitboxSize = _bodyWidth * HitboxFraction;
+        float offset = (_bodyWidth - hitboxSize) / 2f;
 
-        // Match Draw() footprint: warrior body + axe with current facing.
-        float axeOffsetX = _facingLeft ? _bodyWidth - _axePixelSize - 40f : 40f;
-        float axeOffsetY = AxeOffsetY;
-
-        float minX = MathF.Min(0f, axeOffsetX);
-        float maxX = MathF.Max(_bodyWidth, axeOffsetX + _axePixelSize);
-        float minY = MathF.Min(0f, axeOffsetY);
-        float maxY = MathF.Max(_bodyWidth, axeOffsetY + _axePixelSize);
-
-        int left = (int)MathF.Floor(Position.X + minX) - pad;
-        int top = (int)MathF.Floor(Position.Y + minY) - pad;
-        int right = (int)MathF.Ceiling(Position.X + maxX) + pad;
-        int bottom = (int)MathF.Ceiling(Position.Y + maxY) + pad;
-
-        _collider.shape = new Rectangle(left, top, right - left, bottom - top);
+        _collider.shape = new Rectangle(
+            (int)(Position.X + offset),
+            (int)(Position.Y + offset),
+            (int)hitboxSize,
+            (int)hitboxSize
+        );
         SetCollider(_collider);
     }
 
