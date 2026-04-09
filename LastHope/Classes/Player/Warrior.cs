@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Last_Hope.Classes.Items;
 
 namespace Last_Hope;
 
@@ -43,6 +44,12 @@ public class Warrior : BasePlayer
 
     private const float SlashDistance = 105f;
     private const float SlashCastHeightOffset = 10f;
+
+    private const float BombThrowSpeed = 520f;
+    private const float BombActionCooldown = 0.25f;
+    private float _bombActionCooldown;
+
+    private const float DecoyThrowSpeed = 420f;
 
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -102,6 +109,9 @@ public class Warrior : BasePlayer
         if (_hurtCooldown > 0f)
             _hurtCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+        if (_bombActionCooldown > 0f)
+            _bombActionCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         bool moving = _moveInput != Vector2.Zero;
         if (moving)
         {
@@ -127,6 +137,20 @@ public class Warrior : BasePlayer
             {
                 UseWeapon();
                 timeSinceLastAttack = 0;
+            }
+
+            // G = place bomb at feet
+            if (_inputManager.IsKeyPress(Keys.G) && _bombActionCooldown <= 0f)
+            {
+                PlaceSelectedItem();
+                _bombActionCooldown = BombActionCooldown;
+            }
+
+            // T = throw bomb toward mouse
+            if (_inputManager.IsKeyPress(Keys.T) && _bombActionCooldown <= 0f)
+            {
+                ThrowSelectedItemTowardMouse();
+                _bombActionCooldown = BombActionCooldown;
             }
 
             if (_dashCooldown > 0f)
@@ -181,7 +205,7 @@ public class Warrior : BasePlayer
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         var warriorSource = new Rectangle(_walkFrameIndex * FrameSize, _walkRow * FrameSize, FrameSize, FrameSize);
-        spriteBatch.Draw(WarriorSprite, Position, warriorSource, Color.White, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
+        spriteBatch.Draw(WarriorSprite, Position, warriorSource, DrawTint, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
         Rectangle axeSource = GetAxeSourceRect();
         var axeFlip = GetAxeSpriteEffects();
@@ -222,14 +246,8 @@ public class Warrior : BasePlayer
         if (other is not BaseEnemy || _hurtCooldown > 0f)
             return;
 
-        _currentHp -= EnemyContactDamage;
         _hurtCooldown = EnemyContactHurtInterval;
-        if (_currentHp <= 0f)
-        {
-            _currentHp = 0f;
-            GameManager.GetGameManager().playerAlive = false;
-            GameManager.GetGameManager()._state = GameState.GameOver;
-        }
+        Damage(EnemyContactDamage);
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)
@@ -279,11 +297,65 @@ public class Warrior : BasePlayer
     public override void Damage(float amount)
     {
         _currentHp -= amount;
+        TriggerHurtFlash();
+
+        if (_currentHp <= 0f)
+        {
+            _currentHp = 0f;
+            GameManager.GetGameManager().playerAlive = false;
+            GameManager.GetGameManager()._state = GameState.GameOver;
+        }
     }
 
     protected override void ApplyDashOffset(Vector2 delta)
     {
         Position += delta;
         SyncColliderToPosition();
+    }
+
+    private void PlaceSelectedItem()
+    {
+        GameManager gm = GameManager.GetGameManager();
+        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+
+        if (gm.SelectedItemSlot == 1) // slot 2 = decoy
+        {
+            SpawnDecoy(gm, spawnPosition, Vector2.Zero);
+            return;
+        }
+
+        // slot 1 = bomb
+        gm.AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
+    }
+
+    private void ThrowSelectedItemTowardMouse()
+    {
+        GameManager gm = GameManager.GetGameManager();
+        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 mouseWorld = gm.GetWorldMousePosition();
+        Vector2 direction = mouseWorld - spawnPosition;
+        if (direction == Vector2.Zero)
+            return;
+
+        direction.Normalize();
+
+        if (gm.SelectedItemSlot == 1) // slot 2 = decoy
+        {
+            SpawnDecoy(gm, spawnPosition, direction * DecoyThrowSpeed);
+            return;
+        }
+
+        // slot 1 = bomb
+        gm.AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
+    }
+
+    private static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
+    {
+        if (gm.ActiveDecoy is not null)
+            gm.RemoveGameObject(gm.ActiveDecoy);
+
+        Decoy decoy = new Decoy(spawnPosition, initialVelocity, lifetimeSeconds: 5f);
+        gm.AddGameObject(decoy);
+        gm.ActiveDecoy = decoy;
     }
 }

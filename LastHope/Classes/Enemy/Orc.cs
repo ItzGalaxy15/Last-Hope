@@ -1,6 +1,7 @@
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Classes.Items;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -18,7 +19,15 @@ public class Orc : BaseEnemy
     private bool _isFacingLeft = false;
     private float _attackCooldownTimer = 0f;
     private const float AttackCooldownSeconds = 0.5f;
-    private const int OrcRowOffset = 7;
+
+    // enemies.png layout: row 0 faces right, row 1 faces left.
+    // Each row: cols 0-2 = walking, col 3 = attack.
+    private const int OrcFacingRightRow = 0;
+    private const int WalkingStartColumn = 0;
+    private const int WalkingFrameCount = 3;
+    private const int AttackStartColumn = 3;
+    private const int AttackFrameCount = 1;
+    private const int SheetColumns = 8;
 
     public Orc(Point position) : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 20)
     {
@@ -29,27 +38,26 @@ public class Orc : BaseEnemy
     public override void Load(ContentManager content)
     {
         base.Load(content);
-        _texture = content.Load<Texture2D>("spritesheet");
+        _texture = content.Load<Texture2D>("orc");
 
-        // Initialize walking animation: 3 frames, 8 columns, 32x32 sprites
         _walkingAnimation = new AnimationManager(
-            numFrames: 3,
-            numColumns: 8,
+            numFrames: WalkingFrameCount,
+            numColumns: SheetColumns,
             size: new Vector2(32, 32),
             interval: 10,
             loop: true,
-            offsetX: 4 * 32, 
-            offsetY: OrcRowOffset * 32
+            offsetX: WalkingStartColumn * 32,
+            offsetY: OrcFacingRightRow * 32
         );
 
         _attackAnimation = new AnimationManager(
-            numFrames: 2,
-            numColumns: 8,
+            numFrames: AttackFrameCount,
+            numColumns: SheetColumns,
             size: new Vector2(32, 32),
             interval: 8,
             loop: false,
-            offsetX: 6 * 32,
-            offsetY: OrcRowOffset * 32
+            offsetX: AttackStartColumn * 32,
+            offsetY: OrcFacingRightRow * 32
         );
 
         var scaledSize = new Point((int)(32 * SpriteScale), (int)(32 * SpriteScale));
@@ -63,9 +71,10 @@ public class Orc : BaseEnemy
     {
         var gameManager = GameManager.GetGameManager();
         var player = gameManager._player;
+        var decoy = gameManager.ActiveDecoy;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (player == null)
+        if (player == null && decoy == null)
         {
             return;
         }
@@ -77,12 +86,20 @@ public class Orc : BaseEnemy
                 _attackCooldownTimer = 0f;
         }
 
-        var playerCollider = player.GetCollider();
-        Vector2 playerTarget = playerCollider != null
-            ? playerCollider.GetBoundingBox().Center.ToVector2()
-            : player.GetPosition();
+        Vector2 targetPos;
+        if (decoy != null)
+        {
+            targetPos = decoy.GetPosition();
+        }
+        else
+        {
+            var playerCollider = player.GetCollider();
+            targetPos = playerCollider != null
+                ? playerCollider.GetBoundingBox().Center.ToVector2()
+                : player.GetPosition();
+        }
 
-        Vector2 direction = playerTarget - GetPosition();
+        Vector2 direction = targetPos - GetPosition();
 
         if (direction.X != 0)
         {
@@ -112,13 +129,13 @@ public class Orc : BaseEnemy
             {
                 _isAttacking = false;
                 _walkingAnimation = new AnimationManager(
-                    numFrames: 3,
-                    numColumns: 8,
+                    numFrames: WalkingFrameCount,
+                    numColumns: SheetColumns,
                     size: new Vector2(32, 32),
                     interval: 10,
                     loop: true,
-                    offsetX: 4 * 32,
-                    offsetY: OrcRowOffset * 32
+                    offsetX: WalkingStartColumn * 32,
+                    offsetY: OrcFacingRightRow * 32
                 );
             }
         }
@@ -134,7 +151,7 @@ public class Orc : BaseEnemy
             DrawHitbox(spriteBatch, _collider.shape, Color.Red);
 
         Rectangle sourceRect;
-        int currentRowOffset = _isFacingLeft ? OrcRowOffset + 1 : OrcRowOffset;
+        int currentRowOffset = _isFacingLeft ? OrcFacingRightRow + 1 : OrcFacingRightRow;
 
         if (_isAttacking)
         {
@@ -143,7 +160,6 @@ public class Orc : BaseEnemy
         }
         else
         {
-            // Draw current walking animation frame
             sourceRect = _walkingAnimation.GetSourceRect();
             sourceRect.Y = currentRowOffset * 32;
         }
@@ -165,19 +181,24 @@ public class Orc : BaseEnemy
 
     public override void OnCollision(GameObject other)
     {
-        if (other is not BasePlayer || _isAttacking || _attackCooldownTimer > 0f)
+        if ((other is not BasePlayer && other is not Decoy) || _isAttacking || _attackCooldownTimer > 0f)
             return;
+
+        if (other is Decoy decoy)
+        {
+            decoy.Damage(10f); // Orc damages the decoy
+        }
 
         _isAttacking = true;
         _attackCooldownTimer = AttackCooldownSeconds;
         _attackAnimation = new AnimationManager(
-            numFrames: 2,
-            numColumns: 8,
+            numFrames: AttackFrameCount,
+            numColumns: SheetColumns,
             size: new Vector2(32, 32),
             interval: 8,
             loop: false,
-            offsetX: 6 * 32,
-            offsetY: OrcRowOffset * 32
+            offsetX: AttackStartColumn * 32,
+            offsetY: OrcFacingRightRow * 32
         );
     }
 

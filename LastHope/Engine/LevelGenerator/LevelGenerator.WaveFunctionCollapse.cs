@@ -25,14 +25,14 @@ namespace Last_Hope.Engine.LevelGenerator
         // per direction so the solver never gets stuck immediately.
         private void BuildCompatibility()
         {
-            if (_spriteSheet == null)
+            if (_terrainSheet == null)
                 return;
 
-            int tileCount = _sourceTiles.Count;
+            int tileCount = _terrainTiles.Count;
             _compatibility = new bool[tileCount, 4, tileCount];
 
-            Color[] pixels = new Color[_spriteSheet.Width * _spriteSheet.Height];
-            _spriteSheet.GetData(pixels);
+            Color[] pixels = new Color[_terrainSheet.Width * _terrainSheet.Height];
+            _terrainSheet.GetData(pixels);
 
             int minNeighborsPerDirection = Math.Min(4, tileCount);
 
@@ -45,7 +45,7 @@ namespace Last_Hope.Engine.LevelGenerator
 
                     for (int b = 0; b < tileCount; b++)
                     {
-                        float diff = GetEdgeDifference(pixels, _spriteSheet.Width, _sourceTiles[a], _sourceTiles[b], direction);
+                        float diff = GetEdgeDifference(pixels, _terrainSheet.Width, _terrainTiles[a], _terrainTiles[b], direction);
                         diffs[b] = diff;
 
                         if (diff <= EdgeTolerance)
@@ -94,7 +94,7 @@ namespace Last_Hope.Engine.LevelGenerator
 
             int width = outputMap.GetLength(0);
             int height = outputMap.GetLength(1);
-            int tileCount = _sourceTiles.Count;
+            int tileCount = _terrainTiles.Count;
 
             for (int attempt = 0; attempt < MaxGenerationAttempts; attempt++)
             {

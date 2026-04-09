@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Last_Hope.BaseModel;
 using Last_Hope.UI;
+using Last_Hope.Classes.Items;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,16 +23,14 @@ public class GameManager
 
     public ContentManager _content;
 
-    // private float _spawnTimer = 0f;
-    // private float _spawnInterval = 5f;   // seconds between spawns (starts at 5 s)
-    private const float MinSpawnInterval = 0.5f;  // fastest possible rate
-
     public Random RNG { get; private set; }
     public BasePlayer _player { get; private set; }
     public InputManager InputManager { get; private set; }
     public Game Game { get; private set; }
     public bool playerAlive = true;
     public int Score { get; set; } = 0;
+    public Decoy ActiveDecoy { get; set; }
+    public int SelectedItemSlot { get; private set; } = 0;
 
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
@@ -42,7 +41,7 @@ public class GameManager
     public GameState _state;
     public SpriteFont _font;
     public Menu Menu { get; private set; }
-
+    public EnemySpawner EnemySpawner { get; private set; }
 
     public static GameManager GetGameManager()
     {
@@ -60,8 +59,10 @@ public class GameManager
         // Camera = new Camera();
 
         Menu = new Menu();
+        EnemySpawner = new EnemySpawner();
 
         _state = GameState.StartMenu;
+        SelectedItemSlot = 0;
     }
 
     public void Initialize(ContentManager content, Game game, BasePlayer player)
@@ -135,6 +136,7 @@ public class GameManager
                 Menu.UpdateStartMenu(gameTime);
                 break;
             case GameState.Running:
+                EnemySpawner.Update(gameTime);
                 Menu.UpdateRunningMenu(gameTime);
                 break;
             case GameState.Paused:
@@ -145,7 +147,6 @@ public class GameManager
                 break;
         }
     }
-
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
@@ -199,6 +200,10 @@ public class GameManager
             RNG.Next(0, Game.GraphicsDevice.Viewport.Height));
     }
 
+    public void SetSelectedItemSlot(int slotIndex)
+    {
+        SelectedItemSlot = Math.Clamp(slotIndex, 0, 1);
+    }
 
     public void ResetGame()
     {
@@ -209,13 +214,14 @@ public class GameManager
         // Reset player state
         playerAlive = true;
         Score = 0;
+        ActiveDecoy = null;
+        SelectedItemSlot = 0;
+
+        EnemySpawner.Reset();
 
         Warrior player = new Warrior(new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2));
         _player = player;
-
         AddGameObject(_player);
-        AddGameObject(new Goblin(new Point(600, 660), new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
-        AddGameObject(new Orc(new Point(300, 360)));
     }
 
     public Vector2 GetWorldMousePosition()

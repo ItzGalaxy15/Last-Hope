@@ -4,38 +4,61 @@ namespace Last_Hope.Engine.LevelGenerator
 {
     internal partial class LevelGenerator
     {
-        private int GetTileIndexOneBased(int row, int column)
+        // ── Terrain sheet helpers ────────────────────────────────────
+        private int GetTerrainTileIndexOneBased(int row, int column)
         {
-            if (_columns <= 0 || _rows <= 0)
+            return GetTileIndexOneBased(row, column, _terrainColumns, _terrainRows);
+        }
+
+        private List<int> GetTerrainTileIndicesForRowsOneBased(params int[] rowNumbers)
+        {
+            return GetTileIndicesForRowsOneBased(_terrainColumns, _terrainRows, rowNumbers);
+        }
+
+        // ── Decoration sheet helpers ─────────────────────────────────
+        private int GetDecorationTileIndexOneBased(int row, int column)
+        {
+            return GetTileIndexOneBased(row, column, _decorationColumns, _decorationRows);
+        }
+
+        private List<int> GetDecorationTileIndicesForRowsOneBased(params int[] rowNumbers)
+        {
+            return GetTileIndicesForRowsOneBased(_decorationColumns, _decorationRows, rowNumbers);
+        }
+
+        // ── Shared implementations ───────────────────────────────────
+        private static int GetTileIndexOneBased(int row, int column, int sheetColumns, int sheetRows)
+        {
+            if (sheetColumns <= 0 || sheetRows <= 0)
                 return -1;
 
             int zeroBasedRow = row - 1;
             int zeroBasedColumn = column - 1;
 
-            if (zeroBasedRow < 0 || zeroBasedRow >= _rows)
+            if (zeroBasedRow < 0 || zeroBasedRow >= sheetRows)
                 return -1;
 
-            if (zeroBasedColumn < 0 || zeroBasedColumn >= _columns)
+            if (zeroBasedColumn < 0 || zeroBasedColumn >= sheetColumns)
                 return -1;
 
-            return (zeroBasedRow * _columns) + zeroBasedColumn;
+            return (zeroBasedRow * sheetColumns) + zeroBasedColumn;
         }
 
-        private List<int> GetTileIndicesForRowsOneBased(params int[] rowNumbers)
+        private static List<int> GetTileIndicesForRowsOneBased(int sheetColumns, int sheetRows, int[] rowNumbers)
         {
             List<int> result = new List<int>();
 
-            if (_columns <= 0 || _rows <= 0)
+            if (sheetColumns <= 0 || sheetRows <= 0)
                 return result;
 
             foreach (int oneBasedRow in rowNumbers)
             {
                 int row = oneBasedRow - 1;
-                if (row < 0 || row >= _rows)
+                if (row < 0 || row >= sheetRows)
                     continue;
 
-                int start = row * _columns;
-                int endExclusive = start + _columns;
+                int start = row * sheetColumns;
+                int endExclusive = start + sheetColumns;
                 for (int i = start; i < endExclusive; i++)
                     result.Add(i);
             }

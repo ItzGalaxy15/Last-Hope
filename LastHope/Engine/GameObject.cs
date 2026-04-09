@@ -9,8 +9,22 @@ namespace Last_Hope.Engine;
     {
 
         public Collider GetCollider() => collider;
-        
+
         protected Collider collider;
+
+        protected const float HurtFlashDurationSeconds = 0.12f;
+        protected static readonly Color HurtFlashColor = Color.Lerp(Color.White, Color.Red, 0.35f);
+        private float _hurtFlashTimer;
+        protected Color DrawTint => _hurtFlashTimer > 0f ? HurtFlashColor : Color.White;
+
+        /// <summary>
+        /// Starts the hurt flash tint. Call this from Damage implementations
+        /// whenever HP is removed so subclasses can render <see cref="DrawTint"/>.
+        /// </summary>
+        protected void TriggerHurtFlash()
+        {
+            _hurtFlashTimer = HurtFlashDurationSeconds;
+        }
 
         /// <summary>
         /// Used to set the collider used for object collision.
@@ -69,9 +83,14 @@ namespace Last_Hope.Engine;
         /// Called every game step. Override this to keep your GameObject up to date.
         /// </summary>
         /// <param name="gameTime"> The amount of time that has elapsed since the last update call. </param>
-        public virtual void Update(GameTime gameTime) 
-        { 
-        
+        public virtual void Update(GameTime gameTime)
+        {
+            if (_hurtFlashTimer > 0f)
+            {
+                _hurtFlashTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (_hurtFlashTimer < 0f)
+                    _hurtFlashTimer = 0f;
+            }
         }
         /// <summary>
         /// Called every game step. Override this with any drawing code you wish to implement.

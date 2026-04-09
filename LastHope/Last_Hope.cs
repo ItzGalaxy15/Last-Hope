@@ -15,7 +15,9 @@ public class Last_Hope : Game
     private InputManager _inputManager;
     private GameManager _gameManager;
     private SpriteBatch _spriteBatch;
-    private Texture2D _tileSpriteSheet;
+    private Texture2D _terrainSheet;
+    private Texture2D _decorationsSheet;
+    private Texture2D? _itemSpriteSheet;
     private LevelGenerator _levelGenerator;
     private Camera _camera;
     private Warrior _player;
@@ -44,17 +46,26 @@ public class Last_Hope : Game
         _player = new Warrior(new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2));
  
         _gameManager.AddGameObject(_player);
-        _gameManager.AddGameObject(new Goblin(new Point(600, 660), new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
-        _gameManager.AddGameObject(new Orc(new Point(300, 360)));
         _gameManager.Initialize(Content, this, _player);
     }
 
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        _tileSpriteSheet = LoadFirstAvailableTexture("TileSheet", "tilesheet", "Spritesheet", "spritesheet", "Newbackground1");
+        _terrainSheet = Content.Load<Texture2D>("terrain");
+        _decorationsSheet = Content.Load<Texture2D>("decorations");
 
-        _levelGenerator.LoadSpriteSheet(_tileSpriteSheet, usableRows: 9);
+        // Optional item sheet for hotbar icons.
+        try
+        {
+            _itemSpriteSheet = Content.Load<Texture2D>("itemSpriteSheet");
+        }
+        catch (ContentLoadException)
+        {
+            _itemSpriteSheet = null;
+        }
+
+        _levelGenerator.LoadSpriteSheets(_terrainSheet, _decorationsSheet, terrainUsableRows: 5);
         _levelGenerator.GenerateMap(1920, 1080);
 
         _gameManager.Load(Content);
@@ -66,14 +77,11 @@ public class Last_Hope : Game
 
         _gameManager.Camera = _camera;
 
-        _hud = new Hud(_player, _gameManager.Pixel);
+        _hud = new Hud(_player, _gameManager.Pixel, _itemSpriteSheet);
     }
 
     protected override void Update(GameTime gameTime)
     {
-        //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-        //    Exit();
-
         _gameManager.Update(gameTime);
         if (_gameManager.playerAlive && _gameManager._player != null)
             _camera.Update(_gameManager._player.GetPosition());
@@ -99,19 +107,4 @@ public class Last_Hope : Game
         base.Draw(gameTime);
     }
 
-    private Texture2D LoadFirstAvailableTexture(params string[] assetNames)
-    {
-        foreach (string assetName in assetNames)
-        {
-            try
-            {
-                return Content.Load<Texture2D>(assetName);
-            }
-            catch (ContentLoadException)
-            {
-            }
-        }
-
-        throw new ContentLoadException("No valid spritesheet asset was found. Add one of: TileSheet, tilesheet, Spritesheet, spritesheet, Newbackground1.");
-    }
 }

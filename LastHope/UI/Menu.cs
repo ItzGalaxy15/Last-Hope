@@ -31,7 +31,7 @@ public class Menu
         gm.HandleInput(inputManager);
     }
     private void CheckCollision()
-    { 
+    {
         gm.CheckCollision();
     }
     private void ResetGame()
@@ -138,6 +138,11 @@ public class Menu
         Vector2 quitPos = pausePos + new Vector2(pauseSize.X + 40, 0);
         Rectangle quitRect = GetTextRectangle(quitText, quitPos, scale);
 
+        Vector2 quitSize = _font.MeasureString(quitText) * scale;
+        string restartText = "Restart Game";
+        Vector2 restartPos = quitPos + new Vector2(quitSize.X + 40, 0);
+        Rectangle restartRect = GetTextRectangle(restartText, restartPos, scale);
+
         if (pauseRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
             _state = GameState.Paused;
@@ -150,6 +155,11 @@ public class Menu
             return;
         }
 
+        if (restartRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
+        {
+            ResetGame();
+            _state = GameState.Running;
+        }
         // Handle input
         HandleInput(InputManager);
 
@@ -205,6 +215,11 @@ public class Menu
         Vector2 quitPos = pausePos + new Vector2(pauseSize.X + 40, 0);
         Rectangle quitRect = GetTextRectangle(quitText, quitPos, scale);
 
+        Vector2 quitSize = _font.MeasureString(quitText) * scale;
+        string restartText = "Restart Game";
+        Vector2 restartPos = quitPos + new Vector2(quitSize.X + 40, 0);
+        Rectangle restartRect = GetTextRectangle(restartText, restartPos, scale);
+
         spriteBatch.Begin(transformMatrix: transformMatrix);
         foreach (GameObject gameObject in _gameObjects)
         {
@@ -215,10 +230,12 @@ public class Menu
         spriteBatch.Begin();
         spriteBatch.Draw(Pixel, pauseRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
+        spriteBatch.Draw(Pixel, restartRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, pauseText, pausePos, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         spriteBatch.DrawString(_font, quitText, quitPos, Color.Red, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         //spriteBatch.DrawString(_font, pauseText, pausePos, Color.White);
         //spriteBatch.DrawString(_font, quitText,quitPos, Color.White);
+        spriteBatch.DrawString(_font, restartText, restartPos, Color.Green, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         spriteBatch.End();
     }
 
@@ -302,7 +319,7 @@ public class Menu
         {
             _state = GameState.Running;
         }
-  
+
         if (quitRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
             Game.Exit();

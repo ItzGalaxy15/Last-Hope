@@ -9,12 +9,13 @@ public class Hud
 {
 	private readonly List<UIElement> _elements;
 
-	public Hud(BasePlayer player, Texture2D pixel)
+	public Hud(BasePlayer player, Texture2D pixel, Texture2D? itemSpriteSheet = null)
 	{
 		_elements = new List<UIElement>
 		{
 			new ExperienceBar(player, pixel),
-			new HealthBar(player, pixel)
+			new HealthBar(player, pixel),
+			new ItemSlotsBar(pixel, itemSpriteSheet)
 		};
 	}
 
