@@ -1,6 +1,7 @@
 using Last_Hope.Classes.Camera;
 using Last_Hope.Engine;
 using Last_Hope.Engine.LevelGenerator;
+using Last_Hope.Engine.Pathfinding;
 using Last_Hope.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -67,6 +68,11 @@ public class Last_Hope : Game
 
         _levelGenerator.LoadSpriteSheets(_terrainSheet, _decorationsSheet, terrainUsableRows: 5);
         _levelGenerator.GenerateMap(1920, 1080);
+
+        _gameManager.NavigationGrid = new NavigationGrid(
+            _levelGenerator.MapWidthInTiles,
+            _levelGenerator.MapHeightInTiles,
+            _levelGenerator.TileSize);
 
         _gameManager.Load(Content);
 

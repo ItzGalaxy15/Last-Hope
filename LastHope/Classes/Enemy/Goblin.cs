@@ -113,17 +113,22 @@ public class Goblin : BaseEnemy
         if (toTarget.X != 0)
             _isFacingLeft = toTarget.X < 0;
 
-        Vector2 direction = toTarget;
-        if (direction != Vector2.Zero)
-            direction.Normalize();
+        Vector2 moveDirection = toTarget;
+        if (moveDirection != Vector2.Zero)
+            moveDirection.Normalize();
+
+        Vector2 aimDirection = moveDirection;
 
         // Move only when outside attack range
         bool wasMoving = _isMoving;
         if (distanceToTarget > _attackRange)
         {
+            if (gameManager.NavigationGrid != null && gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
+                moveDirection = pathDir;
+
             // Don't overshoot: cap movement so we stop at the edge of attack range
             float moveAmount = Math.Min(Speed * dt, distanceToTarget - _attackRange);
-            _precisePosition += direction * moveAmount;
+            _precisePosition += moveDirection * moveAmount;
             _collider.shape.Location = _precisePosition.ToPoint();
             _isMoving = true;
         }
@@ -149,7 +154,7 @@ public class Goblin : BaseEnemy
         // Attack when in range and cooldown has elapsed
         if (distanceToTarget <= _attackRange && _attackTimer <= 0f)
         {
-            _weapon.Attack(direction, GetPosition());
+            _weapon.Attack(aimDirection, GetPosition());
             _attackTimer = _attackCooldown;
 
             // Reset attack animation with correct facing offset

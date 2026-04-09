@@ -99,16 +99,23 @@ public class Orc : BaseEnemy
                 : player.GetPosition();
         }
 
-        Vector2 direction = targetPos - GetPosition();
+        Vector2 toTarget = targetPos - GetPosition();
 
-        if (direction.X != 0)
+        if (toTarget.X != 0)
         {
-            _isFacingLeft = direction.X < 0;
+            _isFacingLeft = toTarget.X < 0;
         }
-        
-        if (direction != Vector2.Zero)
+
+        Vector2 direction;
+        if (gameManager.NavigationGrid != null && gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
         {
-            direction.Normalize();
+            direction = pathDir;
+        }
+        else
+        {
+            direction = toTarget;
+            if (direction != Vector2.Zero)
+                direction.Normalize();
         }
 
         // Move Orc
