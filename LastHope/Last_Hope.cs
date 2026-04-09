@@ -22,6 +22,8 @@ public class Last_Hope : Game
     private LevelGenerator _levelGenerator;
     private Camera _camera;
     private Warrior _player;
+    private Archer _player2;
+
     private Hud _hud;
 
     public Last_Hope()
@@ -44,10 +46,13 @@ public class Last_Hope : Game
         _levelGenerator = new LevelGenerator(tileSize: 32);
         base.Initialize();
 
-        _player = new Warrior(new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2));
+        // _player = new Warrior(new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2));
+        _player2 = new Archer(new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2));
  
-        _gameManager.AddGameObject(_player);
-        _gameManager.Initialize(Content, this, _player);
+        // _gameManager.AddGameObject(_player);
+        _gameManager.AddGameObject(_player2);
+        // _gameManager.Initialize(Content, this, _player);
+        _gameManager.Initialize(Content, this, _player2);
     }
 
     protected override void LoadContent()

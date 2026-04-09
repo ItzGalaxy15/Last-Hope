@@ -1,0 +1,373 @@
+using System;
+using Last_Hope.BaseModel;
+using Last_Hope.Collision;
+using Last_Hope.Engine;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Last_Hope.Classes.Items;
+
+namespace Last_Hope;
+
+public class Archer : BasePlayer
+{
+    public Vector2 Position { get; private set; }
+    public Texture2D BowSprite;
+    public Texture2D ArcherSprite;
+    public InputManager _inputManager { get; private set; }
+
+    private const int FrameSize = 32;
+    private const float ArcherDrawScale = 3f;
+    private const float BowDrawScale = 1.8f;
+    private const float WalkFrameDuration = 0.12f;
+
+    private int _walkRow;
+    private int _walkFrameIndex;
+    private float _walkFrameTimer;
+    private float _bodyWidth => FrameSize * ArcherDrawScale;
+    private float _bowPixelSize => FrameSize * BowDrawScale;
+    private float BowOffsetY => (_bodyWidth - _bowPixelSize) * 0.5f;
+
+    private const float AttackCooldown = 0.7f;
+    private const float DashCooldown = 0.75f;
+    private const float EnemyContactDamage = 10f;
+    private const float EnemyContactHurtInterval = 0.5f;
+    private const bool DebugDrawHitbox = true;
+
+    private double timeSinceLastAttack = 0;
+    private float _dashCooldown;
+    private Vector2 _moveInput;
+    private bool _facingLeft;
+    private RectangleCollider _collider;
+    private float _hurtCooldown;
+
+    // Bow attack animation
+    private const int BowSheetColumns = 3;
+    private const float BowDrawDuration = 0.35f;
+    private bool _isDrawingBow;
+    private float _bowDrawTimer;
+    private Vector2 _bowAimDirection;
+
+    private const float BombThrowSpeed = 520f;
+    private const float BombActionCooldown = 0.25f;
+    private float _bombActionCooldown;
+
+    private const float DecoyThrowSpeed = 420f;
+    private const float ArrowSpeed = 600f;
+
+    public Archer(Vector2 startPosition)
+        : base(maxHp: 100f, weapon: new Bow("Bow", damage: 20, critChance: 1.0f, speed: 600f, owner: null), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+    {
+        Position = startPosition;
+        var origin = new Point((int)startPosition.X, (int)startPosition.Y);
+        _collider = new RectangleCollider(new Rectangle(origin, Point.Zero));
+        SetCollider(_collider);
+    }
+
+    public override Vector2 GetPosition()
+    {
+        return Position;
+    }
+
+    public void Move(Vector2 direction, GameTime gameTime)
+    {
+        if (direction == Vector2.Zero)
+            return;
+
+        direction.Normalize();
+        Position += direction * _Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+    }
+
+    public override void Load(ContentManager content)
+    {
+        base.Load(content);
+        BowSprite = content.Load<Texture2D>("Bow sheet");
+        ArcherSprite = content.Load<Texture2D>("WarriorSheet");
+        _inputManager = GameManager.GetGameManager().InputManager;
+        _Weapon.SetOwner(this);
+
+        SyncColliderToPosition();
+        SetCollider(_collider);
+    }
+
+    public override void HandleInput(InputManager inputManager)
+    {
+        _moveInput = Vector2.Zero;
+        if (inputManager.IsKeyDown(Keys.W) || inputManager.IsKeyDown(Keys.Up))
+            _moveInput.Y -= 1f;
+        if (inputManager.IsKeyDown(Keys.S) || inputManager.IsKeyDown(Keys.Down))
+            _moveInput.Y += 1f;
+        if (inputManager.IsKeyDown(Keys.A) || inputManager.IsKeyDown(Keys.Left))
+            _moveInput.X -= 1f;
+        if (inputManager.IsKeyDown(Keys.D) || inputManager.IsKeyDown(Keys.Right))
+            _moveInput.X += 1f;
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+        if (!GameManager.GetGameManager().playerAlive || _currentHp <= 0f)
+            return;
+
+        Move(_moveInput, gameTime);
+        SyncColliderToPosition();
+
+        if (_hurtCooldown > 0f)
+            _hurtCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (_bombActionCooldown > 0f)
+            _bombActionCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        bool moving = _moveInput != Vector2.Zero;
+        if (moving)
+        {
+            SetWalkRowFromDirection(_moveInput);
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _walkFrameTimer += dt;
+            while (_walkFrameTimer >= WalkFrameDuration)
+            {
+                _walkFrameTimer -= WalkFrameDuration;
+                _walkFrameIndex = (_walkFrameIndex + 1) % 4;
+            }
+        }
+        else
+        {
+            _walkFrameTimer = 0f;
+            _walkFrameIndex = 0;
+        }
+
+        // Update bow draw animation
+        if (_isDrawingBow)
+        {
+            _bowDrawTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (_bowDrawTimer >= BowDrawDuration)
+            {
+                _isDrawingBow = false;
+                _bowDrawTimer = 0f;
+                FireArrow();
+            }
+        }
+
+        if (_inputManager is not null)
+        {
+            timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
+            if (_inputManager.LeftMousePress() && timeSinceLastAttack >= AttackCooldown && !_isDrawingBow)
+            {
+                StartBowDraw();
+                timeSinceLastAttack = 0;
+            }
+
+            // G = place bomb at feet
+            if (_inputManager.IsKeyPress(Keys.G) && _bombActionCooldown <= 0f)
+            {
+                PlaceSelectedItem();
+                _bombActionCooldown = BombActionCooldown;
+            }
+
+            // T = throw bomb toward mouse
+            if (_inputManager.IsKeyPress(Keys.T) && _bombActionCooldown <= 0f)
+            {
+                ThrowSelectedItemTowardMouse();
+                _bombActionCooldown = BombActionCooldown;
+            }
+
+            if (_dashCooldown > 0f)
+                _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (_inputManager.IsKeyPress(Keys.LeftShift) && _dashCooldown <= 0f)
+            {
+                Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
+                Vector2 towardMouse = mousePosition - Position;
+                if (towardMouse != Vector2.Zero)
+                {
+                    Dash(towardMouse, _DashDistance);
+                    SetWalkRowFromDirection(towardMouse);
+                    _dashCooldown = DashCooldown;
+                }
+            }
+        }
+
+        base.Update(gameTime);
+    }
+
+    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
+    {
+        Texture2D pixel = GameManager.GetGameManager().Pixel;
+        const int thickness = 2;
+
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
+    }
+
+    private void StartBowDraw()
+    {
+        if (_inputManager is null)
+            return;
+
+        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
+        Vector2 direction = mousePosition - center;
+        if (direction == Vector2.Zero)
+            return;
+
+        direction.Normalize();
+        _bowAimDirection = direction;
+        _isDrawingBow = true;
+        _bowDrawTimer = 0f;
+    }
+
+    private void FireArrow()
+    {
+        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        _Weapon.Attack(_bowAimDirection, center);
+    }
+
+    public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+    {
+        var archerSource = new Rectangle(_walkFrameIndex * FrameSize, _walkRow * FrameSize, FrameSize, FrameSize);
+        spriteBatch.Draw(ArcherSprite, Position, archerSource, DrawTint, 0f, Vector2.Zero, ArcherDrawScale, SpriteEffects.None, 0f);
+
+        // Draw bow sprite
+        int bowFrame = 0;
+        if (_isDrawingBow)
+        {
+            float progress = _bowDrawTimer / BowDrawDuration;
+            bowFrame = Math.Min((int)(progress * BowSheetColumns), BowSheetColumns - 1);
+        }
+
+        Rectangle bowSource = new Rectangle(bowFrame * FrameSize, 0, FrameSize, FrameSize);
+        SpriteEffects bowFlip = _facingLeft ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+        float bowW = _bowPixelSize;
+        float y = BowOffsetY;
+        Vector2 bowOffset = _facingLeft
+            ? new Vector2(_bodyWidth - bowW - 40f, y)
+            : new Vector2(40f, y);
+
+        spriteBatch.Draw(BowSprite, Position + bowOffset, bowSource, Color.White, 0f, Vector2.Zero, BowDrawScale, bowFlip, 0f);
+
+        if (DebugDrawHitbox && _collider is not null)
+            DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
+
+        base.Draw(gameTime, spriteBatch);
+    }
+
+    public override void OnCollision(GameObject other)
+    {
+        if (other is not BaseEnemy || _hurtCooldown > 0f)
+            return;
+
+        _hurtCooldown = EnemyContactHurtInterval;
+        Damage(EnemyContactDamage);
+    }
+
+    private void SetWalkRowFromDirection(Vector2 dir)
+    {
+        if (dir == Vector2.Zero)
+            return;
+
+        float ax = Math.Abs(dir.X);
+        float ay = Math.Abs(dir.Y);
+
+        if (ay >= ax)
+        {
+            _walkRow = dir.Y > 0f ? 0 : 1;
+        }
+        else
+        {
+            _walkRow = dir.X > 0f ? 2 : 3;
+            _facingLeft = dir.X < 0f;
+        }
+    }
+
+    private void SyncColliderToPosition()
+    {
+        if (_collider is null)
+            return;
+
+        const int pad = 4;
+
+        // Match Draw() footprint: Archer body + bow with current facing.
+        float bowOffsetX = _facingLeft ? _bodyWidth - _bowPixelSize - 40f : 40f;
+        float bowOffsetYVal = BowOffsetY;
+
+        float minX = MathF.Min(0f, bowOffsetX);
+        float maxX = MathF.Max(_bodyWidth, bowOffsetX + _bowPixelSize);
+        float minY = MathF.Min(0f, bowOffsetYVal);
+        float maxY = MathF.Max(_bodyWidth, bowOffsetYVal + _bowPixelSize);
+
+        int left = (int)MathF.Floor(Position.X + minX) - pad;
+        int top = (int)MathF.Floor(Position.Y + minY) - pad;
+        int right = (int)MathF.Ceiling(Position.X + maxX) + pad;
+        int bottom = (int)MathF.Ceiling(Position.Y + maxY) + pad;
+
+        _collider.shape = new Rectangle(left, top, right - left, bottom - top);
+        SetCollider(_collider);
+    }
+
+    public override void Damage(float amount)
+    {
+        _currentHp -= amount;
+        TriggerHurtFlash();
+
+        if (_currentHp <= 0f)
+        {
+            _currentHp = 0f;
+            GameManager.GetGameManager().playerAlive = false;
+            GameManager.GetGameManager()._state = GameState.GameOver;
+        }
+    }
+
+    protected override void ApplyDashOffset(Vector2 delta)
+    {
+        Position += delta;
+        SyncColliderToPosition();
+    }
+
+    private void PlaceSelectedItem()
+    {
+        GameManager gm = GameManager.GetGameManager();
+        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+
+        if (gm.SelectedItemSlot == 1) // slot 2 = decoy
+        {
+            SpawnDecoy(gm, spawnPosition, Vector2.Zero);
+            return;
+        }
+
+        // slot 1 = bomb
+        gm.AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
+    }
+
+    private void ThrowSelectedItemTowardMouse()
+    {
+        GameManager gm = GameManager.GetGameManager();
+        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 mouseWorld = gm.GetWorldMousePosition();
+        Vector2 direction = mouseWorld - spawnPosition;
+        if (direction == Vector2.Zero)
+            return;
+
+        direction.Normalize();
+
+        if (gm.SelectedItemSlot == 1) // slot 2 = decoy
+        {
+            SpawnDecoy(gm, spawnPosition, direction * DecoyThrowSpeed);
+            return;
+        }
+
+        // slot 1 = bomb
+        gm.AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
+    }
+
+    private static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
+    {
+        if (gm.ActiveDecoy is not null)
+            gm.RemoveGameObject(gm.ActiveDecoy);
+
+        Decoy decoy = new Decoy(spawnPosition, initialVelocity, lifetimeSeconds: 5f);
+        gm.AddGameObject(decoy);
+        gm.ActiveDecoy = decoy;
+    }
+}
