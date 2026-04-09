@@ -344,6 +344,14 @@ public class Warrior : BasePlayer
         {
             gm.AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
         }
+        else if (currentItem == ItemType.HealingPotion)
+        {
+            Heal(50f);
+        }
+        else if (currentItem == ItemType.OneUp)
+        {
+            AddLife(1);
+        }
         
         Inventory[gm.SelectedItemSlot] = ItemType.None;
     }
@@ -369,6 +377,14 @@ public class Warrior : BasePlayer
         else if (currentItem == ItemType.Bomb)
         {
             gm.AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
+        }
+        else if (currentItem == ItemType.HealingPotion)
+        {
+            Heal(50f);
+        }
+        else if (currentItem == ItemType.OneUp)
+        {
+            AddLife(1);
         }
         
         Inventory[gm.SelectedItemSlot] = ItemType.None;
