@@ -5,10 +5,10 @@ using Microsoft.Xna.Framework;
 namespace Last_Hope.Engine.Pathfinding;
 
 /// <summary>
-/// Grid pathfinding using Dijkstra's algorithm (4-directional, uniform edge cost).
-/// Supports future weighted tiles by changing <see cref="GetEdgeCost"/>.
+/// Grid pathfinding using A* algorithm (4-directional, uniform edge cost).
+/// Uses Manhattan distance as heuristic for optimal grid pathfinding.
 /// </summary>
-public static class DijkstraPathfinder
+public static class AStarPathfinder
 {
     private static readonly Point[] CardinalOffsets =
     {
@@ -61,13 +61,17 @@ public static class DijkstraPathfinder
         dist[startIdx] = 0f;
 
         var pq = new PriorityQueue<int, float>();
-        pq.Enqueue(startIdx, 0f);
+        pq.Enqueue(startIdx, Heuristic(start.X, start.Y, goal.X, goal.Y));
+
+        var closed = new bool[total];
 
         while (pq.Count > 0)
         {
-            pq.TryDequeue(out int u, out float d);
-            if (d > dist[u])
+            pq.TryDequeue(out int u, out float _);
+            if (closed[u])
                 continue;
+            closed[u] = true;
+            float d = dist[u];
 
             if (u == goalIdx)
                 break;
@@ -90,7 +94,8 @@ public static class DijkstraPathfinder
                 {
                     dist[v] = nd;
                     parent[v] = u;
-                    pq.Enqueue(v, nd);
+                    float fCost = nd + Heuristic(vx, vy, goal.X, goal.Y);
+                    pq.Enqueue(v, fCost);
                 }
             }
         }
@@ -105,6 +110,9 @@ public static class DijkstraPathfinder
     /// Uniform cost for now; override via a different helper if you add weighted terrain.
     /// </summary>
     private static float GetEdgeCost(int x0, int y0, int x1, int y1) => 1f;
+
+    private static float Heuristic(int x, int y, int goalX, int goalY) =>
+        Math.Abs(x - goalX) + Math.Abs(y - goalY);
 
     private static List<Point> ReconstructPath(int[] parent, int width, int startIdx, int goalIdx)
     {

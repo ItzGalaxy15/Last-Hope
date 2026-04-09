@@ -128,6 +128,18 @@
 /processorParam:TextureFormat=Color
 /build:orc.png
 
+#begin Shcrub-version2.webp
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Shcrub-version2.webp
+
 #begin Slash-sheet.png
 /importer:TextureImporter
 /processor:TextureProcessor

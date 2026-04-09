@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 namespace Last_Hope.Engine.Pathfinding;
 
 /// <summary>
-/// Tile-based navigation: walkability per cell, world/tile conversion, and Dijkstra paths.
+/// Tile-based navigation: walkability per cell, world/tile conversion, and A* paths.
 /// Mark cells non-walkable when you add blocking collision (e.g. <see cref="SetWalkable"/>).
 /// </summary>
 public sealed class NavigationGrid
@@ -57,7 +57,7 @@ public sealed class NavigationGrid
         new Vector2(tile.X * TileSize + TileSize * 0.5f, tile.Y * TileSize + TileSize * 0.5f);
 
     /// <summary>
-    /// Computes a direction toward the next step on a Dijkstra path from <paramref name="fromWorld"/> to <paramref name="toWorld"/>.
+    /// Computes a direction toward the next step on an A* path from <paramref name="fromWorld"/> to <paramref name="toWorld"/>.
     /// Falls back to straight-line behavior if either endpoint has no walkable tile or no path exists.
     /// </summary>
     public bool TryGetMoveDirection(Vector2 fromWorld, Vector2 toWorld, out Vector2 direction)
@@ -77,7 +77,7 @@ public sealed class NavigationGrid
             return false;
         }
 
-        List<Point>? tilePath = DijkstraPathfinder.FindPath(
+        List<Point>? tilePath = AStarPathfinder.FindPath(
             WidthInTiles,
             HeightInTiles,
             (x, y) => _walkable[x, y],
