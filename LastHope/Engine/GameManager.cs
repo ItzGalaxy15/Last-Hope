@@ -202,7 +202,8 @@ public class GameManager
             {
                 if (RNG.NextDouble() < ItemDropChance)
                 {
-                    ItemType type = RNG.Next(2) == 0 ? ItemType.Bomb : ItemType.Decoy;
+                    int typeRoll = RNG.Next(4);
+                    ItemType type = typeRoll == 0 ? ItemType.Bomb : typeRoll == 1 ? ItemType.Decoy : typeRoll == 2 ? ItemType.HealingPotion : ItemType.OneUp;
                     AddGameObject(new ItemDrop(enemy.GetPosition(), type));
                 }
             }

@@ -11,7 +11,9 @@ public enum ItemType
 {
     None,
     Bomb,
-    Decoy
+    Decoy,
+    HealingPotion,
+    OneUp
 }
 
 public class ItemDrop : GameObject
@@ -20,6 +22,7 @@ public class ItemDrop : GameObject
     private ItemType _type;
     private RectangleCollider _collider;
     private Texture2D? _itemSpriteSheet;
+    private Texture2D? _hearthSprite;
     private const float PickupRadius = 150f;
     private const float Speed = 350f;
 
@@ -41,6 +44,15 @@ public class ItemDrop : GameObject
         catch (ContentLoadException)
         {
             _itemSpriteSheet = null;
+        }
+
+        try
+        {
+            _hearthSprite = content.Load<Texture2D>("Hearth");
+        }
+        catch (ContentLoadException)
+        {
+            _hearthSprite = null;
         }
     }
 
@@ -83,9 +95,20 @@ public class ItemDrop : GameObject
         float bounceOffset = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4f) * 6f;
         Vector2 drawPos = _position + new Vector2(0, bounceOffset);
 
-        if (_itemSpriteSheet != null)
+        if (_type == ItemType.OneUp && _hearthSprite != null)
         {
-            Rectangle sourceRect = _type == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : new Rectangle(0, 32, 32, 32);
+            Rectangle sourceRect = new Rectangle(0, 0, _hearthSprite.Width, _hearthSprite.Height);
+            Vector2 origin = new Vector2(_hearthSprite.Width / 2f, _hearthSprite.Height / 2f);
+            
+            // Draw red glow behind the item
+            spriteBatch.Draw(_hearthSprite, drawPos, sourceRect, Color.Red * 0.5f, 0f, origin, 1.4f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(_hearthSprite, drawPos, sourceRect, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
+        }
+        else if (_itemSpriteSheet != null && _type != ItemType.OneUp)
+        {
+            Rectangle sourceRect = _type == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : 
+                                   _type == ItemType.Decoy ? new Rectangle(0, 32, 32, 32) : 
+                                   new Rectangle(0, 64, 32, 32);
             
             // Draw red glow behind the item
             spriteBatch.Draw(_itemSpriteSheet, drawPos, sourceRect, Color.Red * 0.5f, 0f, new Vector2(16, 16), 1.4f, SpriteEffects.None, 0f);
@@ -96,7 +119,10 @@ public class ItemDrop : GameObject
             Texture2D pixel = GameManager.GetGameManager().Pixel;
             
             spriteBatch.Draw(pixel, new Rectangle((int)drawPos.X - 12, (int)drawPos.Y - 12, 24, 24), Color.Red * 0.5f);
-            spriteBatch.Draw(pixel, new Rectangle((int)drawPos.X - 8, (int)drawPos.Y - 8, 16, 16), _type == ItemType.Bomb ? Color.Black : Color.Brown);
+            Color itemColor = _type == ItemType.Bomb ? Color.Black : 
+                              _type == ItemType.Decoy ? Color.Brown : 
+                              _type == ItemType.HealingPotion ? Color.Red : Color.Pink;
+            spriteBatch.Draw(pixel, new Rectangle((int)drawPos.X - 8, (int)drawPos.Y - 8, 16, 16), itemColor);
         }
     }
 }
