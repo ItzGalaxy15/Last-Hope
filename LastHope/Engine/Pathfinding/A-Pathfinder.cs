@@ -10,12 +10,16 @@ namespace Last_Hope.Engine.Pathfinding;
 /// </summary>
 public static class AStarPathfinder
 {
-    private static readonly Point[] CardinalOffsets =
+    private static readonly Point[] Offsets =
     {
         new(0, -1),
         new(1, 0),
         new(0, 1),
         new(-1, 0),
+        new(1, -1),
+        new(1, 1),
+        new(-1, 1),
+        new(-1, -1),
     };
 
     /// <summary>
@@ -79,14 +83,23 @@ public static class AStarPathfinder
             int ux = u % width;
             int uy = u / width;
 
-            for (int k = 0; k < CardinalOffsets.Length; k++)
+            for (int k = 0; k < Offsets.Length; k++)
             {
-                int vx = ux + CardinalOffsets[k].X;
-                int vy = uy + CardinalOffsets[k].Y;
+                int vx = ux + Offsets[k].X;
+                int vy = uy + Offsets[k].Y;
                 if (!InBounds(vx, vy, width, height))
                     continue;
                 if (!isWalkable(vx, vy))
                     continue;
+
+                // Prevent cutting through wall corners on diagonal moves
+                int dx = Offsets[k].X;
+                int dy = Offsets[k].Y;
+                if (dx != 0 && dy != 0)
+                {
+                    if (!isWalkable(ux + dx, uy) || !isWalkable(ux, uy + dy))
+                        continue;
+                }
 
                 int v = ToIndex(vx, vy, width);
                 float nd = d + GetEdgeCost(ux, uy, vx, vy);
@@ -109,10 +122,17 @@ public static class AStarPathfinder
     /// <summary>
     /// Uniform cost for now; override via a different helper if you add weighted terrain.
     /// </summary>
-    private static float GetEdgeCost(int x0, int y0, int x1, int y1) => 1f;
+    private static readonly float Sqrt2 = MathF.Sqrt(2f);
 
-    private static float Heuristic(int x, int y, int goalX, int goalY) =>
-        Math.Abs(x - goalX) + Math.Abs(y - goalY);
+    private static float GetEdgeCost(int x0, int y0, int x1, int y1) =>
+        (x0 != x1 && y0 != y1) ? Sqrt2 : 1f;
+
+    private static float Heuristic(int x, int y, int goalX, int goalY)
+    {
+        int dx = Math.Abs(x - goalX);
+        int dy = Math.Abs(y - goalY);
+        return dx + dy + (Sqrt2 - 2f) * Math.Min(dx, dy);
+    }
 
     private static List<Point> ReconstructPath(int[] parent, int width, int startIdx, int goalIdx)
     {
