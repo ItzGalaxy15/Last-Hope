@@ -14,6 +14,9 @@ public enum ItemType
     Decoy,
     HealingPotion,
     OneUp
+    Decoy,
+    HealingPotion,
+    OneUp
 }
 
 public class ItemDrop : GameObject
@@ -23,6 +26,7 @@ public class ItemDrop : GameObject
     public ItemType Type => _type;
     private RectangleCollider _collider;
     private Texture2D? _itemSpriteSheet;
+    private Texture2D? _hearthSprite;
     private Texture2D? _hearthSprite;
     private const float PickupRadius = 150f;
     private const float Speed = 350f;

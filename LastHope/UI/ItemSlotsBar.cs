@@ -12,6 +12,8 @@ public class ItemSlotsBar : UIElement
 	private readonly Texture2D? _itemSpriteSheet;
 	private Texture2D? _hearthSprite;
 	private bool _triedLoadingHearth;
+	private Texture2D? _hearthSprite;
+	private bool _triedLoadingHearth;
 	private Texture2D? _fallbackPixel;
 
 	private Rectangle _panelRect;
