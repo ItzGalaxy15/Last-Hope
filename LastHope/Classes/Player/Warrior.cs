@@ -51,6 +51,8 @@ public class Warrior : BasePlayer
 
     private const float DecoyThrowSpeed = 420f;
 
+    public ItemType[] Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
+
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
@@ -313,19 +315,37 @@ public class Warrior : BasePlayer
         SyncColliderToPosition();
     }
 
+    public bool TryPickupItem(ItemType item)
+    {
+        for (int i = 0; i < Inventory.Length; i++)
+        {
+            if (Inventory[i] == ItemType.None)
+            {
+                Inventory[i] = item;
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void PlaceSelectedItem()
     {
         GameManager gm = GameManager.GetGameManager();
         Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
 
-        if (gm.SelectedItemSlot == 1) // slot 2 = decoy
+        ItemType currentItem = Inventory[gm.SelectedItemSlot];
+        if (currentItem == ItemType.None) return;
+
+        if (currentItem == ItemType.Decoy)
         {
             SpawnDecoy(gm, spawnPosition, Vector2.Zero);
-            return;
         }
-
-        // slot 1 = bomb
-        gm.AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
+        else if (currentItem == ItemType.Bomb)
+        {
+            gm.AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
+        }
+        
+        Inventory[gm.SelectedItemSlot] = ItemType.None;
     }
 
     private void ThrowSelectedItemTowardMouse()
@@ -339,14 +359,19 @@ public class Warrior : BasePlayer
 
         direction.Normalize();
 
-        if (gm.SelectedItemSlot == 1) // slot 2 = decoy
+        ItemType currentItem = Inventory[gm.SelectedItemSlot];
+        if (currentItem == ItemType.None) return;
+
+        if (currentItem == ItemType.Decoy)
         {
             SpawnDecoy(gm, spawnPosition, direction * DecoyThrowSpeed);
-            return;
         }
-
-        // slot 1 = bomb
-        gm.AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
+        else if (currentItem == ItemType.Bomb)
+        {
+            gm.AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
+        }
+        
+        Inventory[gm.SelectedItemSlot] = ItemType.None;
     }
 
     private static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)

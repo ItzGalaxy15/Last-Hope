@@ -193,7 +193,19 @@ public class GameManager
     /// <param name="gameObject"> The GameObject to Remove. </param>
     public void RemoveGameObject(GameObject gameObject)
     {
-        _toBeRemoved.Add(gameObject);
+        if (!_toBeRemoved.Contains(gameObject))
+        {
+            _toBeRemoved.Add(gameObject);
+
+            if (gameObject is BaseEnemy enemy && enemy.CurrentHealth <= 0)
+            {
+                if (RNG.NextDouble() < 0.3) // 30% drop chance
+                {
+                    ItemType type = RNG.Next(2) == 0 ? ItemType.Bomb : ItemType.Decoy;
+                    AddGameObject(new ItemDrop(enemy.GetPosition(), type));
+                }
+            }
+        }
     }
 
     /// <summary>
