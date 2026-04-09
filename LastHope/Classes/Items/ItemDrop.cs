@@ -13,7 +13,7 @@ public enum ItemType
     Bomb,
     Decoy,
     HealingPotion,
-    OneUp
+    OneUp,
     Decoy,
     HealingPotion,
     OneUp
