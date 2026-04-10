@@ -7,17 +7,20 @@ namespace Last_Hope.Engine;
 
 public class EnemySpawner
 {
-    private const float MinSpawnInterval = 0.5f;
+    private const float MinSpawnInterval = 0.2f;
 
     private float spawnTimer = 0f;
-    private float spawnInterval = 5f;
-    private int spawnCount = 1;
+    private float spawnInterval = 0.2f; // spawn an enemy every 0.2s
+
+    private int currentWave = 1;
+    private int spawnedThisWave = 0;
+    private float waveWaitTimer = 0f;
+    private bool waitingForNextWave = false;
 
     public void Update(GameTime gameTime)
     {
         var gm = GameManager.GetGameManager();
 
-        // How many enemies are active now
         int currentEnemyCount = 0;
         foreach (var gameObject in gm._gameObjects)
         {
@@ -28,8 +31,40 @@ public class EnemySpawner
             if (gameObject is BaseEnemy) currentEnemyCount++;
         }
 
-        if (currentEnemyCount >= 20)
+        if (waitingForNextWave)
         {
+            if (currentEnemyCount == 0)
+            {
+                waveWaitTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (waveWaitTimer >= 5f)
+                {
+                    waitingForNextWave = false;
+                    waveWaitTimer = 0f;
+                    currentWave++;
+                    spawnedThisWave = 0;
+                }
+            }
+            return;
+        }
+
+        if (currentEnemyCount >= 20 || spawnedThisWave >= 20)
+        {
+            if (spawnedThisWave >= 20 && !waitingForNextWave)
+            {
+                if (currentWave == 4)
+                {
+                    // Spawn boss on 4th wave after spawning the 20 normal enemies
+                    Point bossSpawnPos = RandomOffScreenLocation().ToPoint();
+                    gm.AddGameObject(new Boss(bossSpawnPos));
+                    // Boss spawned, wait indefinitely until boss dies (handled in GameManager)
+                    waitingForNextWave = true;
+                    waveWaitTimer = float.MinValue; // effectively stop waves
+                }
+                else
+                {
+                    waitingForNextWave = true;
+                }
+            }
             return;
         }
 
@@ -38,25 +73,14 @@ public class EnemySpawner
         {
             spawnTimer = 0f;
 
-            // spawn up to the limit 
-            int enemiesToSpawn = Math.Min(spawnCount, 20 - currentEnemyCount);
+            // spawn one enemy
+            Point spawnPosition = RandomOffScreenLocation().ToPoint();
+            if (gm.RNG.NextDouble() < 0.5)
+                gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
+            else
+                gm.AddGameObject(new Orc(spawnPosition));
 
-            for (int i = 0; i < enemiesToSpawn; i++)
-            {
-                Point spawnPosition = RandomOffScreenLocation().ToPoint();
-                if (gm.RNG.NextDouble() < 0.5)
-                    gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
-                else
-                    gm.AddGameObject(new Orc(spawnPosition));
-            }
-
-            spawnInterval -= 0.5f;
-
-            if (spawnInterval < MinSpawnInterval)
-            {
-                spawnInterval = MinSpawnInterval;
-                spawnCount++;
-            }
+            spawnedThisWave++;
         }
     }
 
@@ -90,7 +114,10 @@ public class EnemySpawner
     public void Reset()
     {
         spawnTimer = 0f;
-        spawnInterval = 5f;
-        spawnCount = 1;
+        spawnInterval = 0.2f;
+        currentWave = 1;
+        spawnedThisWave = 0;
+        waveWaitTimer = 0f;
+        waitingForNextWave = false;
     }
 }
