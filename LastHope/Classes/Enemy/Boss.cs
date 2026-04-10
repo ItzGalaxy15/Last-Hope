@@ -140,6 +140,10 @@ public class Boss : BaseEnemy
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Vector2 center = _collider.shape.Center.ToVector2();
+
+        if (DebugDrawHitbox && _collider is not null)
+            DrawHitbox(spriteBatch, _collider.shape, Color.Red);
+
         Rectangle sourceRect;
         int currentRowOffset = _isFacingLeft ? OrcFacingRightRow + 1 : OrcFacingRightRow;
 
@@ -157,6 +161,17 @@ public class Boss : BaseEnemy
         Color bossColor = Color.LightCoral; // boss tint
         spriteBatch.Draw(_texture, center, sourceRect, bossColor, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
         base.Draw(gameTime, spriteBatch);
+    }
+
+    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
+    {
+        Texture2D pixel = GameManager.GetGameManager().Pixel;
+        const int thickness = 2;
+
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
     public override void OnCollision(GameObject other)
