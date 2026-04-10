@@ -234,11 +234,6 @@ public class GameManager
 
             if (gameObject is BaseEnemy enemy && enemy.CurrentHealth <= 0)
             {
-                if (enemy is Boss)
-                {
-                    _state = GameState.Winner;
-                }
-
                 if (RNG.NextDouble() < ItemDropChance)
                 {
                     int typeRoll = RNG.Next(4);

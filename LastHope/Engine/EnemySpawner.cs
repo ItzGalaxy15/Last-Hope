@@ -16,6 +16,8 @@ public class EnemySpawner
     private int spawnedThisWave = 0;
     private float waveWaitTimer = 0f;
     private bool waitingForNextWave = false;
+    private float wavePause = 3f; // pause between the waves
+    private bool bossSpawned = false;
 
     public void Update(GameTime gameTime)
     {
@@ -31,12 +33,20 @@ public class EnemySpawner
             if (gameObject is BaseEnemy) currentEnemyCount++;
         }
 
+        int targetEnemiesForWave = GetTargetEnemiesForWave(currentWave);
+
         if (waitingForNextWave)
         {
             if (currentEnemyCount == 0)
             {
+                if (currentWave == 7) // wave 7 is the boss wave 
+                {
+                    gm._state = GameState.Winner;
+                    return;
+                }
+
                 waveWaitTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                if (waveWaitTimer >= 5f)
+                if (waveWaitTimer >= wavePause)
                 {
                     waitingForNextWave = false;
                     waveWaitTimer = 0f;
@@ -47,23 +57,19 @@ public class EnemySpawner
             return;
         }
 
-        if (currentEnemyCount >= 20 || spawnedThisWave >= 20)
+        if (currentWave == 7 && !bossSpawned)
         {
-            if (spawnedThisWave >= 20 && !waitingForNextWave)
+            Point bossSpawnPos = RandomOffScreenLocation().ToPoint();
+            gm.AddGameObject(new Boss(bossSpawnPos));
+            bossSpawned = true;
+        }
+
+        if (currentEnemyCount >= 20 || spawnedThisWave >= targetEnemiesForWave)
+        {
+            if (spawnedThisWave >= targetEnemiesForWave && !waitingForNextWave)
             {
-                if (currentWave == 4)
-                {
-                    // Spawn boss on 4th wave after spawning the 20 normal enemies
-                    Point bossSpawnPos = RandomOffScreenLocation().ToPoint();
-                    gm.AddGameObject(new Boss(bossSpawnPos));
-                    // Boss spawned, wait indefinitely until boss dies (handled in GameManager)
-                    waitingForNextWave = true;
-                    waveWaitTimer = float.MinValue; // effectively stop waves
-                }
-                else
-                {
-                    waitingForNextWave = true;
-                }
+                waitingForNextWave = true;
+                waveWaitTimer = 0f;
             }
             return;
         }
@@ -73,7 +79,6 @@ public class EnemySpawner
         {
             spawnTimer = 0f;
 
-            // spawn one enemy
             Point spawnPosition = RandomOffScreenLocation().ToPoint();
             if (gm.RNG.NextDouble() < 0.5)
                 gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
@@ -81,6 +86,21 @@ public class EnemySpawner
                 gm.AddGameObject(new Orc(spawnPosition));
 
             spawnedThisWave++;
+        }
+    }
+
+    private int GetTargetEnemiesForWave(int wave)
+    {
+        switch (wave)
+        {
+            case 1: return 1;
+            case 2: return 2;
+            case 3: return 4;
+            case 4: return 15;
+            case 5: return 20;
+            case 6: return 25;
+            case 7: return 25;
+            default: return 25; 
         }
     }
 
@@ -119,5 +139,6 @@ public class EnemySpawner
         spawnedThisWave = 0;
         waveWaitTimer = 0f;
         waitingForNextWave = false;
+        bossSpawned = false;
     }
 }
