@@ -2,6 +2,7 @@ using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Last_Hope.Classes.Items;
 
 namespace Last_Hope.UI;
 
@@ -9,13 +10,15 @@ public class ItemSlotsBar : UIElement
 {
 	private readonly Texture2D? _pixel;
 	private readonly Texture2D? _itemSpriteSheet;
+	private Texture2D? _hearthSprite;
+	private bool _triedLoadingHearth;
+
 	private Texture2D? _fallbackPixel;
 
 	private Rectangle _panelRect;
 	private readonly Rectangle[] _slotFrameRects = new Rectangle[2];
 	private readonly Rectangle[] _slotInnerRects = new Rectangle[2];
 	private readonly Rectangle[] _slotItemRects = new Rectangle[2];
-	private readonly Rectangle[] _slotSourceRects = new Rectangle[2];
 	private int _selectedSlot;
 
 	public ItemSlotsBar(Texture2D? pixel, Texture2D? itemSpriteSheet)
@@ -23,11 +26,6 @@ public class ItemSlotsBar : UIElement
 		_pixel = pixel;
 		_itemSpriteSheet = itemSpriteSheet;
 		_selectedSlot = 0;
-
-		// 512x512 sheet, 32x32 cells:
-		// bomb at (0,0), decoy one row below at (0,32), health pot at (0,64)
-		_slotSourceRects[0] = new Rectangle(0, 0, 32, 32);   // slot 1: bomb
-		_slotSourceRects[1] = new Rectangle(0, 32, 32, 32);  // slot 2: decoy
 	}
 
 	public override void Update(GameTime gameTime, Viewport viewport)
@@ -95,13 +93,43 @@ public class ItemSlotsBar : UIElement
 			spriteBatch.Draw(pixel, _slotFrameRects[i], frame);
 			spriteBatch.Draw(pixel, _slotInnerRects[i], background);
 
-			if (_itemSpriteSheet is not null)
+			GameManager gm = GameManager.GetGameManager();
+			if (gm._player is Warrior warrior)
 			{
-				spriteBatch.Draw(_itemSpriteSheet, _slotItemRects[i], _slotSourceRects[i], Color.White);
-			}
-			else
-			{
-				spriteBatch.Draw(pixel, _slotItemRects[i], placeholder);
+			    ItemType item = warrior.Inventory[i];
+			    if (item != ItemType.None)
+			    {
+			        if (item == ItemType.OneUp)
+			        {
+			            if (!_triedLoadingHearth && _hearthSprite == null)
+			            {
+			                _triedLoadingHearth = true;
+			                try { _hearthSprite = gm._content.Load<Texture2D>("Heart"); } catch { }
+			            }
+			            if (_hearthSprite != null)
+			            {
+			                spriteBatch.Draw(_hearthSprite, _slotItemRects[i], Color.White);
+			            }
+			            else
+			            {
+			                spriteBatch.Draw(pixel, _slotItemRects[i], placeholder);
+			            }
+			        }
+			        else
+			        {
+			            Rectangle sourceRect = item == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : 
+			                                   item == ItemType.Decoy ? new Rectangle(0, 32, 32, 32) : 
+			                                   new Rectangle(0, 64, 32, 32);
+			            if (_itemSpriteSheet is not null)
+			            {
+			                spriteBatch.Draw(_itemSpriteSheet, _slotItemRects[i], sourceRect, Color.White);
+			            }
+			            else
+			            {
+			                spriteBatch.Draw(pixel, _slotItemRects[i], placeholder);
+			            }
+			        }
+			    }
 			}
 
 			if (i == _selectedSlot)
