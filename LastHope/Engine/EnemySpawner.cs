@@ -7,6 +7,13 @@ namespace Last_Hope.Engine;
 
 public class EnemySpawner
 {
+    public int TotalWaves { get; set; } = 6;
+    public float EnemyMultiplierPerWave { get; set; } = 2.0f;
+    public int StartingEnemies { get; set; } = 1;
+    public bool BossAppearsAfterLastWave { get; set; } = true;
+    public bool UseMaxEnemyLimit { get; set; } = true;
+    public int MaxEnemiesPerWave { get; set; } = 35;
+
     private const float MinSpawnInterval = 0.2f;
 
     private float spawnTimer = 0f;
@@ -34,12 +41,13 @@ public class EnemySpawner
         }
 
         int targetEnemiesForWave = GetTargetEnemiesForWave(currentWave);
+        int finalWave = BossAppearsAfterLastWave ? TotalWaves + 1 : TotalWaves;
 
         if (waitingForNextWave)
         {
             if (currentEnemyCount == 0)
             {
-                if (currentWave == 7) // wave 7 is the boss wave 
+                if (currentWave == finalWave)
                 {
                     gm._state = GameState.Winner;
                     return;
@@ -57,16 +65,16 @@ public class EnemySpawner
             return;
         }
 
-        if (currentWave == 7 && !bossSpawned)
+        if (BossAppearsAfterLastWave && currentWave == finalWave && !bossSpawned)
         {
             Point bossSpawnPos = RandomOffScreenLocation().ToPoint();
             gm.AddGameObject(new Boss(bossSpawnPos));
             bossSpawned = true;
         }
 
-        if (currentEnemyCount >= 20 || spawnedThisWave >= targetEnemiesForWave)
+        if (spawnedThisWave >= targetEnemiesForWave)
         {
-            if (spawnedThisWave >= targetEnemiesForWave && !waitingForNextWave)
+            if (!waitingForNextWave)
             {
                 waitingForNextWave = true;
                 waveWaitTimer = 0f;
@@ -91,17 +99,15 @@ public class EnemySpawner
 
     private int GetTargetEnemiesForWave(int wave)
     {
-        switch (wave)
+        // Calculate the target enemies based on the starting amount and the multiplier.
+        int enemies = (int)(StartingEnemies * Math.Pow(EnemyMultiplierPerWave, wave - 1));
+
+        if (UseMaxEnemyLimit)
         {
-            case 1: return 1;
-            case 2: return 2;
-            case 3: return 4;
-            case 4: return 15;
-            case 5: return 20;
-            case 6: return 25;
-            case 7: return 25;
-            default: return 25; 
+            enemies = Math.Min(enemies, MaxEnemiesPerWave);
         }
+
+        return Math.Max(1, enemies); // Make sure there is always at least 1 enemy
     }
 
     /// <summary>
