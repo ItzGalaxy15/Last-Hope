@@ -153,6 +153,9 @@ public class GameManager
             case GameState.GameOver:
                 Menu.UpdateGameOverMenu(gameTime);
                 break;
+            case GameState.Winner:
+                Menu.UpdateWinnerMenu(gameTime);
+                break;
         }
     }
 
@@ -171,6 +174,9 @@ public class GameManager
                 break;
             case GameState.GameOver:
                 Menu.DrawGameOverMenu(gameTime, spriteBatch, transformMatrix);
+                break;
+            case GameState.Winner:
+                Menu.DrawWinnerMenu(gameTime, spriteBatch, transformMatrix);
                 break;
         }
     }
@@ -232,12 +238,12 @@ public class GameManager
                 {
                     int typeRoll = RNG.Next(4);
                     ItemType type = typeRoll == 0 ? ItemType.Bomb : typeRoll == 1 ? ItemType.Decoy : typeRoll == 2 ? ItemType.HealingPotion : ItemType.OneUp;
-                    
+
                     if (type == ItemType.OneUp && IsOneUpAlreadyActive())
                     {
                         type = ItemType.HealingPotion;
                     }
-                    
+
                     AddGameObject(new ItemDrop(enemy.GetPosition(), type));
                 }
             }

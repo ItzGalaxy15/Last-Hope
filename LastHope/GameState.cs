@@ -11,7 +11,8 @@ namespace Last_Hope
         StartMenu,
         Running,
         Paused,
-        GameOver
+        GameOver,
+        Winner
     }
 }
 
