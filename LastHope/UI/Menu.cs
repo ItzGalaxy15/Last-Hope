@@ -26,6 +26,9 @@ public class Menu
     private List<GameObject> _toBeRemoved => gm._toBeRemoved;
     private ContentManager _content => gm._content;
 
+    private SkillTreeUI _skillTreeUI;
+    private bool _showSkillTree = false;
+
     private void HandleInput(InputManager inputManager)
     {
         gm.HandleInput(inputManager);
@@ -143,6 +146,21 @@ public class Menu
         Vector2 restartPos = quitPos + new Vector2(quitSize.X + 40, 0);
         Rectangle restartRect = GetTextRectangle(restartText, restartPos, scale);
 
+        if (InputManager.IsKeyPress(Keys.N))
+        {
+            _showSkillTree = !_showSkillTree;
+            if (_showSkillTree && _skillTreeUI == null)
+            {
+                _skillTreeUI = new SkillTreeUI(Pixel, Game.GraphicsDevice.Viewport.Width);
+            }
+        }
+
+        if (_showSkillTree)
+        {
+            _skillTreeUI?.Update(gameTime, Game.GraphicsDevice.Viewport);
+            return; // Pause the game underneath while the UI is open
+        }
+
         if (pauseRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
             _state = GameState.Paused;
@@ -159,6 +177,7 @@ public class Menu
         {
             ResetGame();
             _state = GameState.Running;
+            _showSkillTree = false;
         }
         // Handle input
         HandleInput(InputManager);
@@ -227,16 +246,38 @@ public class Menu
         }
         spriteBatch.End();
 
+        Color metalBg = new Color(30, 35, 40, 220);
+        Color metalBorder = new Color(130, 140, 150, 255);
+
         spriteBatch.Begin();
-        spriteBatch.Draw(Pixel, pauseRect, Color.DarkSlateGray);
-        spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
-        spriteBatch.Draw(Pixel, restartRect, Color.DarkSlateGray);
-        spriteBatch.DrawString(_font, pauseText, pausePos, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        spriteBatch.DrawString(_font, quitText, quitPos, Color.Red, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        //spriteBatch.DrawString(_font, pauseText, pausePos, Color.White);
-        //spriteBatch.DrawString(_font, quitText,quitPos, Color.White);
-        spriteBatch.DrawString(_font, restartText, restartPos, Color.Green, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        
+        // Premium styled metallic buttons
+        DrawPremiumButton(spriteBatch, Pixel, pauseRect, metalBg, metalBorder);
+        DrawPremiumButton(spriteBatch, Pixel, quitRect, metalBg, metalBorder);
+        DrawPremiumButton(spriteBatch, Pixel, restartRect, metalBg, metalBorder);
+        
+        spriteBatch.DrawString(_font, pauseText, pausePos, Color.White, 0f, Vector2.Zero, scale * 0.8f, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, quitText, quitPos, new Color(255, 100, 100), 0f, Vector2.Zero, scale * 0.8f, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, restartText, restartPos, Color.LimeGreen, 0f, Vector2.Zero, scale * 0.8f, SpriteEffects.None, 0f);
         spriteBatch.End();
+
+        if (_showSkillTree && _skillTreeUI != null)
+        {
+            spriteBatch.Begin();
+            // Deep rich textured ambient background (parchment/dark metal tone)
+            spriteBatch.Draw(Pixel, new Rectangle(0, 0, Game.GraphicsDevice.Viewport.Width, Game.GraphicsDevice.Viewport.Height), new Color(22, 24, 28, 240));
+            _skillTreeUI.Draw(gameTime, spriteBatch);
+            spriteBatch.End();
+        }
+    }
+
+    private void DrawPremiumButton(SpriteBatch spriteBatch, Texture2D pixel, Rectangle rect, Color bg, Color border)
+    {
+        spriteBatch.Draw(pixel, rect, bg);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, 2), border);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - 2, rect.Width, 2), border);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, 2, rect.Height), border);
+        spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Top, 2, rect.Height), border);
     }
 
     //public void UpdateRunning(GameTime gameTime)
@@ -399,6 +440,7 @@ public class Menu
         {
             ResetGame();
             _state = GameState.Running;
+            _showSkillTree = false;
         }
 
         if (quitRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
@@ -452,6 +494,7 @@ public class Menu
         {
             ResetGame();
             _state = GameState.Running;
+            _showSkillTree = false;
         }
 
         if (quitRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())

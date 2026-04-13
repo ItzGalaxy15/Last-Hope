@@ -29,7 +29,6 @@ public class Warrior : BasePlayer
     private float _axePixelSize => FrameSize * AxeDrawScale;
     private float AxeOffsetY => (_bodyWidth - _axePixelSize) * 0.5f;
 
-    private const float AttackCooldown = 0.7f;
     private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
@@ -55,8 +54,19 @@ public class Warrior : BasePlayer
     public int ExtraLives { get; private set; } = 0;
     private float _greenGlowTimer = 0f;
 
+    // --- Skill Tree States ---
+    public bool DualWieldUnlocked { get; set; }
+    public int HasteLevel { get; set; }
+    public int CritLevel { get; set; }
+    public int DmgLevel { get; set; }
+    public bool WhirlwindUnlocked { get; set; }
+    private float _currentAttackCooldown = 0.7f;
+    private float _whirlwindCooldownTimer = 0f;
+    private float _whirlwindDurationTimer = 0f;
+    private float _whirlwindTickTimer = 0f;
+
     public Warrior(Vector2 startPosition)
-        : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 0.1f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
         Position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
@@ -136,10 +146,10 @@ public class Warrior : BasePlayer
             _greenGlowTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         bool moving = _moveInput != Vector2.Zero;
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         if (moving)
         {
             SetWalkRowFromDirection(_moveInput);
-            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _walkFrameTimer += dt;
             while (_walkFrameTimer >= WalkFrameDuration)
             {
@@ -153,10 +163,37 @@ public class Warrior : BasePlayer
             _walkFrameIndex = 0;
         }
 
+        // --- WHIRLWIND ACTIVE ABILITY LOGIC ---
+        if (WhirlwindUnlocked)
+        {
+            if (_whirlwindCooldownTimer > 0f) _whirlwindCooldownTimer -= dt;
+            
+            if (_whirlwindDurationTimer > 0f)
+            {
+                _whirlwindDurationTimer -= dt;
+                _whirlwindTickTimer -= dt;
+                
+                // Overwrite the walk animation to spin rapidly
+                _walkRow = (int)(gameTime.TotalGameTime.TotalMilliseconds / 50) % 4; 
+                
+                if (_whirlwindTickTimer <= 0f)
+                {
+                    _whirlwindTickTimer = 0.15f; // Emits radial burst every 0.15s
+                    FireRadialSlashes();
+                }
+            }
+            else if (_inputManager.IsKeyPress(Keys.H) && _whirlwindCooldownTimer <= 0f)
+            {
+                _whirlwindDurationTimer = 2.0f; // Spin for 2 seconds
+                _whirlwindCooldownTimer = 5.0f; // 5 second cooldown
+                _whirlwindTickTimer = 0f;
+            }
+        }
+
         if (_inputManager is not null)
         {
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.LeftMousePress() && timeSinceLastAttack >= AttackCooldown)
+            if (_inputManager.LeftMousePress() && timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
                 timeSinceLastAttack = 0;
@@ -225,6 +262,33 @@ public class Warrior : BasePlayer
         _Weapon.Attack(direction, slashOrigin);
     }
 
+    private void FireRadialSlashes()
+    {
+        Vector2 castAnchor = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
+        for (int i = 0; i < 8; i++) // 8 directions
+        {
+            float angle = i * MathHelper.TwoPi / 8f;
+            Vector2 dir = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
+            Vector2 slashOrigin = castAnchor + dir * SlashDistance;
+            _Weapon.Attack(dir, slashOrigin);
+        }
+    }
+
+    public void UpdateStats()
+    {
+        // Calculate new modifiers incrementally
+        float newCrit = 0.1f + (CritLevel * 0.1f); // Up to 40%
+        int newDmg = 20 + (DmgLevel * 5); // Up to 35
+        if (DualWieldUnlocked) newDmg = (int)(newDmg * 1.05f); // +5% base damage buff
+        
+        _Weapon = new Weapon("Sword", damage: newDmg, critChance: newCrit);
+
+        _currentAttackCooldown = 0.7f;
+        if (DualWieldUnlocked) _currentAttackCooldown *= 0.9f; // Global 10% faster attack
+        _currentAttackCooldown -= (HasteLevel * 0.1f); // Linear increase per point
+        if (_currentAttackCooldown < 0.1f) _currentAttackCooldown = 0.1f;
+    }
+
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         var warriorSource = new Rectangle(_walkFrameIndex * FrameSize, _walkRow * FrameSize, FrameSize, FrameSize);
@@ -241,11 +305,22 @@ public class Warrior : BasePlayer
         var axeFlip = GetAxeSpriteEffects();
         float axeW = _axePixelSize;
         float y = AxeOffsetY;
-        Vector2 axeOffset = _facingLeft
-            ? new Vector2(_bodyWidth - axeW - 40f, y)
-            : new Vector2(40f, y);
+        
+        Vector2 leftAxeOffset = new Vector2(40f, y);
+        Vector2 rightAxeOffset = new Vector2(_bodyWidth - axeW - 40f, y);
 
-        spriteBatch.Draw(AxeSprite, Position + axeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, axeFlip, 0f);
+        if (DualWieldUnlocked)
+        {
+            // Draw Two Axes
+            spriteBatch.Draw(AxeSprite, Position + leftAxeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(AxeSprite, Position + rightAxeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, SpriteEffects.FlipHorizontally, 0f);
+        }
+        else
+        {
+            // Draw Original single Axe
+            Vector2 axeOffset = _facingLeft ? rightAxeOffset : leftAxeOffset;
+            spriteBatch.Draw(AxeSprite, Position + axeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, axeFlip, 0f);
+        }
 
         if (DebugDrawHitbox && _collider is not null)
             DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);

@@ -67,7 +67,7 @@ public class ExperienceBar : UIElement
 		BasePlayer? player = GetActivePlayer();
 		float flash = player?.LevelUpFlashProgress ?? 0f;
 
-		Color frame = new Color(210, 210, 210, 245);
+		Color frame = new Color(130, 140, 150, 255); // Matched premium metal border
 		Color background = new Color(28, 28, 28, 245);
 		Color fill = new Color(228, 72, 72, 255);
 		Color panel = new Color(0, 0, 0, 110);
