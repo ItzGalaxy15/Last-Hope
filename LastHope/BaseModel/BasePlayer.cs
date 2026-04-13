@@ -94,8 +94,27 @@ public abstract class BasePlayer : GameObject
     {
         if (direction == Vector2.Zero)
             return;
+
         direction.Normalize();
-        ApplyDashOffset(direction * distance);
+
+        Vector2 start = GetPosition();
+        Vector2 step = direction * 8f; // faster than movement steps
+        float moved = 0f;
+
+        Vector2 current = start;
+
+        while (moved < distance)
+        {
+            Vector2 next = current + step;
+
+            if (WouldCollideAt(next))
+                break;
+
+            current = next;
+            moved += step.Length();
+        }
+
+        ApplyDashOffset(current - start);
     }
 
 
@@ -111,8 +130,11 @@ public abstract class BasePlayer : GameObject
     {
 
     }
+    
 
     public abstract Vector2 GetPosition();
 
     public abstract void Damage(float amount);
+
+    protected abstract bool WouldCollideAt(Vector2 testPosition);
 }

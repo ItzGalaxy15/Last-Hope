@@ -125,7 +125,23 @@ public class Goblin : BaseEnemy
 
             // Don't overshoot: cap movement so we stop at the edge of attack range
             float moveAmount = Math.Min(Speed * dt, distanceToTarget - _attackRange);
-            _precisePosition += moveDirection * moveAmount;
+            Vector2 velocity = moveDirection * moveAmount;
+
+            // --- X movement ---
+            Vector2 newPosX = new Vector2(_precisePosition.X + velocity.X, _precisePosition.Y);
+            if (!WouldCollideAt(newPosX))
+            {
+                _precisePosition = newPosX;
+            }
+
+            // --- Y movement ---
+            Vector2 newPosY = new Vector2(_precisePosition.X, _precisePosition.Y + velocity.Y);
+            if (!WouldCollideAt(newPosY))
+            {
+                _precisePosition = newPosY;
+            }
+
+            // Apply to collider
             _collider.shape.Location = _precisePosition.ToPoint();
             _isMoving = true;
         }
@@ -251,5 +267,21 @@ public class Goblin : BaseEnemy
     public override Vector2 GetPosition()
     {
         return _collider.shape.Center.ToVector2();
+    }
+
+    private bool WouldCollideAt(Vector2 testPosition)
+    {
+        Rectangle current = _collider.shape;
+
+        Rectangle testRect = new Rectangle(
+            (int)testPosition.X,
+            (int)testPosition.Y,
+            current.Width,
+            current.Height
+        );
+
+        var testCollider = new RectangleCollider(testRect);
+
+        return CollisionWorld.CollidesWithStatic(testCollider);
     }
 }

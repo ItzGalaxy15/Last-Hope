@@ -75,7 +75,24 @@ public class Warrior : BasePlayer
             return;
 
         direction.Normalize();
-        Position += direction * _Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        Vector2 velocity = direction * _Speed * dt;
+
+        // --- X movement ---
+        Vector2 newPosX = new Vector2(Position.X + velocity.X, Position.Y);
+        if (!WouldCollideAt(newPosX))
+        {
+            Position = newPosX;
+        }
+
+        // --- Y movement ---
+        Vector2 newPosY = new Vector2(Position.X, Position.Y + velocity.Y);
+        if (!WouldCollideAt(newPosY))
+        {
+            Position = newPosY;
+        }
+
         ClampToMapBounds();
     }
 
@@ -446,5 +463,22 @@ public class Warrior : BasePlayer
         Decoy decoy = new Decoy(spawnPosition, initialVelocity, lifetimeSeconds: 5f);
         gm.AddGameObject(decoy);
         gm.ActiveDecoy = decoy;
+    }
+
+    protected override bool WouldCollideAt(Vector2 testPosition)
+    {
+        float hitboxSize = _bodyWidth * HitboxFraction;
+        float offset = (_bodyWidth - hitboxSize) / 2f;
+
+        Rectangle testRect = new Rectangle(
+            (int)(testPosition.X + offset),
+            (int)(testPosition.Y + offset),
+            (int)hitboxSize,
+            (int)hitboxSize
+        );
+
+        var testCollider = new RectangleCollider(testRect);
+
+        return CollisionWorld.CollidesWithStatic(testCollider);
     }
 }

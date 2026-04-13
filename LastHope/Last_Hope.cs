@@ -21,6 +21,7 @@ public class Last_Hope : Game
     private SpriteBatch _spriteBatch;
     private Texture2D _terrainSheet;
     private Texture2D _decorationsSheet;
+    private Texture2D _villageSheet;
     private Texture2D? _itemSpriteSheet;
     private LevelGenerator _levelGenerator;
     private Camera _camera;
@@ -58,6 +59,7 @@ public class Last_Hope : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _terrainSheet = Content.Load<Texture2D>("terrain");
         _decorationsSheet = Content.Load<Texture2D>("decorations");
+        _villageSheet = Content.Load<Texture2D>("VillageSpriteSheetNew");
 
         // Optional item sheet for hotbar icons.
         try
@@ -69,13 +71,36 @@ public class Last_Hope : Game
             _itemSpriteSheet = null;
         }
 
-        _levelGenerator.LoadSpriteSheets(_terrainSheet, _decorationsSheet, terrainUsableRows: 5);
+        _levelGenerator.LoadSpriteSheets(_terrainSheet, _decorationsSheet, _villageSheet, terrainUsableRows: 5);
         _levelGenerator.GenerateMap(MapWidthInTiles * _levelGenerator.TileSize, MapHeightInTiles * _levelGenerator.TileSize);
 
         _gameManager.NavigationGrid = new NavigationGrid(
             _levelGenerator.MapWidthInTiles,
             _levelGenerator.MapHeightInTiles,
             _levelGenerator.TileSize);
+
+        // Register building colliders and block them in the navigation grid
+        CollisionWorld.ClearStatic();
+        foreach (var collider in _levelGenerator.GetVillageBuildingColliders())
+        {
+            CollisionWorld.RegisterStatic(collider);
+
+            // Mark every tile the building footprint covers as non-walkable.
+            // Inflate by one tile on every side so the A* path (which plans from the
+            // enemy's point position) leaves room for the enemy's hitbox — otherwise
+            // paths hug the wall and enemies just grind against the collider.
+            Rectangle bounds = collider.GetBoundingBox();
+            const int NavPaddingTiles = 1;
+            int tileSize = _levelGenerator.TileSize;
+            int tileLeft   = (bounds.Left        / tileSize) - NavPaddingTiles;
+            int tileTop    = (bounds.Top         / tileSize) - NavPaddingTiles;
+            int tileRight  = ((bounds.Right - 1) / tileSize) + NavPaddingTiles;
+            int tileBottom = ((bounds.Bottom - 1)/ tileSize) + NavPaddingTiles;
+
+            for (int ty = tileTop; ty <= tileBottom; ty++)
+                for (int tx = tileLeft; tx <= tileRight; tx++)
+                    _gameManager.NavigationGrid.SetWalkable(tx, ty, false);
+        }
 
         _gameManager.Load(Content);
 
@@ -116,4 +141,20 @@ public class Last_Hope : Game
         base.Draw(gameTime);
     }
 
+    private Rectangle GetPlayerSpawnArea()
+    {
+        int size = 6 * _levelGenerator.TileSize; // safe radius around player
+
+        Vector2 center = new Vector2(
+            MapWidthInTiles * _levelGenerator.TileSize / 2f,
+            MapHeightInTiles * _levelGenerator.TileSize / 2f
+        );
+
+        return new Rectangle(
+            (int)(center.X - size / 2),
+            (int)(center.Y - size / 2),
+            size,
+            size
+        );
+    }
 }
