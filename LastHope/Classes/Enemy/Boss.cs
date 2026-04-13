@@ -158,7 +158,7 @@ public class Boss : BaseEnemy
             sourceRect.Y = currentRowOffset * 32;
         }
         
-        Color bossColor = Color.LightCoral; // boss tint
+        Color bossColor = DrawTint == Color.White ? Color.Green : DrawTint;
         spriteBatch.Draw(_texture, center, sourceRect, bossColor, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
         base.Draw(gameTime, spriteBatch);
     }
