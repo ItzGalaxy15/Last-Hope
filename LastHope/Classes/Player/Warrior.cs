@@ -273,11 +273,18 @@ public class Warrior : BasePlayer
 
     public override void OnCollision(GameObject other)
     {
-        if (other is not BaseEnemy || _hurtCooldown > 0f)
+        if (other is not BaseEnemy enemy || _hurtCooldown > 0f)
             return;
 
         _hurtCooldown = EnemyContactHurtInterval;
-        Damage(EnemyContactDamage);
+
+        float damageToTake = EnemyContactDamage;
+        if (enemy is Boss) 
+        {
+            damageToTake *= 2;
+        }
+
+        Damage(damageToTake);
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)
