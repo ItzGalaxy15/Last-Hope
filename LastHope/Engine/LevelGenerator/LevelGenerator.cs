@@ -62,10 +62,11 @@ namespace Last_Hope.Engine.LevelGenerator
         // The terrain sheet feeds the WFC solver (and drives the
         // compatibility table), the decorations sheet feeds the overlay
         // layer — weed, rocks, pebbles, snails, bunnies.
-        public void LoadSpriteSheets(Texture2D terrainSheet, Texture2D decorationsSheet, int terrainUsableRows = 5)
+        public void LoadSpriteSheets(Texture2D terrainSheet, Texture2D decorationsSheet, Texture2D villageSheet, int terrainUsableRows = 5)
         {
             _terrainSheet = terrainSheet;
             _decorationsSheet = decorationsSheet;
+            _villageSheet = villageSheet;
 
             _terrainTiles.Clear();
             _terrainColumns = terrainSheet.Width / TileSize;
@@ -154,6 +155,10 @@ namespace Last_Hope.Engine.LevelGenerator
             ApplyWalkways(_map);
             ApplyFlowerField(_map);
             ApplyDecorations(_map, _overlayMap);
+            if (_villageSheet != null)
+            {
+                GenerateVillage();
+            }
         }
 
         // ── Drawing ──────────────────────────────────────────────────
@@ -189,6 +194,7 @@ namespace Last_Hope.Engine.LevelGenerator
                 Vector2 position = origin + new Vector2(decoration.TileX * TileSize, decoration.TileY * TileSize);
                 spriteBatch.Draw(_decorationsSheet, position, decoration.Animation.GetSourceRect(), Color.White);
             }
+            DrawVillage(spriteBatch, origin);
         }
     }
 }

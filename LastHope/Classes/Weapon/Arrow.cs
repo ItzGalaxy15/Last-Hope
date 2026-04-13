@@ -38,11 +38,31 @@ namespace Last_Hope.Classes.Weapon
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            _position += _velocity * dt;
-            _collider.shape.Location = (_position - new Vector2(_collider.shape.Width / 2f, _collider.shape.Height / 2f)).ToPoint();
+
+            Vector2 nextPosition = _position + _velocity * dt;
+
+            Rectangle nextRect = new Rectangle(
+                (int)(nextPosition.X - _collider.shape.Width / 2f),
+                (int)(nextPosition.Y - _collider.shape.Height / 2f),
+                _collider.shape.Width,
+                _collider.shape.Height
+            );
+
+            var testCollider = new RectangleCollider(nextRect);
+
+            // 🧱 BLOCKED BY WORLD
+            if (CollisionWorld.CollidesWithStatic(testCollider))
+            {
+                GameManager.GetGameManager().RemoveGameObject(this);
+                return;
+            }
+
+            // Move if no collision
+            _position = nextPosition;
+            _collider.shape.Location = nextRect.Location;
+
             base.Update(gameTime);
         }
-
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             float angle = (float)System.Math.Atan2(_velocity.Y, _velocity.X);
