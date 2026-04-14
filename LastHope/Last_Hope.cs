@@ -85,12 +85,17 @@ public class Last_Hope : Game
         {
             CollisionWorld.RegisterStatic(collider);
 
-            // Mark every tile the building footprint covers as non-walkable
+            // Mark every tile the building footprint covers as non-walkable.
+            // Inflate by one tile on every side so the A* path (which plans from the
+            // enemy's point position) leaves room for the enemy's hitbox — otherwise
+            // paths hug the wall and enemies just grind against the collider.
             Rectangle bounds = collider.GetBoundingBox();
-            int tileLeft   = bounds.Left   / _levelGenerator.TileSize;
-            int tileTop    = bounds.Top    / _levelGenerator.TileSize;
-            int tileRight  = bounds.Right  / _levelGenerator.TileSize;
-            int tileBottom = bounds.Bottom / _levelGenerator.TileSize;
+            const int NavPaddingTiles = 1;
+            int tileSize = _levelGenerator.TileSize;
+            int tileLeft   = (bounds.Left        / tileSize) - NavPaddingTiles;
+            int tileTop    = (bounds.Top         / tileSize) - NavPaddingTiles;
+            int tileRight  = ((bounds.Right - 1) / tileSize) + NavPaddingTiles;
+            int tileBottom = ((bounds.Bottom - 1)/ tileSize) + NavPaddingTiles;
 
             for (int ty = tileTop; ty <= tileBottom; ty++)
                 for (int tx = tileLeft; tx <= tileRight; tx++)

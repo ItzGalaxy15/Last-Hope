@@ -22,7 +22,7 @@ public class Bomb : GameObject
     private Texture2D? _bombSpriteSheet;
     private int _currentFuseFrame;
 
-    private const float ExplosionRadius = 140f;
+    private const float ExplosionRadius = 100f;
     private const float ExplosionDamage = 55f;
 
     private const int BombFrameSize = 32;
@@ -102,12 +102,13 @@ public class Bomb : GameObject
         // Explosion animation object (set textureName to your actual content asset name).
         gm.AddGameObject(new Explosion(
             position: _position.ToPoint(),
-            explosionFrameCount: 16,
-            explosionColumns: 4,
-            explosionRows: 4,
-            explosionInterval: 3,
-            scale: 2.8f,
-            textureName: "Explosion"));
+            explosionFrameCount: 6,
+            explosionColumns: 6,
+            explosionRows: 1,
+            explosionInterval: 4,
+            scale: 2.0f,
+            textureName: "explosion",
+            hitboxRadius: ExplosionRadius));
 
         gm.RemoveGameObject(this);
     }

@@ -7,17 +7,30 @@ namespace Last_Hope.Engine;
 
 public class EnemySpawner
 {
-    private const float MinSpawnInterval = 0.5f;
+    public int TotalWaves { get; set; } = 6;
+    public float EnemyMultiplierPerWave { get; set; } = 2.0f;
+    public int StartingEnemies { get; set; } = 1;
+    public bool BossAppearsOnLastWave { get; set; } = true;
+    public bool UseMaxEnemyLimit { get; set; } = true;
+    public int MaxEnemiesPerWave { get; set; } = 35;
+
+    private const float MinSpawnInterval = 0.2f;
 
     private float spawnTimer = 0f;
-    private float spawnInterval = 5f;
-    private int spawnCount = 1;
+    private float spawnInterval = 0.2f; // spawn an enemy every 0.2s
+
+    private int currentWave = 1;
+    public int CurrentWave => currentWave;
+    private int spawnedThisWave = 0;
+    private float waveWaitTimer = 0f;
+    private bool waitingForNextWave = false;
+    private float wavePause = 3f; // pause between the waves
+    private bool bossSpawned = false;
 
     public void Update(GameTime gameTime)
     {
         var gm = GameManager.GetGameManager();
 
-        // How many enemies are active now
         int currentEnemyCount = 0;
         foreach (var gameObject in gm._gameObjects)
         {
@@ -28,8 +41,45 @@ public class EnemySpawner
             if (gameObject is BaseEnemy) currentEnemyCount++;
         }
 
-        if (currentEnemyCount >= 20)
+        int targetEnemiesForWave = GetTargetEnemiesForWave(currentWave);
+        int finalWave = TotalWaves;
+
+        if (waitingForNextWave)
         {
+            if (currentEnemyCount == 0)
+            {
+                if (currentWave == finalWave)
+                {
+                    gm._state = GameState.Winner;
+                    return;
+                }
+
+                waveWaitTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (waveWaitTimer >= wavePause)
+                {
+                    waitingForNextWave = false;
+                    waveWaitTimer = 0f;
+                    currentWave++;
+                    spawnedThisWave = 0;
+                }
+            }
+            return;
+        }
+
+        if (BossAppearsOnLastWave && currentWave == finalWave && !bossSpawned)
+        {
+            Point bossSpawnPos = RandomOffScreenLocation().ToPoint();
+            gm.AddGameObject(new Boss(bossSpawnPos));
+            bossSpawned = true;
+        }
+
+        if (spawnedThisWave >= targetEnemiesForWave)
+        {
+            if (!waitingForNextWave)
+            {
+                waitingForNextWave = true;
+                waveWaitTimer = 0f;
+            }
             return;
         }
 
@@ -38,26 +88,27 @@ public class EnemySpawner
         {
             spawnTimer = 0f;
 
-            // spawn up to the limit 
-            int enemiesToSpawn = Math.Min(spawnCount, 20 - currentEnemyCount);
+            Point spawnPosition = RandomOffScreenLocation().ToPoint();
+            if (gm.RNG.NextDouble() < 0.5)
+                gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
+            else
+                gm.AddGameObject(new Orc(spawnPosition));
 
-            for (int i = 0; i < enemiesToSpawn; i++)
-            {
-                Point spawnPosition = RandomOffScreenLocation().ToPoint();
-                if (gm.RNG.NextDouble() < 0.5)
-                    gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
-                else
-                    gm.AddGameObject(new Orc(spawnPosition));
-            }
-
-            spawnInterval -= 0.5f;
-
-            if (spawnInterval < MinSpawnInterval)
-            {
-                spawnInterval = MinSpawnInterval;
-                spawnCount++;
-            }
+            spawnedThisWave++;
         }
+    }
+
+    private int GetTargetEnemiesForWave(int wave)
+    {
+        // Calculate the target enemies based on the starting amount and the multiplier.
+        int enemies = (int)(StartingEnemies * Math.Pow(EnemyMultiplierPerWave, wave - 1));
+
+        if (UseMaxEnemyLimit)
+        {
+            enemies = Math.Min(enemies, MaxEnemiesPerWave);
+        }
+
+        return Math.Max(1, enemies); // Make sure there is always at least 1 enemy
     }
 
     /// <summary>
@@ -90,7 +141,11 @@ public class EnemySpawner
     public void Reset()
     {
         spawnTimer = 0f;
-        spawnInterval = 5f;
-        spawnCount = 1;
+        spawnInterval = 0.2f;
+        currentWave = 1;
+        spawnedThisWave = 0;
+        waveWaitTimer = 0f;
+        waitingForNextWave = false;
+        bossSpawned = false;
     }
 }
