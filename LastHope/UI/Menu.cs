@@ -139,6 +139,8 @@ public class Menu
             "[1] / [2] -> Select Item\n" +
             "[T] -> Use Item";
         Vector2 textPos = new Vector2(50, 250);
+        Rectangle backgroundRect = GetTextRectangle(text, textPos, 0.5f);
+        spriteBatch.Draw(Pixel, backgroundRect, Color.Black * 0.60f);
 
         // Use an appropriate scale if necessary, otherwise use default
         spriteBatch.DrawString(_font, text, textPos, Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
