@@ -279,62 +279,6 @@ public class GameManager
             RNG.Next(0, Game.GraphicsDevice.Viewport.Height));
     }
 
-    private Rectangle GetCameraWorldBounds()
-    {
-        var gm = GameManager.GetGameManager();
-        var camera = gm.Camera;
-
-        Vector2 topLeft = Vector2.Transform(Vector2.Zero, Matrix.Invert(camera.ViewMatrix));
-        Vector2 bottomRight = Vector2.Transform(
-            new Vector2(
-                gm.Game.GraphicsDevice.Viewport.Width,
-                gm.Game.GraphicsDevice.Viewport.Height),
-            Matrix.Invert(camera.ViewMatrix)
-        );
-
-        return new Rectangle(
-            (int)topLeft.X,
-            (int)topLeft.Y,
-            (int)(bottomRight.X - topLeft.X),
-            (int)(bottomRight.Y - topLeft.Y)
-        );
-    }
-
-    public Vector2 GetSpawnPositionOutsideScreen(float margin = 200f)
-    {
-        var gm = GameManager.GetGameManager();
-        Rectangle cam = GetCameraWorldBounds();
-
-        int side = gm.RNG.Next(4);
-
-        switch (side)
-        {
-            case 0: // LEFT
-                return new Vector2(
-                    cam.Left - margin,
-                    gm.RNG.Next(cam.Top - 200, cam.Bottom + 200)
-                );
-
-            case 1: // RIGHT
-                return new Vector2(
-                    cam.Right + margin,
-                    gm.RNG.Next(cam.Top - 200, cam.Bottom + 200)
-                );
-
-            case 2: // TOP
-                return new Vector2(
-                    gm.RNG.Next(cam.Left - 200, cam.Right + 200),
-                    cam.Top - margin
-                );
-
-            default: // BOTTOM
-                return new Vector2(
-                    gm.RNG.Next(cam.Left - 200, cam.Right + 200),
-                    cam.Bottom + margin
-                );
-        }
-    }
-
     public void SetSelectedItemSlot(int slotIndex)
     {
         SelectedItemSlot = Math.Clamp(slotIndex, 0, 1);
