@@ -77,7 +77,7 @@ public class GameManager
         Menu = new Menu();
         EnemySpawner = new EnemySpawner();
 
-        _state = GameState.StartMenu;
+        _state = GameState.ControlsMenu;
         SelectedItemSlot = 0;
     }
 

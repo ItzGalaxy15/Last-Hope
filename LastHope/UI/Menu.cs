@@ -14,6 +14,7 @@ public class Menu
 
     private SpriteFont _font => gm._font;
     private InputManager InputManager => gm.InputManager;
+    private GameState _previousState = GameState.StartMenu;
     private GameState _state
     {
         get => gm._state;
@@ -62,13 +63,13 @@ public class Menu
         //Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
 
         string quitText = "Quit Game";
-        Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 200);
+        Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 100);
         Rectangle quitRect = GetTextRectangle(quitText, quitPos);
 
 
         if (startRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
-            _state = GameState.ControlsMenu;
+            _state = GameState.Running;
         }
 
         //if (controlsRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
@@ -154,7 +155,7 @@ public class Menu
 
         if (continueRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
-            _state = GameState.Running;
+            _state = _previousState;
         }
     }
 
@@ -224,6 +225,7 @@ public class Menu
 
         if (controlsRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
+            _previousState = _state;
             _state = GameState.ControlsMenu;
             return;
         }
@@ -633,3 +635,4 @@ public class Menu
         return position;
     }
 }
+
