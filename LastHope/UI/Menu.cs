@@ -135,7 +135,8 @@ public class Menu
         float scale = 0.5f;
         string text =
             "Controls\n\nMovement\n" +
-            "[W] [A] [S] [D] -> Move\n\n" +
+            "[W] [A] [S] [D] -> Move\n" +
+            "[Left Shift] -> Dash\n\n" +
             "Combat\n" +
             "[LMB] -> Attack\n\n" +
             "Items\n" +
