@@ -130,7 +130,14 @@ public class Menu
 
     private void DrawControlsText(SpriteBatch spriteBatch)
     {
-        string text = "Controls\n\nMovement\nW / A / S / D -> Move\n\nCombat\nLeft Mouse -> Attack\n\nItems\n1 / 2 -> Select Item\nT -> Use Item";
+        string text =
+            "Controls\n\nMovement\n" +
+            "[W] [A] [S] [D] -> Move\n\n" +
+            "Combat\n" +
+            "[LMB] -> Attack\n\n" +
+            "Items\n" +
+            "[1] / [2] -> Select Item\n" +
+            "[T] -> Use Item";
         Vector2 textPos = new Vector2(50, 250);
 
         // Use an appropriate scale if necessary, otherwise use default
