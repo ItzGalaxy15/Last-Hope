@@ -109,12 +109,6 @@
 /processorParam:TextureFormat=Color
 /build:Fence.png
 
-#begin File.fx
-/importer:EffectImporter
-/processor:EffectProcessor
-/processorParam:DebugMode=Auto
-/build:File.fx;Shader.fx
-
 #begin Fonts/font.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
