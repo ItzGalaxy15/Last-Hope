@@ -131,6 +131,7 @@ public class Menu
 
     private void DrawControlsText(SpriteBatch spriteBatch)
     {
+        float scale = 0.5f;
         string text =
             "Controls\n\nMovement\n" +
             "[W] [A] [S] [D] -> Move\n\n" +
@@ -140,11 +141,9 @@ public class Menu
             "[1] / [2] -> Select Item\n" +
             "[T] -> Use Item";
         Vector2 textPos = new Vector2(50, 250);
-        Rectangle backgroundRect = GetTextRectangle(text, textPos, 0.5f);
+        Rectangle backgroundRect = GetTextRectangle(text, textPos, scale);
         spriteBatch.Draw(Pixel, backgroundRect, Color.Black * 0.60f);
-
-        // Use an appropriate scale if necessary, otherwise use default
-        spriteBatch.DrawString(_font, text, textPos, Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, text, textPos, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 
     public void UpdateControlsMenu(GameTime gameTime)
