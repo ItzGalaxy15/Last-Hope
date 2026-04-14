@@ -30,6 +30,9 @@ public class WaveIndicator : UIElement
         var gm = GameManager.GetGameManager();
         if (gm._font == null || gm.EnemySpawner == null) return;
 
+        if (gm._state == GameState.StartMenu) return;
+        if (gm._state == GameState.ControlsMenu && gm.Menu.PreviousState == GameState.StartMenu) return;
+
         int displayWave = System.Math.Min(gm.EnemySpawner.CurrentWave, gm.EnemySpawner.TotalWaves);
         string waveText = $"Wave {displayWave}/{gm.EnemySpawner.TotalWaves}";
         spriteBatch.DrawString(gm._font, waveText, _position, Color.White, 0f, Vector2.Zero, TextScale, SpriteEffects.None, 0f);

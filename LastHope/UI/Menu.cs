@@ -14,6 +14,7 @@ public class Menu
 
     private SpriteFont _font => gm._font;
     private InputManager InputManager => gm.InputManager;
+    public GameState PreviousState => _previousState;
     private GameState _previousState = GameState.StartMenu;
     private GameState _state
     {
