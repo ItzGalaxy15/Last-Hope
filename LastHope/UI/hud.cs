@@ -15,7 +15,8 @@ public class Hud
 		{
 			new ExperienceBar(player, pixel),
 			new HealthBar(player, pixel),
-			new ItemSlotsBar(pixel, itemSpriteSheet)
+			new ItemSlotsBar(pixel, itemSpriteSheet),
+			new WaveIndicator()
 		};
 	}
 
