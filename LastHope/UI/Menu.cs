@@ -57,9 +57,9 @@ public class Menu
         Vector2 startPos = GetFontPosition(startText);
         Rectangle startRect = GetTextRectangle(startText, startPos);
 
-        string controlsText = "Controls";
-        Vector2 controlsPos = GetFontPosition(controlsText) + new Vector2(0, 100);
-        Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
+        //string controlsText = "Controls";
+        //Vector2 controlsPos = GetFontPosition(controlsText) + new Vector2(0, 100);
+        //Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
 
         string quitText = "Quit Game";
         Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 200);
@@ -71,10 +71,10 @@ public class Menu
             _state = GameState.ControlsMenu;
         }
 
-        if (controlsRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
-        {
-            _state = GameState.ControlsMenu;
-        }
+        //if (controlsRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
+        //{
+        //    _state = GameState.ControlsMenu;
+        //}
 
         if (quitRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
@@ -89,21 +89,21 @@ public class Menu
         Vector2 startPos = GetFontPosition(startText);
         Rectangle startRect = GetTextRectangle(startText, startPos);
 
-        string controlsText = "Controls";
-        Vector2 controlsPos = GetFontPosition(controlsText) + new Vector2(0, 100);
-        Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
+        //string controlsText = "Controls";
+        //Vector2 controlsPos = GetFontPosition(controlsText) + new Vector2(0, 100);
+        //Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
 
 
         string quitText = "Quit Game";
-        Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 200);
+        Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 100);
         Rectangle quitRect = GetTextRectangle(quitText, quitPos);
 
         spriteBatch.Begin();
         spriteBatch.Draw(Pixel, startRect, Color.DarkSlateGray);
-        spriteBatch.Draw(Pixel, controlsRect, Color.DarkSlateGray);
+        // spriteBatch.Draw(Pixel, controlsRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, startText, startPos, Color.White);
-        spriteBatch.DrawString(_font, controlsText, controlsPos, Color.White);
+        //spriteBatch.DrawString(_font, controlsText, controlsPos, Color.White);
         spriteBatch.DrawString(_font, quitText, quitPos, Color.Red);
         spriteBatch.End();
     }
