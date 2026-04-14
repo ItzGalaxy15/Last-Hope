@@ -10,7 +10,7 @@ public class EnemySpawner
     public int TotalWaves { get; set; } = 6;
     public float EnemyMultiplierPerWave { get; set; } = 2.0f;
     public int StartingEnemies { get; set; } = 1;
-    public bool BossAppearsAfterLastWave { get; set; } = true;
+    public bool BossAppearsOnLastWave { get; set; } = true;
     public bool UseMaxEnemyLimit { get; set; } = true;
     public int MaxEnemiesPerWave { get; set; } = 35;
 
@@ -20,6 +20,7 @@ public class EnemySpawner
     private float spawnInterval = 0.2f; // spawn an enemy every 0.2s
 
     private int currentWave = 1;
+    public int CurrentWave => currentWave;
     private int spawnedThisWave = 0;
     private float waveWaitTimer = 0f;
     private bool waitingForNextWave = false;
@@ -41,7 +42,7 @@ public class EnemySpawner
         }
 
         int targetEnemiesForWave = GetTargetEnemiesForWave(currentWave);
-        int finalWave = BossAppearsAfterLastWave ? TotalWaves + 1 : TotalWaves;
+        int finalWave = TotalWaves;
 
         if (waitingForNextWave)
         {
@@ -65,7 +66,7 @@ public class EnemySpawner
             return;
         }
 
-        if (BossAppearsAfterLastWave && currentWave == finalWave && !bossSpawned)
+        if (BossAppearsOnLastWave && currentWave == finalWave && !bossSpawned)
         {
             Point bossSpawnPos = RandomOffScreenLocation().ToPoint();
             gm.AddGameObject(new Boss(bossSpawnPos));
