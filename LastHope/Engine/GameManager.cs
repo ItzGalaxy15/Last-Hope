@@ -77,7 +77,7 @@ public class GameManager
         Menu = new Menu();
         EnemySpawner = new EnemySpawner();
 
-        _state = GameState.StartMenu;
+        _state = GameState.ControlsMenu;
         SelectedItemSlot = 0;
     }
 
@@ -151,6 +151,9 @@ public class GameManager
             case GameState.StartMenu:
                 Menu.UpdateStartMenu(gameTime);
                 break;
+            case GameState.ControlsMenu:
+                Menu.UpdateControlsMenu(gameTime);
+                break;
             case GameState.Running:
                 EnemySpawner.Update(gameTime);
                 Menu.UpdateRunningMenu(gameTime);
@@ -173,6 +176,9 @@ public class GameManager
         {
             case GameState.StartMenu:
                 Menu.DrawStartMenu(gameTime, spriteBatch);
+                break;
+            case GameState.ControlsMenu:
+                Menu.DrawControlsMenu(gameTime, spriteBatch, transformMatrix);
                 break;
             case GameState.Running:
                 Menu.DrawRunningMenu(gameTime, spriteBatch, transformMatrix);

@@ -14,6 +14,8 @@ public class Menu
 
     private SpriteFont _font => gm._font;
     private InputManager InputManager => gm.InputManager;
+    public GameState PreviousState => _previousState;
+    private GameState _previousState = GameState.StartMenu;
     private GameState _state
     {
         get => gm._state;
@@ -57,6 +59,10 @@ public class Menu
         Vector2 startPos = GetFontPosition(startText);
         Rectangle startRect = GetTextRectangle(startText, startPos);
 
+        //string controlsText = "Controls";
+        //Vector2 controlsPos = GetFontPosition(controlsText) + new Vector2(0, 100);
+        //Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
+
         string quitText = "Quit Game";
         Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 100);
         Rectangle quitRect = GetTextRectangle(quitText, quitPos);
@@ -66,6 +72,11 @@ public class Menu
         {
             _state = GameState.Running;
         }
+
+        //if (controlsRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
+        //{
+        //    _state = GameState.ControlsMenu;
+        //}
 
         if (quitRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
@@ -80,6 +91,10 @@ public class Menu
         Vector2 startPos = GetFontPosition(startText);
         Rectangle startRect = GetTextRectangle(startText, startPos);
 
+        //string controlsText = "Controls";
+        //Vector2 controlsPos = GetFontPosition(controlsText) + new Vector2(0, 100);
+        //Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
+
 
         string quitText = "Quit Game";
         Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 100);
@@ -87,8 +102,10 @@ public class Menu
 
         spriteBatch.Begin();
         spriteBatch.Draw(Pixel, startRect, Color.DarkSlateGray);
+        // spriteBatch.Draw(Pixel, controlsRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, startText, startPos, Color.White);
+        //spriteBatch.DrawString(_font, controlsText, controlsPos, Color.White);
         spriteBatch.DrawString(_font, quitText, quitPos, Color.Red);
         spriteBatch.End();
     }
@@ -113,6 +130,59 @@ public class Menu
     //    spriteBatch.End();
     //}
 
+    private void DrawControlsText(SpriteBatch spriteBatch)
+    {
+        float scale = 0.5f;
+        string text =
+            "Controls\n\nMovement\n" +
+            "[W] [A] [S] [D] -> Move\n" +
+            "[Left Shift] -> Dash\n\n" +
+            "Combat\n" +
+            "[LMB] -> Attack\n\n" +
+            "Items\n" +
+            "[1] / [2] -> Select Item\n" +
+            "[T] -> Use Item";
+        Vector2 textPos = new Vector2(50, 250);
+        Rectangle backgroundRect = GetTextRectangle(text, textPos, scale);
+        spriteBatch.Draw(Pixel, backgroundRect, Color.Black * 0.60f);
+        spriteBatch.DrawString(_font, text, textPos, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
+
+    public void UpdateControlsMenu(GameTime gameTime)
+    {
+        string continueText = "Continue";
+        Vector2 continuePos = GetFontPosition(continueText);
+        Rectangle continueRect = GetTextRectangle(continueText, continuePos);
+
+        if (continueRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
+        {
+            _state = _previousState;
+        }
+    }
+
+    public void DrawControlsMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
+    {
+        string continueText = "Continue";
+        Vector2 continuePos = GetFontPosition(continueText);
+        Rectangle continueRect = GetTextRectangle(continueText, continuePos);
+
+        if (transformMatrix != null)
+        {
+            spriteBatch.Begin(transformMatrix: transformMatrix);
+            foreach (GameObject gameObject in _gameObjects)
+            {
+                gameObject.Draw(gameTime, spriteBatch);
+            }
+            spriteBatch.End();
+        }
+
+        spriteBatch.Begin();
+        DrawControlsText(spriteBatch);
+
+        spriteBatch.Draw(Pixel, continueRect, Color.DarkSlateGray);
+        spriteBatch.DrawString(_font, continueText, continuePos, Color.White);
+        spriteBatch.End();
+    }
 
     public void UpdateRunningMenu(GameTime gameTime)
     {
@@ -143,9 +213,21 @@ public class Menu
         Vector2 restartPos = quitPos + new Vector2(quitSize.X + 40, 0);
         Rectangle restartRect = GetTextRectangle(restartText, restartPos, scale);
 
+        Vector2 restartSize = _font.MeasureString(restartText) * scale;
+        string controlsText = "Controls";
+        Vector2 controlsPos = restartPos + new Vector2(restartSize.X + 40, 0);
+        Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos, scale);
+
         if (pauseRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
             _state = GameState.Paused;
+            return;
+        }
+
+        if (controlsRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
+        {
+            _previousState = _state;
+            _state = GameState.ControlsMenu;
             return;
         }
 
@@ -220,6 +302,11 @@ public class Menu
         Vector2 restartPos = quitPos + new Vector2(quitSize.X + 40, 0);
         Rectangle restartRect = GetTextRectangle(restartText, restartPos, scale);
 
+        Vector2 restartSize = _font.MeasureString(restartText) * scale;
+        string controlsText = "Controls";
+        Vector2 controlsPos = restartPos + new Vector2(restartSize.X + 40, 0);
+        Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos, scale);
+
         spriteBatch.Begin(transformMatrix: transformMatrix);
         foreach (GameObject gameObject in _gameObjects)
         {
@@ -231,11 +318,13 @@ public class Menu
         spriteBatch.Draw(Pixel, pauseRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, restartRect, Color.DarkSlateGray);
+        spriteBatch.Draw(Pixel, controlsRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, pauseText, pausePos, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         spriteBatch.DrawString(_font, quitText, quitPos, Color.Red, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         //spriteBatch.DrawString(_font, pauseText, pausePos, Color.White);
         //spriteBatch.DrawString(_font, quitText,quitPos, Color.White);
         spriteBatch.DrawString(_font, restartText, restartPos, Color.Green, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, controlsText, controlsPos, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         spriteBatch.End();
     }
 
@@ -346,6 +435,7 @@ public class Menu
         spriteBatch.End();
 
         spriteBatch.Begin();
+        DrawControlsText(spriteBatch);
         spriteBatch.Draw(Pixel, continueRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, continueText, continuePos, Color.White);
@@ -546,3 +636,4 @@ public class Menu
         return position;
     }
 }
+
