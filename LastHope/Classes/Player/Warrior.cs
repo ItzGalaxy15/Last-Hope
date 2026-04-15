@@ -34,7 +34,7 @@ public class Warrior : BasePlayer
     private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
-    private const bool DebugDrawHitbox = true;
+    private const bool DebugDrawHitbox = false;
 
     private double timeSinceLastAttack = 0;
     private float _dashCooldown;

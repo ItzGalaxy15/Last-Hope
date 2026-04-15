@@ -22,7 +22,7 @@ public class Explosion : GameObject
     private float _scale;
     private float _hitboxRadius;
 
-    private const bool DebugDrawHitbox = true;
+    private const bool DebugDrawHitbox = false;
 
     public Explosion(Point position,
         int explosionFrameCount,
