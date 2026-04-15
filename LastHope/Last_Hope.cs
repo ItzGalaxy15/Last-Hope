@@ -28,7 +28,6 @@ public class Last_Hope : Game
     private Camera _camera;
     private Warrior _player;
     private Hud _hud;
-    private Song _bgm;
 
     public Last_Hope()
     {
@@ -114,11 +113,6 @@ public class Last_Hope : Game
         _gameManager.Camera = _camera;
 
         _hud = new Hud(_player, _gameManager.Pixel, _itemSpriteSheet);
-
-        _bgm = Content.Load<Song>("sounds/BMG");
-        MediaPlayer.Volume = 0.5f;
-        MediaPlayer.Play(_bgm);
-        MediaPlayer.IsRepeating = true;
     }
 
     protected override void Update(GameTime gameTime)
