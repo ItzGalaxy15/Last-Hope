@@ -95,7 +95,9 @@ public class Goblin : BaseEnemy
                 _attackTimer = 0f;
         }
 
-        Vector2 targetPos = decoy != null ? decoy.GetPosition() : player.GetPosition();
+        Vector2 targetPos = decoy != null
+            ? decoy.GetPosition()
+            : player.GetCollider()?.GetBoundingBox().Center.ToVector2() ?? player.GetPosition();
 
         Vector2 toTarget = targetPos - GetPosition();
         float distanceToTarget = toTarget.Length();
