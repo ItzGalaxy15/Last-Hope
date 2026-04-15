@@ -188,6 +188,24 @@
 /processorParam:TextureFormat=Color
 /build:Slash-sheet.png
 
+#begin sounds/BMG.wav
+/importer:WavImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:sounds/BMG.wav
+
+#begin sounds/Death sound.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Death sound.wav
+
+#begin sounds/Warrior Attack.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Warrior Attack.wav
+
 #begin TempExplosion.png
 /importer:TextureImporter
 /processor:TextureProcessor
