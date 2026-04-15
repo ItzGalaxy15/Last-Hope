@@ -22,6 +22,10 @@ public class Goblin : BaseEnemy
 
     private AnimationManager _walkingAnimation;
     private AnimationManager _attackingAnimation;
+    private AnimationManager _bowAnimation;
+
+    private Texture2D _bowTexture;
+
     private bool _isAttacking = false;
     private bool _isMoving = false;
     private bool _isFacingLeft = false;
@@ -36,6 +40,12 @@ public class Goblin : BaseEnemy
     private const int AttackFrameCount = 2;
     private const int SheetColumns = 4;
     private const int FrameSize = 32;
+
+    // Bow animation constants
+    private const int BowFrameCount = 3;
+    private const int BowSheetColumns = 3;
+    private const int BowRightRow = 0;
+    private const int BowLeftRow = 1;
 
     public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 2)
     {
@@ -55,6 +65,8 @@ public class Goblin : BaseEnemy
         base.Load(content);
         _texture = content.Load<Texture2D>("Goblin spritesheet attempt-sheet");
 
+        _bowTexture = content.Load<Texture2D>("Bow sheet");
+
         _walkingAnimation = new AnimationManager(
             WalkFrameCount,
             SheetColumns,
@@ -73,6 +85,16 @@ public class Goblin : BaseEnemy
             false,
             AttackRightStartColumn * FrameSize,
             AttackRow * FrameSize
+        );
+
+        _bowAnimation = new AnimationManager(
+            BowFrameCount,
+            BowSheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10,
+            false,
+            0,
+            BowRightRow * FrameSize
         );
 
         InitHitbox(_precisePosition, FrameSize, SpriteScale);
@@ -164,12 +186,27 @@ public class Goblin : BaseEnemy
                 AttackRow * FrameSize
             );
 
+            // Bow animation sync
+            int bowRow = _isFacingLeft ? BowLeftRow : BowRightRow;
+
+            _bowAnimation = new AnimationManager(
+                BowFrameCount,
+                BowSheetColumns,
+                new Vector2(FrameSize, FrameSize),
+                10,
+                false,
+                0,
+                bowRow * FrameSize
+            );
+
             _isAttacking = true;
         }
 
         if (_isAttacking)
         {
             _attackingAnimation.Update();
+            _bowAnimation.Update();
+
             if (_attackingAnimation.isFinished)
             {
                 _isAttacking = false;
@@ -214,6 +251,28 @@ public class Goblin : BaseEnemy
             SpriteEffects.None,
             0f
         );
+
+        // Draw bow on top
+        if (_isAttacking)
+        {
+            Rectangle bowSource = _bowAnimation.GetSourceRect();
+
+            Vector2 bowOffset = _isFacingLeft
+                ? new Vector2(-10, 0)
+                : new Vector2(10, 0);
+
+            spriteBatch.Draw(
+                _bowTexture,
+                center + bowOffset,
+                bowSource,
+                Color.White,
+                0f,
+                new Vector2(FrameSize / 2f, FrameSize / 2f),
+                SpriteScale,
+                SpriteEffects.None,
+                0f
+            );
+        }
 
         base.Draw(gameTime, spriteBatch);
     }
