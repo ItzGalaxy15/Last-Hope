@@ -37,7 +37,7 @@ public class Goblin : BaseEnemy
     private const int SheetColumns = 4;
     private const int FrameSize = 32;
 
-    public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 12)
+    public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 2)
     {
         _weapon = weapon;
         _weapon.SetOwner(this);
