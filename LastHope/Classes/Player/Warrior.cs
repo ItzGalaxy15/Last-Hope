@@ -5,6 +5,7 @@ using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Items;
 
@@ -33,7 +34,7 @@ public class Warrior : BasePlayer
     private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
-    private const bool DebugDrawHitbox = true;
+    private const bool DebugDrawHitbox = false;
 
     private double timeSinceLastAttack = 0;
     private float _dashCooldown;
@@ -54,6 +55,8 @@ public class Warrior : BasePlayer
     public ItemType[] Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
     public int ExtraLives { get; private set; } = 0;
     private float _greenGlowTimer = 0f;
+    private SoundEffect _deathSound;
+    private SoundEffect _attackSound;
 
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 1.0f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -116,6 +119,8 @@ public class Warrior : BasePlayer
         base.Load(content);
         AxeSprite = content.Load<Texture2D>("AxeSheet");
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
+        _deathSound = content.Load<SoundEffect>("sounds/Death sound");
+        _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
         _inputManager = GameManager.GetGameManager().InputManager;
 
         SyncColliderToPosition();
@@ -176,6 +181,7 @@ public class Warrior : BasePlayer
             if (_inputManager.LeftMousePress() && timeSinceLastAttack >= AttackCooldown)
             {
                 UseWeapon();
+                _attackSound.Play();
                 timeSinceLastAttack = 0;
             }
 
@@ -361,6 +367,7 @@ public class Warrior : BasePlayer
             else
             {
                 _currentHp = 0f;
+                _deathSound.Play();
                 GameManager.GetGameManager().playerAlive = false;
                 GameManager.GetGameManager()._state = GameState.GameOver;
             }

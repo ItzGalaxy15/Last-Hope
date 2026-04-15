@@ -11,7 +11,7 @@ namespace Last_Hope;
 public class Boss : BaseEnemy
 {
     private const float SpriteScale = 5f;
-    private const bool DebugDrawHitbox = true;
+    private const bool DebugDrawHitbox = false;
 
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
