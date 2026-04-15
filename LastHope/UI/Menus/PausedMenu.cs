@@ -40,7 +40,7 @@ public class PausedMenu : MenuBase
         DrawWorld(gameTime, spriteBatch, transformMatrix);
 
         spriteBatch.Begin();
-        DrawControlsText(spriteBatch);
+        DrawControlsText(spriteBatch, gameTime);
         spriteBatch.Draw(Pixel, continueRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, continueText, continuePos, Color.White);

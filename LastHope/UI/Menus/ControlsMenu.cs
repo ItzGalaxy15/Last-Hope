@@ -36,7 +36,7 @@ public class ControlsMenu : MenuBase
         }
 
         spriteBatch.Begin();
-        DrawControlsText(spriteBatch);
+        DrawControlsText(spriteBatch, gameTime);
 
         spriteBatch.Draw(Pixel, continueRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, continueText, continuePos, Color.White);
