@@ -59,10 +59,6 @@ public class Menu
         Vector2 startPos = GetFontPosition(startText);
         Rectangle startRect = GetTextRectangle(startText, startPos);
 
-        //string controlsText = "Controls";
-        //Vector2 controlsPos = GetFontPosition(controlsText) + new Vector2(0, 100);
-        //Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
-
         string quitText = "Quit Game";
         Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 100);
         Rectangle quitRect = GetTextRectangle(quitText, quitPos);
@@ -72,11 +68,6 @@ public class Menu
         {
             _state = GameState.Running;
         }
-
-        //if (controlsRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
-        //{
-        //    _state = GameState.ControlsMenu;
-        //}
 
         if (quitRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
@@ -90,45 +81,16 @@ public class Menu
         string startText = "Start Game";
         Vector2 startPos = GetFontPosition(startText);
         Rectangle startRect = GetTextRectangle(startText, startPos);
-
-        //string controlsText = "Controls";
-        //Vector2 controlsPos = GetFontPosition(controlsText) + new Vector2(0, 100);
-        //Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos);
-
-
         string quitText = "Quit Game";
         Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 100);
         Rectangle quitRect = GetTextRectangle(quitText, quitPos);
-
         spriteBatch.Begin();
         spriteBatch.Draw(Pixel, startRect, Color.DarkSlateGray);
-        // spriteBatch.Draw(Pixel, controlsRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, startText, startPos, Color.White);
-        //spriteBatch.DrawString(_font, controlsText, controlsPos, Color.White);
         spriteBatch.DrawString(_font, quitText, quitPos, Color.Red);
         spriteBatch.End();
     }
-
-    //public void UpdateStartMenu(GameTime gameTime)
-    //{
-    //    if (InputManager.IsKeyPress(Keys.Enter)) _state = GameState.Running;
-    //    if (InputManager.IsKeyPress(Keys.Escape)) Game.Exit();
-
-    //}
-
-    //public void DrawStartMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-    //{
-    //    string enterText = "Press Enter to start the Game";
-    //    string escapeText = "Press Escape to quit";
-    //    Vector2 positionEnter = GetFontPosition(enterText);
-    //    Vector2 positionEscape = GetFontPosition(escapeText);
-
-    //    spriteBatch.Begin();
-    //    spriteBatch.DrawString(_font, enterText, positionEnter, Color.White);
-    //    spriteBatch.DrawString(_font, escapeText, positionEscape + new Vector2(0, 100), Color.Red);
-    //    spriteBatch.End();
-    //}
 
     private void DrawControlsText(SpriteBatch spriteBatch)
     {
@@ -186,15 +148,6 @@ public class Menu
 
     public void UpdateRunningMenu(GameTime gameTime)
     {
-        //Vector2 topLeft = new Vector2(20, 20);
-
-        //string pauseText = "Pause Game";
-        //Vector2 pausePos = topLeft;
-        //Rectangle pauseRect = GetTextRectangle(pauseText, pausePos);
-
-        //string quitText = "Quit Game";
-        //Vector2 quitPos = topLeft + new Vector2(600, 0);
-        //Rectangle quitRect = GetTextRectangle(quitText, quitPos);
 
         float scale = 0.5f;
         Vector2 topLeft = new Vector2(20, 100);
@@ -213,21 +166,9 @@ public class Menu
         Vector2 restartPos = quitPos + new Vector2(quitSize.X + 40, 0);
         Rectangle restartRect = GetTextRectangle(restartText, restartPos, scale);
 
-        Vector2 restartSize = _font.MeasureString(restartText) * scale;
-        string controlsText = "Controls";
-        Vector2 controlsPos = restartPos + new Vector2(restartSize.X + 40, 0);
-        Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos, scale);
-
         if (pauseRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
             _state = GameState.Paused;
-            return;
-        }
-
-        if (controlsRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
-        {
-            _previousState = _state;
-            _state = GameState.ControlsMenu;
             return;
         }
 
@@ -273,17 +214,6 @@ public class Menu
 
     public void DrawRunningMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
-
-        //Vector2 topLeft = new Vector2(20, 20);
-
-        //string pauseText = "Pause Game";
-        //Vector2 pausePos = topLeft;
-        //Rectangle pauseRect = GetTextRectangle(pauseText, pausePos);
-
-        //string quitText = "Quit Game";
-        //Vector2 quitPos = topLeft + new Vector2(600, 0);
-        //Rectangle quitRect = GetTextRectangle(quitText, quitPos);
-
         float scale = 0.5f;
         Vector2 topLeft = new Vector2(20, 100);
 
@@ -302,11 +232,6 @@ public class Menu
         Vector2 restartPos = quitPos + new Vector2(quitSize.X + 40, 0);
         Rectangle restartRect = GetTextRectangle(restartText, restartPos, scale);
 
-        Vector2 restartSize = _font.MeasureString(restartText) * scale;
-        string controlsText = "Controls";
-        Vector2 controlsPos = restartPos + new Vector2(restartSize.X + 40, 0);
-        Rectangle controlsRect = GetTextRectangle(controlsText, controlsPos, scale);
-
         spriteBatch.Begin(transformMatrix: transformMatrix);
         foreach (GameObject gameObject in _gameObjects)
         {
@@ -318,80 +243,11 @@ public class Menu
         spriteBatch.Draw(Pixel, pauseRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, restartRect, Color.DarkSlateGray);
-        spriteBatch.Draw(Pixel, controlsRect, Color.DarkSlateGray);
         spriteBatch.DrawString(_font, pauseText, pausePos, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         spriteBatch.DrawString(_font, quitText, quitPos, Color.Red, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        //spriteBatch.DrawString(_font, pauseText, pausePos, Color.White);
-        //spriteBatch.DrawString(_font, quitText,quitPos, Color.White);
         spriteBatch.DrawString(_font, restartText, restartPos, Color.Green, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        spriteBatch.DrawString(_font, controlsText, controlsPos, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         spriteBatch.End();
     }
-
-    //public void UpdateRunning(GameTime gameTime)
-    //{
-
-    //    if (InputManager.IsKeyPress(Keys.Space))
-    //    {
-    //        _state = GameState.Paused;
-    //        return;
-    //    }
-    //    if (InputManager.IsKeyPress(Keys.Escape))
-    //    {
-    //        Game.Exit();
-    //        return;
-    //    }
-
-    //    // Handle input
-    //    HandleInput(InputManager);
-
-
-    //    // Update
-    //    foreach (GameObject gameObject in _gameObjects)
-    //    {
-    //        gameObject.Update(gameTime);
-    //    }
-
-
-    //    // Check Collission
-    //    CheckCollision();
-
-    //    foreach (GameObject gameObject in _toBeAdded)
-    //    {
-    //        gameObject.Load(_content);
-    //        _gameObjects.Add(gameObject);
-    //    }
-    //    _toBeAdded.Clear();
-
-    //    foreach (GameObject gameObject in _toBeRemoved)
-    //    {
-    //        gameObject.Destroy();
-    //        _gameObjects.Remove(gameObject);
-    //    }
-    //    _toBeRemoved.Clear();
-    //}
-
-
-    //public void DrawRunning(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-    //{
-
-    //    string spaceText = "Press Space to pause the Game";
-    //    string escapeText = "Press Escape to quit";
-    //    Vector2 topLeft = new Vector2(20, 20);
-
-    //    spriteBatch.Begin(transformMatrix: transformMatrix);
-    //    foreach (GameObject gameObject in _gameObjects)
-    //    {
-    //        gameObject.Draw(gameTime, spriteBatch);
-    //    }
-    //    spriteBatch.End();
-
-    //    spriteBatch.Begin();
-    //    spriteBatch.DrawString(_font, spaceText, topLeft, Color.White);
-    //    spriteBatch.DrawString(_font, escapeText, topLeft + new Vector2(0, 100), Color.Red);
-    //    spriteBatch.End();
-    //}
-
 
 
     public void UpdatePausedMenu(GameTime gameTime)
@@ -443,37 +299,6 @@ public class Menu
         spriteBatch.End();
 
     }
-
-
-    //public void UpdatePaused(GameTime gameTime)
-    //{
-    //    if (InputManager.IsKeyPress(Keys.Space)) _state = GameState.Running;
-    //    if (InputManager.IsKeyPress(Keys.Escape)) Game.Exit();
-
-    //}
-
-
-    //public void DrawPaused(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-    //{
-    //    string spaceText = "Press Space to continue the Game";
-    //    string escapeText = "Press Escape to quit";
-    //    Vector2 positionEnter = GetFontPosition(spaceText);
-    //    Vector2 positionEscape = GetFontPosition(escapeText);
-
-
-    //    spriteBatch.Begin(transformMatrix: transformMatrix);
-    //    foreach (GameObject gameObject in _gameObjects)
-    //    {
-    //        gameObject.Draw(gameTime, spriteBatch);
-    //    }
-    //    spriteBatch.End();
-
-    //    spriteBatch.Begin();
-    //    spriteBatch.DrawString(_font, spaceText, positionEnter, Color.White);
-    //    spriteBatch.DrawString(_font, escapeText, positionEscape + new Vector2(0, 100), Color.Red);
-    //    spriteBatch.End();
-    //}
-
 
     public void UpdateWinnerMenu(GameTime gameTime)
     {
@@ -582,44 +407,6 @@ public class Menu
         spriteBatch.DrawString(_font, quitText, quitPos, Color.Red);
         spriteBatch.End();
     }
-
-    //public void UpdateGameOver(GameTime gameTime)
-    //{
-    //    if (InputManager.IsKeyPress(Keys.Enter))
-    //    {
-    //        ResetGame();
-    //        _state = GameState.Running;
-    //    }
-
-
-    //    if (InputManager.IsKeyPress(Keys.Escape)) Game.Exit();
-    //}
-
-
-    //public void DrawGameOver(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-    //{
-    //    string gameOverText = "Game Over";
-    //    string enterText = "Press Enter to restart the Game";
-    //    string escapeText = "Press Escape to quit";
-    //    Vector2 positrionGameOver = GetFontPosition(gameOverText);
-    //    Vector2 positionEnter = GetFontPosition(enterText);
-    //    Vector2 positionEscape = GetFontPosition(escapeText);
-
-    //    spriteBatch.Begin(transformMatrix: transformMatrix);
-    //    foreach (GameObject gameObject in _gameObjects)
-    //    {
-    //        gameObject.Draw(gameTime, spriteBatch);
-    //    }
-
-    //    spriteBatch.End();
-
-    //    spriteBatch.Begin();
-    //    spriteBatch.DrawString(_font, gameOverText, positrionGameOver, Color.Red);
-    //    spriteBatch.DrawString(_font, enterText, positionEnter + new Vector2(0, 100), Color.White);
-    //    spriteBatch.DrawString(_font, escapeText, positionEscape + new Vector2(0, 200), Color.Red);
-    //    spriteBatch.End();
-    //}
-
 
     public Vector2 GetFontPosition(string text)
     {
