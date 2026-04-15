@@ -152,13 +152,13 @@ namespace Last_Hope.Engine.LevelGenerator
             }
 
             _animatedDecorations.Clear();
-            ApplyWalkways(_map);
-            ApplyFlowerField(_map);
-            ApplyDecorations(_map, _overlayMap);
+            _villageBounds = Rectangle.Empty;
             if (_villageSheet != null)
             {
                 GenerateVillage();
             }
+            ApplyFlowerField(_map);
+            ApplyDecorations(_map, _overlayMap);
         }
 
         // ── Drawing ──────────────────────────────────────────────────

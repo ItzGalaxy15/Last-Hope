@@ -30,7 +30,7 @@ public class Orc : BaseEnemy
     private const int FrameSize = 32;
 
     public Orc(Point position)
-        : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 20)
+        : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 4)
     {
         int size = (int)(FrameSize * SpriteScale);
 

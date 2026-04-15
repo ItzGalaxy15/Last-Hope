@@ -79,12 +79,15 @@ public class ItemSlotsBar : UIElement
 	public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
 	{
 		Texture2D pixel = GetPixel(spriteBatch);
+		GameManager gm = GameManager.GetGameManager();
 
 		Color panel = new Color(0, 0, 0, 110);
 		Color frame = new Color(210, 210, 210, 245);
 		Color background = new Color(28, 28, 28, 245);
 		Color placeholder = new Color(232, 189, 52, 255);
 		Color selectedRing = new Color(255, 240, 170, 255);
+		Color labelBackground = new Color(0, 0, 0, 170);
+		Color labelText = new Color(255, 245, 210, 255);
 
 		spriteBatch.Draw(pixel, _panelRect, panel);
 
@@ -93,7 +96,6 @@ public class ItemSlotsBar : UIElement
 			spriteBatch.Draw(pixel, _slotFrameRects[i], frame);
 			spriteBatch.Draw(pixel, _slotInnerRects[i], background);
 
-			GameManager gm = GameManager.GetGameManager();
 			if (gm._player is Warrior warrior)
 			{
 			    ItemType item = warrior.Inventory[i];
@@ -135,6 +137,43 @@ public class ItemSlotsBar : UIElement
 			if (i == _selectedSlot)
 				DrawOutline(spriteBatch, pixel, _slotFrameRects[i], 3, selectedRing);
 		}
+
+		if (gm._font != null && gm._player is Warrior selectedWarrior)
+		{
+			ItemType selectedItem = selectedWarrior.Inventory[_selectedSlot];
+			if (selectedItem != ItemType.None)
+			{
+				string label = GetItemLabel(selectedItem);
+				const float labelScale = 0.45f;
+				Vector2 labelSize = gm._font.MeasureString(label) * labelScale;
+
+				Rectangle selectedRect = _slotFrameRects[_selectedSlot];
+				Vector2 labelPos = new Vector2(
+					selectedRect.Center.X - (labelSize.X / 2f),
+					selectedRect.Top - labelSize.Y - 8f);
+
+				Rectangle labelBgRect = new Rectangle(
+					(int)labelPos.X - 6,
+					(int)labelPos.Y - 3,
+					(int)labelSize.X + 12,
+					(int)labelSize.Y + 6);
+
+				spriteBatch.Draw(pixel, labelBgRect, labelBackground);
+				spriteBatch.DrawString(gm._font, label, labelPos, labelText, 0f, Vector2.Zero, labelScale, SpriteEffects.None, 0f);
+			}
+		}
+	}
+
+	private static string GetItemLabel(ItemType item)
+	{
+		return item switch
+		{
+			ItemType.Bomb => "Bomb",
+			ItemType.Decoy => "Decoy",
+			ItemType.HealingPotion => "Potion",
+			ItemType.OneUp => "1-UP",
+			_ => string.Empty,
+		};
 	}
 
 	private static void DrawOutline(SpriteBatch spriteBatch, Texture2D pixel, Rectangle rect, int thickness, Color color)

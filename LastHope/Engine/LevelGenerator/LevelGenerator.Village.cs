@@ -28,6 +28,9 @@ namespace Last_Hope.Engine.LevelGenerator
 
         private Texture2D? _villageSheet;
         private readonly List<VillageBuilding> _villageBuildings = new();
+        private Rectangle _villageBounds;
+
+        public Rectangle VillageBoundsInTiles => _villageBounds;
 
         private int VillageHouseCount =>
             _villageSheet == null
@@ -71,6 +74,8 @@ namespace Last_Hope.Engine.LevelGenerator
             // clamp to map bounds
             originX = Math.Max(2, Math.Min(originX, mapW - clusterW - 2));
             originY = Math.Max(2, Math.Min(originY, mapH - clusterH - 2));
+
+            _villageBounds = new Rectangle(originX, originY, clusterW, clusterH);
 
             // ── BUILD HOUSES ───────────────────────────────────────
 
