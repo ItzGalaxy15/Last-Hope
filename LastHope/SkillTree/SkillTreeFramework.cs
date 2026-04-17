@@ -149,6 +149,26 @@ namespace Last_Hope.SkillTree
                 }
             }
 
+            // Check 3: Validate visual Connections. If there are incoming connections,
+            // AT LEAST ONE parent MUST have points allocated (> 0).
+            var parentConnections = _data.Connections.Where(c => c.ToNodeId == nodeId).ToList();
+            if (parentConnections.Count > 0)
+            {
+                bool hasActiveParent = false;
+                foreach (var conn in parentConnections)
+                {
+                    if (GetAllocatedPoints(conn.FromNodeId) > 0)
+                    {
+                        hasActiveParent = true;
+                        break;
+                    }
+                }
+                if (!hasActiveParent)
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
 

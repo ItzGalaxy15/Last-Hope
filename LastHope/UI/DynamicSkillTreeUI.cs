@@ -171,8 +171,8 @@ namespace Last_Hope.UI
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             
-            // If parent is maxed and child is available/unlocked, animate the connection line filling up
-            bool isRouteActive = ParentNode.CurrentState == NodeState.Maxed && ChildNode.CurrentState != NodeState.Locked;
+            // If parent has allocated points and child is available/unlocked, animate the connection line filling up
+            bool isRouteActive = (ParentNode.CurrentState == NodeState.Maxed || ParentNode.CurrentState == NodeState.Partial) && ChildNode.CurrentState != NodeState.Locked;
             
             float targetFill = isRouteActive ? 1f : 0f;
             _fillProgress = MathHelper.Lerp(_fillProgress, targetFill, dt * 4f);
@@ -369,21 +369,30 @@ namespace Last_Hope.UI
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             SpriteFont font = GameManager.GetGameManager()._font;
+            Vector2 mousePos = GameManager.GetGameManager().InputManager.CurrentMouseState.Position.ToVector2();
 
-            // 1. Draw Main Panel
-            Color panelBg = new Color(30, 32, 38, 240);
+            // 1. Draw Main Panel with Drop Shadow and Translucency
+            Rectangle shadowRect = new Rectangle(_mainPanel.X + 8, _mainPanel.Y + 8, _mainPanel.Width, _mainPanel.Height);
+            spriteBatch.Draw(_pixel, shadowRect, Color.Black * 0.6f);
+
+            Color panelBg = new Color(25, 28, 33, 210); // Translucent frosted look
             Color panelBorder = new Color(80, 85, 95);
             DrawPanel(spriteBatch, _mainPanel, panelBg, panelBorder);
 
             // 2. Draw UI Text & Controls
             if (font != null)
             {
-                // Close Button
-                DrawPanel(spriteBatch, _closeButtonRect, new Color(180, 50, 50), new Color(220, 80, 80));
+                // Close Button Redesign
+                bool isCloseHovered = _closeButtonRect.Contains(mousePos);
+                Color closeBg = isCloseHovered ? Color.DarkRed : Color.DarkSlateGray;
+                Color closeBorder = new Color(150, 150, 150);
+                DrawPanel(spriteBatch, _closeButtonRect, closeBg, closeBorder, 1);
+
                 string closeText = "X";
                 Vector2 closeTextSize = font.MeasureString(closeText);
-                Vector2 closeTextPos = _closeButtonRect.Center.ToVector2() - closeTextSize / 2f;
-                spriteBatch.DrawString(font, closeText, closeTextPos, Color.White);
+                float closeScale = 0.6f;
+                Vector2 closeTextPos = _closeButtonRect.Center.ToVector2() - (closeTextSize * closeScale) / 2f;
+                spriteBatch.DrawString(font, closeText, closeTextPos, Color.White, 0f, Vector2.Zero, closeScale, SpriteEffects.None, 0f);
 
                 // Points Available Text (Bottom-Left)
                 string pointsText = $"Talent Points Left: {_tree.UnspentPoints}";
@@ -418,11 +427,17 @@ namespace Last_Hope.UI
                 float angle = (float)Math.Atan2(diff.Y, diff.X);
                 float length = diff.Length();
                 
-                spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, (int)length, 2), null, new Color(60, 60, 60), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
+                // Base background line (Thicker, Darker)
+                spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, (int)length, 4), null, new Color(40, 45, 50, 200), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                 
                 if (conn.GetFillProgress() > 0)
                 {
                     int fillLength = (int)(length * conn.GetFillProgress());
+                    
+                    // Glow behind the active line
+                    spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 8), null, _theme.AccentGlowColor * 0.4f, angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
+                    
+                    // Core active line
                     spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 4), null, _theme.AccentGlowColor, angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                 }
             }
@@ -434,6 +449,10 @@ namespace Last_Hope.UI
                 int size = (int)(40 * currentScale);
                 Rectangle rect = new Rectangle((int)node.Position.X - size / 2, (int)node.Position.Y - size / 2, size, size);
                 
+                // Node Drop Shadow
+                Rectangle nodeShadowRect = new Rectangle(rect.X + 3, rect.Y + 3, rect.Width, rect.Height);
+                spriteBatch.Draw(_pixel, nodeShadowRect, Color.Black * 0.5f);
+
                 Color nodeBg = new Color(50, 55, 65);
                 Color nodeBorder = node.CurrentState switch {
                     NodeState.Available => Color.DeepSkyBlue,
@@ -459,7 +478,6 @@ namespace Last_Hope.UI
             // 5. Draw Hover Tooltip on Top
             if (_hoveredNode != null && font != null)
             {
-                Vector2 mousePos = GameManager.GetGameManager().InputManager.CurrentMouseState.Position.ToVector2();
                 string title = $"{_hoveredNode.Data.Name} ({_tree.GetAllocatedPoints(_hoveredNode.Data.Id)}/{_hoveredNode.Data.MaxPoints})";
                 
                 float tipScale = 0.4f;
@@ -470,7 +488,12 @@ namespace Last_Hope.UI
                 int tipHeight = (int)(titleSize.Y + descSize.Y) + 25;
                 
                 Rectangle bgTip = new Rectangle((int)mousePos.X + 20, (int)mousePos.Y + 20, tipWidth, tipHeight);
-                spriteBatch.Draw(_pixel, bgTip, new Color(20, 22, 25, 245));
+                
+                // Tooltip drop shadow
+                Rectangle tipShadow = new Rectangle(bgTip.X + 5, bgTip.Y + 5, bgTip.Width, bgTip.Height);
+                spriteBatch.Draw(_pixel, tipShadow, Color.Black * 0.5f);
+
+                DrawPanel(spriteBatch, bgTip, new Color(20, 22, 25, 245), new Color(100, 100, 100), 1);
                 
                 spriteBatch.DrawString(font, title, new Vector2(bgTip.X + 10, bgTip.Y + 10), Color.Gold, 0f, Vector2.Zero, tipScale, SpriteEffects.None, 0f);
                 spriteBatch.DrawString(font, _hoveredNode.Data.Description, new Vector2(bgTip.X + 10, bgTip.Y + 10 + titleSize.Y + 5), Color.LightGray, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
