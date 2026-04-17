@@ -5,6 +5,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
 using Last_Hope.BaseModel;
+using Last_Hope.SkillTree; // Needed for new Skill Tree architecture
+using System.IO;
+using System.Text.Json;
 
 namespace Last_Hope.UI;
 
@@ -26,7 +29,7 @@ public class Menu
     private List<GameObject> _toBeRemoved => gm._toBeRemoved;
     private ContentManager _content => gm._content;
 
-    private SkillTreeUI _skillTreeUI;
+    private SkillTreeMenuCanvas _skillTreeCanvas;
     private bool _showSkillTree = false;
 
     private void HandleInput(InputManager inputManager)
@@ -149,15 +152,56 @@ public class Menu
         if (InputManager.IsKeyPress(Keys.N))
         {
             _showSkillTree = !_showSkillTree;
-            if (_showSkillTree && _skillTreeUI == null)
+            if (_showSkillTree && _skillTreeCanvas == null)
             {
-                _skillTreeUI = new SkillTreeUI(Pixel, Game.GraphicsDevice.Viewport.Width);
+                // 1. Load JSON Data (Updated to your new folder structure)
+                string jsonPath = "SkillTree/WarriorSkillTree.json";
+                ClassSkillTreeData treeData = null;
+                
+                if (File.Exists(jsonPath))
+                {
+                    string rawJson = File.ReadAllText(jsonPath);
+                    treeData = JsonSerializer.Deserialize<ClassSkillTreeData>(rawJson);
+                }
+
+                // [DEBUG STEP 4]: Failsafe Null Check
+                if (treeData == null) 
+                { 
+                    throw new System.Exception($"[SkillTree Error] Data is null! Could not find JSON at: {Path.GetFullPath(jsonPath)} \nEnsure the file's 'Copy to Output Directory' property is set to 'Copy if newer' in Visual Studio!"); 
+                }
+                if (treeData.Nodes == null || treeData.Nodes.Count == 0)
+                {
+                    throw new System.Exception("[SkillTree Error] JSON loaded, but Nodes list is empty! Check your JSON structure.");
+                }
+
+                // [DEBUG STEP 1]: Log node instantiation count
+                System.Console.WriteLine($"[SkillTree UI] Successfully parsed {treeData.Nodes.Count} nodes from JSON.");
+                
+                // 2. Load Persisted Player State
+                SkillTreeState state = SkillTreeSaveManager.Load("Warrior");
+                
+                // 3. Build Logic Tree
+                BaseSkillTree tree = new BaseSkillTree(treeData, state);
+                
+                // 4. Wire the Stats Bus directly into the Player Component
+                if (gm._player is Warrior warrior)
+                {
+                    tree.OnEffectApplied += warrior.ApplyNodeEffect;
+                    tree.OnTreeRespec += warrior.RevertAllSkillStats;
+                }
+                
+                // 5. Build Dynamic UI Canvas
+                UIThemeData theme = new UIThemeData { 
+                    LockedDesaturation = new Color(50, 50, 50), 
+                    AccentGlowColor = new Color(230, 60, 70) 
+                };
+                _skillTreeCanvas = new SkillTreeMenuCanvas(tree, theme, Pixel, Game.GraphicsDevice.Viewport);
             }
         }
 
         if (_showSkillTree)
         {
-            _skillTreeUI?.Update(gameTime, Game.GraphicsDevice.Viewport);
+            _skillTreeCanvas?.Update(gameTime, Game.GraphicsDevice.Viewport);
             return; // Pause the game underneath while the UI is open
         }
 
@@ -261,12 +305,13 @@ public class Menu
         spriteBatch.DrawString(_font, restartText, restartPos, Color.LimeGreen, 0f, Vector2.Zero, scale * 0.8f, SpriteEffects.None, 0f);
         spriteBatch.End();
 
-        if (_showSkillTree && _skillTreeUI != null)
+        if (_showSkillTree && _skillTreeCanvas != null)
         {
-            spriteBatch.Begin();
+            // [DEBUG STEP 2]: Proper SpriteBatch Ordering & BlendState
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
             // Deep rich textured ambient background (parchment/dark metal tone)
             spriteBatch.Draw(Pixel, new Rectangle(0, 0, Game.GraphicsDevice.Viewport.Width, Game.GraphicsDevice.Viewport.Height), new Color(22, 24, 28, 240));
-            _skillTreeUI.Draw(gameTime, spriteBatch);
+            _skillTreeCanvas.Draw(gameTime, spriteBatch);
             spriteBatch.End();
         }
     }

@@ -1,0 +1,85 @@
+{
+  "ClassId": "Warrior",
+  "Theme": {
+    "PrimaryColorHex": "#E63946",
+    "SecondaryColorHex": "#F1FAEE",
+    "DefaultShape": 0
+  },
+  "LayerUnlockRequirements": {
+    "0": 0,
+    "1": 3
+  },
+  "Nodes": [
+    {
+      "Id": "warrior_left_l0",
+      "Name": "Agility Training",
+      "Description": "Increases Attack Speed.",
+      "MaxPoints": 3,
+      "Type": 0,
+      "Layer": 0,
+      "Dependencies": [],
+      "Effects": [{ "EffectId": "haste_percent", "ValuePerPoint": 5.0 }],
+      "GridX": -1, "GridY": 0
+    },
+    {
+      "Id": "warrior_mid_l0",
+      "Name": "Brute Force",
+      "Description": "Increases Raw Melee Damage.",
+      "MaxPoints": 3,
+      "Type": 0,
+      "Layer": 0,
+      "Dependencies": [],
+      "Effects": [{ "EffectId": "base_damage", "ValuePerPoint": 10.0 }],
+      "GridX": 0, "GridY": 0
+    },
+    {
+      "Id": "warrior_right_l0",
+      "Name": "Iron Skin",
+      "Description": "Increases Maximum HP.",
+      "MaxPoints": 3,
+      "Type": 0,
+      "Layer": 0,
+      "Dependencies": [],
+      "Effects": [{ "EffectId": "max_hp", "ValuePerPoint": 25.0 }],
+      "GridX": 1, "GridY": 0
+    },
+    {
+      "Id": "warrior_left_l1",
+      "Name": "Fleet Footed",
+      "Description": "Move faster out of combat. Requires Agility.",
+      "MaxPoints": 1,
+      "Type": 1,
+      "Layer": 1,
+      "Dependencies": ["warrior_left_l0"],
+      "Effects": [{ "EffectId": "move_speed_modifier", "ValuePerPoint": 15.0 }],
+      "GridX": -1, "GridY": 1
+    },
+    {
+      "Id": "warrior_mid_l1",
+      "Name": "Deep Cuts",
+      "Description": "Sword slashes now apply a Bleed effect. Requires Brute Force.",
+      "MaxPoints": 1,
+      "Type": 1,
+      "Layer": 1,
+      "Dependencies": ["warrior_mid_l0"],
+      "Effects": [{ "EffectId": "unlock_bleed_modifier", "ValuePerPoint": 1.0 }],
+      "GridX": 0, "GridY": 1
+    },
+    {
+      "Id": "warrior_right_l1",
+      "Name": "Shield Block",
+      "Description": "Grants a chance to negate incoming hits. Requires Iron Skin.",
+      "MaxPoints": 1,
+      "Type": 1,
+      "Layer": 1,
+      "Dependencies": ["warrior_right_l0"],
+      "Effects": [{ "EffectId": "block_chance", "ValuePerPoint": 10.0 }],
+      "GridX": 1, "GridY": 1
+    }
+  ],
+  "Connections": [
+    { "FromNodeId": "warrior_left_l0", "ToNodeId": "warrior_left_l1" },
+    { "FromNodeId": "warrior_mid_l0", "ToNodeId": "warrior_mid_l1" },
+    { "FromNodeId": "warrior_right_l0", "ToNodeId": "warrior_right_l1" }
+  ]
+}

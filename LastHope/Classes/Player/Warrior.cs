@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Items;
+using Last_Hope.SkillTree; // Import Skill Tree structures
 
 namespace Last_Hope;
 
@@ -272,6 +273,42 @@ public class Warrior : BasePlayer
             Vector2 slashOrigin = castAnchor + dir * SlashDistance;
             _Weapon.Attack(dir, slashOrigin);
         }
+    }
+
+    // --- SKILL TREE INTEGRATION ---
+    public void ApplyNodeEffect(NodeEffect effect)
+    {
+        switch (effect.EffectId)
+        {
+            case "haste_percent":
+                HasteLevel++;
+                break;
+            case "base_damage":
+                DmgLevel++;
+                break;
+            case "max_hp":
+                Heal(effect.ValuePerPoint); // Keep it simple for now, can modify MaxHp property later if created
+                break;
+            case "move_speed_modifier":
+                _Speed += effect.ValuePerPoint;
+                break;
+            case "unlock_bleed_modifier":
+                // Set future bleed flag
+                break;
+            case "block_chance":
+                // Set future block flag
+                break;
+        }
+        UpdateStats();
+    }
+
+    public void RevertAllSkillStats()
+    {
+        HasteLevel = 0;
+        DmgLevel = 0;
+        CritLevel = 0;
+        _Speed = 220f; // Revert to base speed
+        UpdateStats();
     }
 
     public void UpdateStats()
