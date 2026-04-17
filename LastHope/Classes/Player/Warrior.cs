@@ -219,7 +219,7 @@ public class Warrior : BasePlayer
             if (_inputManager.LeftMousePress() && timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
-                _attackSound.Play();
+                // _attackSound.Play();
                 timeSinceLastAttack = 0;
             }
 
