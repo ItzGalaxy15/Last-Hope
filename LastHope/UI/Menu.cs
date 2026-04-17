@@ -202,6 +202,10 @@ public class Menu
         if (_showSkillTree)
         {
             _skillTreeCanvas?.Update(gameTime, Game.GraphicsDevice.Viewport);
+            if (_skillTreeCanvas?.CloseRequested == true)
+            {
+                _showSkillTree = false;
+            }
             return; // Pause the game underneath while the UI is open
         }
 

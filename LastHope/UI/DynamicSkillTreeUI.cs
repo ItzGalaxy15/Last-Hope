@@ -250,6 +250,11 @@ namespace Last_Hope.UI
         private readonly List<SkillConnectionUI> _uiConnections = new List<SkillConnectionUI>();
         private readonly DynamicSkillTreeLayout _layout = new DynamicSkillTreeLayout();
 
+        // UI Panel & Controls
+        private Rectangle _mainPanel;
+        private Rectangle _closeButtonRect;
+        public bool CloseRequested { get; private set; }
+
         private SkillNodeUI _hoveredNode;
         private const float RequiredHoldTime = 0.5f; // Hold click for half a second to buy
 
@@ -274,13 +279,24 @@ namespace Last_Hope.UI
             }
 
             // 3. Layout Generation
-            Rectangle usableScreen = new Rectangle(0, 0, viewport.Width, viewport.Height);
-            _layout.GenerateLayout(_uiNodes, usableScreen);
+            int panelWidth = (int)(viewport.Width * 0.8f);
+            int panelHeight = (int)(viewport.Height * 0.8f);
+            _mainPanel = new Rectangle(
+                (viewport.Width - panelWidth) / 2,
+                (viewport.Height - panelHeight) / 2,
+                panelWidth,
+                panelHeight
+            );
+            _layout.GenerateLayout(_uiNodes, _mainPanel);
+
+            // Define close button rect
+            int buttonSize = 30;
+            _closeButtonRect = new Rectangle(_mainPanel.Right - buttonSize - 15, _mainPanel.Top + 15, buttonSize, buttonSize);
             
             // [DEBUG STEP 3]: Coordinate System Check
             if (_uiNodes.Count > 0)
             {
-                System.Console.WriteLine($"[SkillTree UI] Canvas Center: {usableScreen.Center.X}, {usableScreen.Center.Y}");
+                System.Console.WriteLine($"[SkillTree UI] Panel Center: {_mainPanel.Center.X}, {_mainPanel.Center.Y}");
                 System.Console.WriteLine($"[SkillTree UI] First Node Generated at Absolute Position: {_uiNodes[0].Position.X}, {_uiNodes[0].Position.Y}");
             }
         }
@@ -291,6 +307,15 @@ namespace Last_Hope.UI
             var input = GameManager.GetGameManager().InputManager;
             Vector2 mousePos = input.CurrentMouseState.Position.ToVector2();
             bool isLeftClickHeld = input.CurrentMouseState.LeftButton == ButtonState.Pressed;
+            bool isLeftClickPressed = input.LeftMousePress();
+
+            CloseRequested = false;
+
+            if (_closeButtonRect.Contains(mousePos) && isLeftClickPressed)
+            {
+                CloseRequested = true;
+                return;
+            }
 
             // Check 'R' for Respec
             if (input.IsKeyPress(Keys.R))
@@ -332,56 +357,106 @@ namespace Last_Hope.UI
                 conn.Update(gameTime);
         }
 
+        private void DrawPanel(SpriteBatch spriteBatch, Rectangle bounds, Color backgroundColor, Color borderColor, int borderThickness = 2)
+        {
+            spriteBatch.Draw(_pixel, bounds, backgroundColor);
+            spriteBatch.Draw(_pixel, new Rectangle(bounds.Left, bounds.Top, bounds.Width, borderThickness), borderColor);
+            spriteBatch.Draw(_pixel, new Rectangle(bounds.Left, bounds.Bottom - borderThickness, bounds.Width, borderThickness), borderColor);
+            spriteBatch.Draw(_pixel, new Rectangle(bounds.Left, bounds.Top, borderThickness, bounds.Height), borderColor);
+            spriteBatch.Draw(_pixel, new Rectangle(bounds.Right - borderThickness, bounds.Top, borderThickness, bounds.Height), borderColor);
+        }
+
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             SpriteFont font = GameManager.GetGameManager()._font;
 
-            // Draw Info Text
+            // 1. Draw Main Panel
+            Color panelBg = new Color(30, 32, 38, 240);
+            Color panelBorder = new Color(80, 85, 95);
+            DrawPanel(spriteBatch, _mainPanel, panelBg, panelBorder);
+
+            // 2. Draw UI Text & Controls
             if (font != null)
             {
-                float infoScale = 0.4f;
-                spriteBatch.DrawString(font, $"Points Available: {_tree.UnspentPoints}", new Vector2(20, 20), Color.Gold, 0f, Vector2.Zero, infoScale, SpriteEffects.None, 0f);
-                spriteBatch.DrawString(font, "Hold Left Click to Unlock", new Vector2(20, 45), Color.LightGray, 0f, Vector2.Zero, infoScale, SpriteEffects.None, 0f);
-                spriteBatch.DrawString(font, "Press [R] to Respec Points", new Vector2(20, 70), Color.LightGray, 0f, Vector2.Zero, infoScale, SpriteEffects.None, 0f);
+                // Close Button
+                DrawPanel(spriteBatch, _closeButtonRect, new Color(180, 50, 50), new Color(220, 80, 80));
+                string closeText = "X";
+                Vector2 closeTextSize = font.MeasureString(closeText);
+                Vector2 closeTextPos = _closeButtonRect.Center.ToVector2() - closeTextSize / 2f;
+                spriteBatch.DrawString(font, closeText, closeTextPos, Color.White);
+
+                // Points Available Text (Bottom-Left)
+                string pointsText = $"Talent Points Left: {_tree.UnspentPoints}";
+                Vector2 pointsTextPos = new Vector2(_mainPanel.Left + 20, _mainPanel.Bottom - 40);
+                spriteBatch.DrawString(font, pointsText, pointsTextPos, Color.Gold, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+
+                // Respec Text (Bottom-Right)
+                string respecText = "Press [R] to Respec Points";
+                Vector2 respecTextSize = font.MeasureString(respecText) * 0.5f;
+                Vector2 respecTextPos = new Vector2(_mainPanel.Right - respecTextSize.X - 20, _mainPanel.Bottom - 40);
+                spriteBatch.DrawString(font, respecText, respecTextPos, Color.LightGray, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
             }
 
-            // 1. Draw Connections
+            // 3. Draw Connections
             foreach (var conn in _uiConnections)
             {
-                Vector2 diff = conn.ChildNode.Position - conn.ParentNode.Position;
+                Vector2 startPos = conn.ParentNode.Position;
+                Vector2 endPos = conn.ChildNode.Position;
+                Vector2 dir = endPos - startPos;
+                if (dir == Vector2.Zero) continue;
+                dir.Normalize();
+
+                float parentRadius = (40 * conn.ParentNode.GetScale()) / 2f;
+                float childRadius = (40 * conn.ChildNode.GetScale()) / 2f;
+
+                startPos += dir * parentRadius;
+                endPos -= dir * childRadius;
+
+                Vector2 diff = endPos - startPos;
+                if (diff.LengthSquared() < 1) continue;
+
                 float angle = (float)Math.Atan2(diff.Y, diff.X);
                 float length = diff.Length();
                 
-                // Draw Base Line
-                spriteBatch.Draw(_pixel, new Rectangle((int)conn.ParentNode.Position.X, (int)conn.ParentNode.Position.Y, (int)length, 4), null, new Color(40, 40, 40), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
+                spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, (int)length, 2), null, new Color(60, 60, 60), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                 
-                // Draw Fill Progress
                 if (conn.GetFillProgress() > 0)
                 {
                     int fillLength = (int)(length * conn.GetFillProgress());
-                    spriteBatch.Draw(_pixel, new Rectangle((int)conn.ParentNode.Position.X, (int)conn.ParentNode.Position.Y, fillLength, 4), null, _theme.AccentGlowColor, angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
+                    spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 4), null, _theme.AccentGlowColor, angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                 }
             }
 
-            // 2. Draw Nodes
+            // 4. Draw Nodes
             foreach (var node in _uiNodes)
             {
                 float currentScale = node.GetScale();
                 int size = (int)(40 * currentScale);
                 Rectangle rect = new Rectangle((int)node.Position.X - size / 2, (int)node.Position.Y - size / 2, size, size);
                 
-                spriteBatch.Draw(_pixel, rect, node.GetColor());
+                Color nodeBg = new Color(50, 55, 65);
+                Color nodeBorder = node.CurrentState switch {
+                    NodeState.Available => Color.DeepSkyBlue,
+                    NodeState.Partial or NodeState.Maxed => Color.Gold,
+                    _ => Color.DarkGray,
+                };
+                DrawPanel(spriteBatch, rect, nodeBg, nodeBorder);
 
-                // Draw Hold-to-Purchase ring
+                Rectangle innerRect = new Rectangle(rect.X + 4, rect.Y + 4, rect.Width - 8, rect.Height - 8);
+                spriteBatch.Draw(_pixel, innerRect, node.GetColor());
+
                 if (node.HoldProgress > 0)
                 {
-                    int fillHeight = (int)(size * node.HoldProgress);
-                    Rectangle fillRect = new Rectangle(rect.Left - 5, rect.Bottom - fillHeight, 5, fillHeight);
+                    int barHeight = 8;
+                    Rectangle ringBgRect = new Rectangle(rect.Left, rect.Bottom + 5, size, barHeight);
+                    spriteBatch.Draw(_pixel, ringBgRect, Color.DarkGray);
+                    int fillWidth = (int)(size * node.HoldProgress);
+                    Rectangle fillRect = new Rectangle(rect.Left, rect.Bottom + 5, fillWidth, barHeight);
                     spriteBatch.Draw(_pixel, fillRect, Color.Gold);
                 }
             }
 
-            // 3. Draw Hover Tooltip on Top
+            // 5. Draw Hover Tooltip on Top
             if (_hoveredNode != null && font != null)
             {
                 Vector2 mousePos = GameManager.GetGameManager().InputManager.CurrentMouseState.Position.ToVector2();
