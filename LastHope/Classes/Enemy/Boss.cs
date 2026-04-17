@@ -11,7 +11,8 @@ namespace Last_Hope;
 public class Boss : BaseEnemy
 {
     private const float SpriteScale = 5f;
-    private const bool DebugDrawHitbox = true;
+    private const bool DebugDrawHitbox = false;
+
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
     private AnimationManager _attackAnimation;
@@ -26,44 +27,50 @@ public class Boss : BaseEnemy
     private const int AttackStartColumn = 3;
     private const int AttackFrameCount = 1;
     private const int SheetColumns = 8;
-    
-    public Boss(Point position) : base(maxHealth: 400, currentHealth: 400, speed: 60, experienceValue: 100)
+    private const int FrameSize = 32;
+
+    public Boss(Point position)
+        : base(maxHealth: 400, currentHealth: 400, speed: 60, experienceValue: 100)
     {
-        _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
+        int size = (int)(FrameSize * SpriteScale);
+
+        _collider = new RectangleCollider(new Rectangle(position, new Point(size, size)));
         SetCollider(_collider);
+
+        _precisePosition = position.ToVector2();
     }
 
     public override void Load(ContentManager content)
     {
         base.Load(content);
-        // Boss uses orc texture but drawn bigger
+
         _texture = content.Load<Texture2D>("orc");
 
         _walkingAnimation = new AnimationManager(
-            numFrames: WalkingFrameCount,
-            numColumns: SheetColumns,
-            size: new Vector2(32, 32),
-            interval: 10,
-            loop: true,
-            offsetX: WalkingStartColumn * 32,
-            offsetY: OrcFacingRightRow * 32
+            WalkingFrameCount,
+            SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10,
+            true,
+            WalkingStartColumn * FrameSize,
+            OrcFacingRightRow * FrameSize
         );
 
         _attackAnimation = new AnimationManager(
-            numFrames: AttackFrameCount,
-            numColumns: SheetColumns,
-            size: new Vector2(32, 32),
-            interval: 8,
-            loop: false,
-            offsetX: AttackStartColumn * 32,
-            offsetY: OrcFacingRightRow * 32
+            AttackFrameCount,
+            SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            8,
+            false,
+            AttackStartColumn * FrameSize,
+            OrcFacingRightRow * FrameSize
         );
 
-        var scaledSize = new Point((int)(32 * SpriteScale), (int)(32 * SpriteScale));
+        // ✅ Only ensure correct size, DON'T shift position anymore
+        var scaledSize = new Point((int)(FrameSize * SpriteScale), (int)(FrameSize * SpriteScale));
         _collider.shape.Size = scaledSize;
-        _collider.shape.Location -= new Point(scaledSize.X / 2, scaledSize.Y / 2);
+
         _precisePosition = _collider.shape.Location.ToVector2();
-        SetCollider(_collider);
     }
 
     public override void Update(GameTime gameTime)
@@ -83,23 +90,19 @@ public class Boss : BaseEnemy
                 _attackCooldownTimer = 0f;
         }
 
-        Vector2 targetPos;
-        if (decoy != null)
-            targetPos = decoy.GetPosition();
-        else
-        {
-            var playerCollider = player.GetCollider();
-            targetPos = playerCollider != null
-                ? playerCollider.GetBoundingBox().Center.ToVector2()
-                : player.GetPosition();
-        }
+        Vector2 targetPos = decoy != null
+            ? decoy.GetPosition()
+            : player.GetCollider()?.GetBoundingBox().Center.ToVector2() ?? player.GetPosition();
 
         Vector2 toTarget = targetPos - GetPosition();
+
         if (toTarget.X != 0)
             _isFacingLeft = toTarget.X < 0;
 
         Vector2 direction;
-        if (gameManager.NavigationGrid != null && gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
+
+        if (gameManager.NavigationGrid != null &&
+            gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
         {
             direction = pathDir;
         }
@@ -111,29 +114,32 @@ public class Boss : BaseEnemy
         }
 
         Vector2 movement = direction * Speed * dt;
-        _precisePosition += movement;
+
+        // ✅ Proper collision movement (same as Orc/Goblin)
+        Vector2 newPosX = new Vector2(_precisePosition.X + movement.X, _precisePosition.Y);
+        if (!WouldCollideAt(newPosX))
+            _precisePosition = newPosX;
+
+        Vector2 newPosY = new Vector2(_precisePosition.X, _precisePosition.Y + movement.Y);
+        if (!WouldCollideAt(newPosY))
+            _precisePosition = newPosY;
+
         _collider.shape.Location = _precisePosition.ToPoint();
-        
-        if (!_isAttacking && player != null)
+
+        if (!_isAttacking)
+        {
             _walkingAnimation.Update();
-        else if (_isAttacking)
+        }
+        else
         {
             _attackAnimation.Update();
             if (_attackAnimation.isFinished)
             {
                 _isAttacking = false;
-                _walkingAnimation = new AnimationManager(
-                    numFrames: WalkingFrameCount,
-                    numColumns: SheetColumns,
-                    size: new Vector2(32, 32),
-                    interval: 10,
-                    loop: true,
-                    offsetX: WalkingStartColumn * 32,
-                    offsetY: OrcFacingRightRow * 32
-                );
+                ResetWalkAnimation();
             }
         }
-        
+
         base.Update(gameTime);
     }
 
@@ -145,22 +151,47 @@ public class Boss : BaseEnemy
             DrawHitbox(spriteBatch, _collider.shape, Color.Red);
 
         Rectangle sourceRect;
-        int currentRowOffset = _isFacingLeft ? OrcFacingRightRow + 1 : OrcFacingRightRow;
+        int row = _isFacingLeft ? OrcFacingRightRow + 1 : OrcFacingRightRow;
 
         if (_isAttacking)
         {
             sourceRect = _attackAnimation.GetSourceRect();
-            sourceRect.Y = currentRowOffset * 32;
+            sourceRect.Y = row * FrameSize;
         }
         else
         {
             sourceRect = _walkingAnimation.GetSourceRect();
-            sourceRect.Y = currentRowOffset * 32;
+            sourceRect.Y = row * FrameSize;
         }
-        
+
         Color bossColor = DrawTint == Color.White ? Color.Green : DrawTint;
-        spriteBatch.Draw(_texture, center, sourceRect, bossColor, 0f, new Vector2(16, 16), SpriteScale, SpriteEffects.None, 0f);
+
+        spriteBatch.Draw(
+            _texture,
+            center,
+            sourceRect,
+            bossColor,
+            0f,
+            new Vector2(FrameSize / 2f, FrameSize / 2f),
+            SpriteScale,
+            SpriteEffects.None,
+            0f
+        );
+
         base.Draw(gameTime, spriteBatch);
+    }
+
+    private void ResetWalkAnimation()
+    {
+        _walkingAnimation = new AnimationManager(
+            WalkingFrameCount,
+            SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10,
+            true,
+            WalkingStartColumn * FrameSize,
+            OrcFacingRightRow * FrameSize
+        );
     }
 
     private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
@@ -172,6 +203,21 @@ public class Boss : BaseEnemy
         spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
         spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
         spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
+    }
+
+    private bool WouldCollideAt(Vector2 testPosition)
+    {
+        Rectangle current = _collider.shape;
+
+        Rectangle testRect = new Rectangle(
+            (int)testPosition.X,
+            (int)testPosition.Y,
+            current.Width,
+            current.Height
+        );
+
+        var testCollider = new RectangleCollider(testRect);
+        return CollisionWorld.CollidesWithStatic(testCollider);
     }
 
     public override void OnCollision(GameObject other)
@@ -186,14 +232,15 @@ public class Boss : BaseEnemy
 
         _isAttacking = true;
         _attackCooldownTimer = AttackCooldownSeconds;
+
         _attackAnimation = new AnimationManager(
-            numFrames: AttackFrameCount,
-            numColumns: SheetColumns,
-            size: new Vector2(32, 32),
-            interval: 8,
-            loop: false,
-            offsetX: AttackStartColumn * 32,
-            offsetY: OrcFacingRightRow * 32
+            AttackFrameCount,
+            SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            8,
+            false,
+            AttackStartColumn * FrameSize,
+            OrcFacingRightRow * FrameSize
         );
     }
 

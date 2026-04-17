@@ -37,7 +37,15 @@ public class GameManager
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
     //public Camera Camera { get; private set; }
-    public const double ItemDropChance = 0.3;
+
+    // --- Configurable Item Drop Chances ---
+    public readonly Dictionary<ItemType, double> ItemDropChances = new Dictionary<ItemType, double>
+    {
+        { ItemType.Bomb, 0.10 },          // 10% chance
+        { ItemType.Decoy, 0.05 },         // 5% chance
+        { ItemType.HealingPotion, 0.12 }, // 12% chance
+        { ItemType.OneUp, 0.03 }          // 3% chance
+    };
     public Texture2D Pixel { get; private set; }
 
 
@@ -69,7 +77,7 @@ public class GameManager
         Menu = new Menu();
         EnemySpawner = new EnemySpawner();
 
-        _state = GameState.StartMenu;
+        _state = GameState.ControlsMenu;
         SelectedItemSlot = 0;
     }
 
@@ -143,6 +151,9 @@ public class GameManager
             case GameState.StartMenu:
                 Menu.UpdateStartMenu(gameTime);
                 break;
+            case GameState.ControlsMenu:
+                Menu.UpdateControlsMenu(gameTime);
+                break;
             case GameState.Running:
                 EnemySpawner.Update(gameTime);
                 Menu.UpdateRunningMenu(gameTime);
@@ -165,6 +176,9 @@ public class GameManager
         {
             case GameState.StartMenu:
                 Menu.DrawStartMenu(gameTime, spriteBatch);
+                break;
+            case GameState.ControlsMenu:
+                Menu.DrawControlsMenu(gameTime, spriteBatch, transformMatrix);
                 break;
             case GameState.Running:
                 Menu.DrawRunningMenu(gameTime, spriteBatch, transformMatrix);
@@ -234,17 +248,28 @@ public class GameManager
 
             if (gameObject is BaseEnemy enemy && enemy.CurrentHealth <= 0)
             {
-                if (RNG.NextDouble() < ItemDropChance)
-                {
-                    int typeRoll = RNG.Next(4);
-                    ItemType type = typeRoll == 0 ? ItemType.Bomb : typeRoll == 1 ? ItemType.Decoy : typeRoll == 2 ? ItemType.HealingPotion : ItemType.OneUp;
+                double roll = RNG.NextDouble();
+                double cumulative = 0.0;
+                ItemType droppedType = ItemType.None;
 
-                    if (type == ItemType.OneUp && IsOneUpAlreadyActive())
+                foreach (var drop in ItemDropChances)
+                {
+                    cumulative += drop.Value;
+                    if (roll < cumulative)
                     {
-                        type = ItemType.HealingPotion;
+                        droppedType = drop.Key;
+                        break;
+                    }
+                }
+
+                if (droppedType != ItemType.None)
+                {
+                    if (droppedType == ItemType.OneUp && IsOneUpAlreadyActive())
+                    {
+                        droppedType = ItemType.HealingPotion;
                     }
 
-                    AddGameObject(new ItemDrop(enemy.GetPosition(), type));
+                    AddGameObject(new ItemDrop(enemy.GetPosition(), droppedType));
                 }
             }
         }

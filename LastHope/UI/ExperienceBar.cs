@@ -69,7 +69,7 @@ public class ExperienceBar : UIElement
 
 		Color frame = new Color(130, 140, 150, 255); // Matched premium metal border
 		Color background = new Color(28, 28, 28, 245);
-		Color fill = new Color(228, 72, 72, 255);
+		Color fill = new Color(120, 200, 255, 255);
 		Color panel = new Color(0, 0, 0, 110);
 		Color badgeBase = Color.Lerp(new Color(60, 60, 60, 225), new Color(255, 205, 80, 245), flash);
 		Color badgeRing = Color.Lerp(frame, new Color(255, 240, 170, 255), flash);

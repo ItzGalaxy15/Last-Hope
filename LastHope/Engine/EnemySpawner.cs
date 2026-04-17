@@ -1,6 +1,7 @@
 using System;
 using Last_Hope.BaseModel;
 using Last_Hope.Classes.Items;
+using Last_Hope.Collision;
 using Microsoft.Xna.Framework;
 
 namespace Last_Hope.Engine;
@@ -10,7 +11,7 @@ public class EnemySpawner
     public int TotalWaves { get; set; } = 6;
     public float EnemyMultiplierPerWave { get; set; } = 2.0f;
     public int StartingEnemies { get; set; } = 1;
-    public bool BossAppearsAfterLastWave { get; set; } = true;
+    public bool BossAppearsOnLastWave { get; set; } = true;
     public bool UseMaxEnemyLimit { get; set; } = true;
     public int MaxEnemiesPerWave { get; set; } = 35;
 
@@ -20,6 +21,7 @@ public class EnemySpawner
     private float spawnInterval = 0.2f; // spawn an enemy every 0.2s
 
     private int currentWave = 1;
+    public int CurrentWave => currentWave;
     private int spawnedThisWave = 0;
     private float waveWaitTimer = 0f;
     private bool waitingForNextWave = false;
@@ -41,7 +43,7 @@ public class EnemySpawner
         }
 
         int targetEnemiesForWave = GetTargetEnemiesForWave(currentWave);
-        int finalWave = BossAppearsAfterLastWave ? TotalWaves + 1 : TotalWaves;
+        int finalWave = TotalWaves;
 
         if (waitingForNextWave)
         {
@@ -65,9 +67,9 @@ public class EnemySpawner
             return;
         }
 
-        if (BossAppearsAfterLastWave && currentWave == finalWave && !bossSpawned)
+        if (BossAppearsOnLastWave && currentWave == finalWave && !bossSpawned)
         {
-            Point bossSpawnPos = RandomOffScreenLocation().ToPoint();
+            Point bossSpawnPos = GetValidSpawnPoint();
             gm.AddGameObject(new Boss(bossSpawnPos));
             bossSpawned = true;
         }
@@ -87,7 +89,7 @@ public class EnemySpawner
         {
             spawnTimer = 0f;
 
-            Point spawnPosition = RandomOffScreenLocation().ToPoint();
+            Point spawnPosition = GetValidSpawnPoint();
             if (gm.RNG.NextDouble() < 0.5)
                 gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
             else
@@ -95,6 +97,45 @@ public class EnemySpawner
 
             spawnedThisWave++;
         }
+    }
+
+    private Point GetValidSpawnPoint(float radius = 1500f)
+    {
+        var gm = GameManager.GetGameManager();
+
+        const int maxAttempts = 25;
+
+        for (int i = 0; i < maxAttempts; i++)
+        {
+            Vector2 pos = RandomOffScreenLocation(radius);
+
+            int size = 96; // goblin/orc approx size
+
+            var rect = new Rectangle((int)pos.X, (int)pos.Y, size, size);
+            var collider = new RectangleCollider(rect);
+
+            if (!CollisionWorld.CollidesWithStatic(collider))
+                return rect.Location;
+        }
+
+        // fallback (safe but rare)
+        return RandomOffScreenLocation(radius).ToPoint();
+    }
+
+    public Vector2 RandomOffScreenLocation(float distance = 1400f)
+    {
+        var gm = GameManager.GetGameManager();
+        if (gm._player == null)
+            return Vector2.Zero;
+
+        Vector2 playerPos = gm._player.GetPosition();
+
+        float angle = (float)(gm.RNG.NextDouble() * Math.PI * 2);
+
+        return playerPos + new Vector2(
+            (float)Math.Cos(angle),
+            (float)Math.Sin(angle)
+        ) * distance;
     }
 
     private int GetTargetEnemiesForWave(int wave)

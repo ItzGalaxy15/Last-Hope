@@ -5,6 +5,7 @@ using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Items;
 using Last_Hope.SkillTree; // Import Skill Tree structures
@@ -33,7 +34,7 @@ public class Warrior : BasePlayer
     private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
-    private const bool DebugDrawHitbox = true;
+    private const bool DebugDrawHitbox = false;
 
     private double timeSinceLastAttack = 0;
     private float _dashCooldown;
@@ -54,6 +55,8 @@ public class Warrior : BasePlayer
     public ItemType[] Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
     public new int ExtraLives { get; private set; } = 0;
     private float _greenGlowTimer = 0f;
+    private SoundEffect _deathSound;
+    private SoundEffect _attackSound;
 
     // --- Skill Tree States ---
     public bool DualWieldUnlocked { get; set; }
@@ -86,7 +89,24 @@ public class Warrior : BasePlayer
             return;
 
         direction.Normalize();
-        Position += direction * _Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        Vector2 velocity = direction * _Speed * dt;
+
+        // --- X movement ---
+        Vector2 newPosX = new Vector2(Position.X + velocity.X, Position.Y);
+        if (!WouldCollideAt(newPosX))
+        {
+            Position = newPosX;
+        }
+
+        // --- Y movement ---
+        Vector2 newPosY = new Vector2(Position.X, Position.Y + velocity.Y);
+        if (!WouldCollideAt(newPosY))
+        {
+            Position = newPosY;
+        }
+
         ClampToMapBounds();
     }
 
@@ -110,6 +130,8 @@ public class Warrior : BasePlayer
         base.Load(content);
         AxeSprite = content.Load<Texture2D>("AxeSheet");
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
+        _deathSound = content.Load<SoundEffect>("sounds/Death sound");
+        _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
         _inputManager = GameManager.GetGameManager().InputManager;
 
         SyncColliderToPosition();
@@ -197,6 +219,7 @@ public class Warrior : BasePlayer
             if (_inputManager.LeftMousePress() && timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
+                _attackSound.Play();
                 timeSinceLastAttack = 0;
             }
 
@@ -456,6 +479,7 @@ public class Warrior : BasePlayer
             else
             {
                 _currentHp = 0f;
+                _deathSound.Play();
                 GameManager.GetGameManager().playerAlive = false;
                 GameManager.GetGameManager()._state = GameState.GameOver;
             }
@@ -558,5 +582,22 @@ public class Warrior : BasePlayer
         Decoy decoy = new Decoy(spawnPosition, initialVelocity, lifetimeSeconds: 5f);
         gm.AddGameObject(decoy);
         gm.ActiveDecoy = decoy;
+    }
+
+    protected override bool WouldCollideAt(Vector2 testPosition)
+    {
+        float hitboxSize = _bodyWidth * HitboxFraction;
+        float offset = (_bodyWidth - hitboxSize) / 2f;
+
+        Rectangle testRect = new Rectangle(
+            (int)(testPosition.X + offset),
+            (int)(testPosition.Y + offset),
+            (int)hitboxSize,
+            (int)hitboxSize
+        );
+
+        var testCollider = new RectangleCollider(testRect);
+
+        return CollisionWorld.CollidesWithStatic(testCollider);
     }
 }
