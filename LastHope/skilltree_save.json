@@ -1,8 +1,6 @@
 {
   "ClassId": "Warrior",
-  "TotalPointsSpent": 3,
-  "UnspentSkillPoints": 2,
-  "AllocatedNodes": {
-    "warrior_right_l0": 3
-  }
+  "TotalPointsSpent": 0,
+  "UnspentSkillPoints": 25,
+  "AllocatedNodes": {}
 }

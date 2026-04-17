@@ -52,7 +52,7 @@ public class Warrior : BasePlayer
     private const float DecoyThrowSpeed = 420f;
 
     public ItemType[] Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
-    public int ExtraLives { get; private set; } = 0;
+    public new int ExtraLives { get; private set; } = 0;
     private float _greenGlowTimer = 0f;
 
     // --- Skill Tree States ---
