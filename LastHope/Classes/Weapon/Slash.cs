@@ -23,7 +23,7 @@ namespace Last_Hope.Classes.Weapon
         private Vector2 lastPlayerPos;
         private float visualExpand;
         private float hitboxExpand;
-        private const bool DebugDrawHitbox = true;
+        private const bool DebugDrawHitbox = false;
 
         public Slash(Collider collider, int attackDamage, float critChance, Vector2 origin, Vector2 direction, float visualExpand, float hitboxExpand)
         {

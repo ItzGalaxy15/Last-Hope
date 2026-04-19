@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using Last_Hope.BaseModel;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
@@ -11,6 +11,8 @@ public class HealthBar : UIElement
 	private readonly BasePlayer? _player;
 	private readonly Texture2D? _pixel;
 	private Texture2D? _fallbackPixel;
+	private Texture2D? _heartSprite;
+	private bool _triedLoadingHeart;
     private Rectangle _healthFrameRect;
     private Rectangle _healthFillRect;
 	private Rectangle _frameRect;
@@ -73,7 +75,7 @@ public class HealthBar : UIElement
 		BasePlayer? player = GetActivePlayer();
 		float healthProgress = player?.HealthProgress ?? 0f;
 
-        Color frame = new Color(210, 210, 210, 245);
+        Color frame = new Color(130, 140, 150, 255); // Matched premium metal border
         Color background = new Color(20, 20, 20, 245);
         Color fill = Color.Lerp(Color.Red, Color.LimeGreen, healthProgress);
 
@@ -92,6 +94,29 @@ public class HealthBar : UIElement
         // Fill
         if (_healthFillRect.Width > 0)
             spriteBatch.Draw(pixel, _healthFillRect, fill);
+
+        if (player is Warrior warrior && warrior.ExtraLives > 0)
+        {
+            if (!_triedLoadingHeart && _heartSprite == null)
+            {
+                _triedLoadingHeart = true;
+                try { _heartSprite = GameManager.GetGameManager()._content.Load<Texture2D>("Heart"); } catch { }
+            }
+            
+            int badgeX = _healthFrameRect.Right + 12;
+            int badgeY = _healthFrameRect.Y + (_healthFrameRect.Height / 2) - 8;
+            
+            if (_heartSprite != null)
+            {
+                spriteBatch.Draw(_heartSprite, new Rectangle(badgeX, badgeY, 16, 16), Color.White);
+            }
+            
+            SpriteFont font = GameManager.GetGameManager()._font;
+            if (font != null)
+            {
+                spriteBatch.DrawString(font, "+1", new Vector2(badgeX + 20, badgeY - 2), Color.LimeGreen, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+            }
+        }
     }
 
 	private void DrawLevelNumber(SpriteBatch spriteBatch, Point center, int level, Color color)

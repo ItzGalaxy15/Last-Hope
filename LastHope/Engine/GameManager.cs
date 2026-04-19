@@ -31,11 +31,21 @@ public class GameManager
     public bool playerAlive = true;
     public int Score { get; set; } = 0;
     public Decoy ActiveDecoy { get; set; }
+    public bool HasUsedOneUp { get; set; } = false;
     public int SelectedItemSlot { get; private set; } = 0;
 
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
     //public Camera Camera { get; private set; }
+
+    // --- Configurable Item Drop Chances ---
+    public readonly Dictionary<ItemType, double> ItemDropChances = new Dictionary<ItemType, double>
+    {
+        { ItemType.Bomb, 0.10 },          // 10% chance
+        { ItemType.Decoy, 0.05 },         // 5% chance
+        { ItemType.HealingPotion, 0.12 }, // 12% chance
+        { ItemType.OneUp, 0.03 }          // 3% chance
+    };
     public Texture2D Pixel { get; private set; }
 
 
@@ -47,7 +57,7 @@ public class GameManager
     /// <summary>
     /// Tile grid for enemy pathfinding; set after level generation. Mark cells non-walkable when adding blocking collision.
     /// </summary>
-    public NavigationGrid? NavigationGrid { get; set; }
+    public NavigationGrid NavigationGrid { get; set; }
 
     public static GameManager GetGameManager()
     {
@@ -67,7 +77,7 @@ public class GameManager
         Menu = new Menu();
         EnemySpawner = new EnemySpawner();
 
-        _state = GameState.StartMenu;
+        _state = GameState.ControlsMenu;
         SelectedItemSlot = 0;
     }
 
@@ -141,6 +151,9 @@ public class GameManager
             case GameState.StartMenu:
                 Menu.UpdateStartMenu(gameTime);
                 break;
+            case GameState.ControlsMenu:
+                Menu.UpdateControlsMenu(gameTime);
+                break;
             case GameState.Running:
                 EnemySpawner.Update(gameTime);
                 Menu.UpdateRunningMenu(gameTime);
@@ -150,6 +163,9 @@ public class GameManager
                 break;
             case GameState.GameOver:
                 Menu.UpdateGameOverMenu(gameTime);
+                break;
+            case GameState.Winner:
+                Menu.UpdateWinnerMenu(gameTime);
                 break;
         }
     }
@@ -161,6 +177,9 @@ public class GameManager
             case GameState.StartMenu:
                 Menu.DrawStartMenu(gameTime, spriteBatch);
                 break;
+            case GameState.ControlsMenu:
+                Menu.DrawControlsMenu(gameTime, spriteBatch, transformMatrix);
+                break;
             case GameState.Running:
                 Menu.DrawRunningMenu(gameTime, spriteBatch, transformMatrix);
                 break;
@@ -169,6 +188,9 @@ public class GameManager
                 break;
             case GameState.GameOver:
                 Menu.DrawGameOverMenu(gameTime, spriteBatch, transformMatrix);
+                break;
+            case GameState.Winner:
+                Menu.DrawWinnerMenu(gameTime, spriteBatch, transformMatrix);
                 break;
         }
     }
@@ -185,6 +207,33 @@ public class GameManager
         _toBeAdded.Add(gameObject);
     }
 
+    private bool IsOneUpAlreadyActive()
+    {
+        if (HasUsedOneUp) return true;
+
+        if (_player is Warrior warrior)
+        {
+            if (warrior.ExtraLives > 0) return true;
+            
+            foreach (ItemType item in warrior.Inventory)
+            {
+                if (item == ItemType.OneUp) return true;
+            }
+        }
+
+        foreach (var obj in _gameObjects)
+        {
+            if (obj is ItemDrop item && item.Type == ItemType.OneUp) return true;
+        }
+
+        foreach (var obj in _toBeAdded)
+        {
+            if (obj is ItemDrop item && item.Type == ItemType.OneUp) return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Remove GameObject from the GameManager.
     /// The GameObject will be removed at the start of the next Update step and its Destroy() mehtod will be called.
@@ -193,7 +242,37 @@ public class GameManager
     /// <param name="gameObject"> The GameObject to Remove. </param>
     public void RemoveGameObject(GameObject gameObject)
     {
-        _toBeRemoved.Add(gameObject);
+        if (!_toBeRemoved.Contains(gameObject))
+        {
+            _toBeRemoved.Add(gameObject);
+
+            if (gameObject is BaseEnemy enemy && enemy.CurrentHealth <= 0)
+            {
+                double roll = RNG.NextDouble();
+                double cumulative = 0.0;
+                ItemType droppedType = ItemType.None;
+
+                foreach (var drop in ItemDropChances)
+                {
+                    cumulative += drop.Value;
+                    if (roll < cumulative)
+                    {
+                        droppedType = drop.Key;
+                        break;
+                    }
+                }
+
+                if (droppedType != ItemType.None)
+                {
+                    if (droppedType == ItemType.OneUp && IsOneUpAlreadyActive())
+                    {
+                        droppedType = ItemType.HealingPotion;
+                    }
+
+                    AddGameObject(new ItemDrop(enemy.GetPosition(), droppedType));
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -222,6 +301,7 @@ public class GameManager
         Score = 0;
         ActiveDecoy = null;
         SelectedItemSlot = 0;
+        HasUsedOneUp = false;
 
         EnemySpawner.Reset();
 

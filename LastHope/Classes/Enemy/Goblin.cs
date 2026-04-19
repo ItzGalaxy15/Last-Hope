@@ -10,30 +10,26 @@ namespace Last_Hope;
 
 public class Goblin : BaseEnemy
 {
-    // Visualize hitbox for debugging
-    private const bool DebugDrawHitbox = true;
+    private const bool DebugDrawHitbox = false;
 
-    // Core variables
     private Vector2 _precisePosition;
     private BaseWeapon _weapon;
     private float _attackCooldown = 2f;
     private float _attackTimer = 0f;
     private float _attackRange = 300f;
 
-    // Scale
     private const float SpriteScale = 3f;
 
-    // Animation variables
     private AnimationManager _walkingAnimation;
     private AnimationManager _attackingAnimation;
+    private AnimationManager _bowAnimation;
+
+    private Texture2D _bowTexture;
+
     private bool _isAttacking = false;
     private bool _isMoving = false;
     private bool _isFacingLeft = false;
 
-    // Goblin spritesheet layout:
-    // Row 0: walking right, columns 0-3
-    // Row 1: walking left,  columns 0-3
-    // Row 2: attack left columns 0-1, attack right columns 2-3
     private const int WalkRightRow = 0;
     private const int WalkLeftRow = 1;
     private const int AttackRow = 2;
@@ -45,12 +41,23 @@ public class Goblin : BaseEnemy
     private const int SheetColumns = 4;
     private const int FrameSize = 32;
 
-    public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 12)
+    // Bow animation constants
+    private const int BowFrameCount = 3;
+    private const int BowSheetColumns = 3;
+    private const int BowRightRow = 0;
+    private const int BowLeftRow = 1;
+
+    public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 2)
     {
-        _collider = new RectangleCollider(new Rectangle(position, Point.Zero));
-        SetCollider(_collider);
         _weapon = weapon;
         _weapon.SetOwner(this);
+
+        int size = (int)(FrameSize * SpriteScale);
+
+        _collider = new RectangleCollider(new Rectangle(position, new Point(size, size)));
+        SetCollider(_collider);
+
+        _precisePosition = position.ToVector2();
     }
 
     public override void Load(ContentManager content)
@@ -58,32 +65,39 @@ public class Goblin : BaseEnemy
         base.Load(content);
         _texture = content.Load<Texture2D>("Goblin spritesheet attempt-sheet");
 
+        _bowTexture = content.Load<Texture2D>("Bow sheet");
+
         _walkingAnimation = new AnimationManager(
-            numFrames: WalkFrameCount,
-            numColumns: SheetColumns,
-            size: new Vector2(FrameSize, FrameSize),
-            interval: 10,
-            loop: true,
-            offsetX: WalkStartColumn * FrameSize,
-            offsetY: WalkRightRow * FrameSize
+            WalkFrameCount,
+            SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10,
+            true,
+            WalkStartColumn * FrameSize,
+            WalkRightRow * FrameSize
         );
 
         _attackingAnimation = new AnimationManager(
-            numFrames: AttackFrameCount,
-            numColumns: SheetColumns,
-            size: new Vector2(FrameSize, FrameSize),
-            interval: 10,
-            loop: false,
-            offsetX: AttackRightStartColumn * FrameSize,
-            offsetY: AttackRow * FrameSize
+            AttackFrameCount,
+            SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10,
+            false,
+            AttackRightStartColumn * FrameSize,
+            AttackRow * FrameSize
         );
 
-        // Use a single frame size (32x32) scaled, not the full texture dimensions
-        var scaledSize = new Point((int)(FrameSize * SpriteScale), (int)(FrameSize * SpriteScale));
-        _collider.shape.Size = scaledSize;
-        _collider.shape.Location -= new Point(scaledSize.X / 2, scaledSize.Y / 2);
-        _precisePosition = _collider.shape.Location.ToVector2();
-        SetCollider(_collider);
+        _bowAnimation = new AnimationManager(
+            BowFrameCount,
+            BowSheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10,
+            false,
+            0,
+            BowRightRow * FrameSize
+        );
+
+        InitHitbox(_precisePosition, FrameSize, SpriteScale);
     }
 
     public override void Update(GameTime gameTime)
@@ -96,7 +110,6 @@ public class Goblin : BaseEnemy
         if (player == null && decoy == null)
             return;
 
-        // Tick attack cooldown
         if (_attackTimer > 0f)
         {
             _attackTimer -= dt;
@@ -104,9 +117,10 @@ public class Goblin : BaseEnemy
                 _attackTimer = 0f;
         }
 
-        Vector2 targetPos = decoy != null ? decoy.GetPosition() : player.GetPosition();
+        Vector2 targetPos = decoy != null
+            ? decoy.GetPosition()
+            : player.GetCollider()?.GetBoundingBox().Center.ToVector2() ?? player.GetPosition();
 
-        // Compute direction and REAL distance before normalizing
         Vector2 toTarget = targetPos - GetPosition();
         float distanceToTarget = toTarget.Length();
 
@@ -119,16 +133,27 @@ public class Goblin : BaseEnemy
 
         Vector2 aimDirection = moveDirection;
 
-        // Move only when outside attack range
         bool wasMoving = _isMoving;
+
         if (distanceToTarget > _attackRange)
         {
-            if (gameManager.NavigationGrid != null && gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
+            if (gameManager.NavigationGrid != null &&
+                gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
+            {
                 moveDirection = pathDir;
+            }
 
-            // Don't overshoot: cap movement so we stop at the edge of attack range
             float moveAmount = Math.Min(Speed * dt, distanceToTarget - _attackRange);
-            _precisePosition += moveDirection * moveAmount;
+            Vector2 velocity = moveDirection * moveAmount;
+
+            Vector2 newPosX = new Vector2(_precisePosition.X + velocity.X, _precisePosition.Y);
+            if (!WouldCollideAt(newPosX))
+                _precisePosition = newPosX;
+
+            Vector2 newPosY = new Vector2(_precisePosition.X, _precisePosition.Y + velocity.Y);
+            if (!WouldCollideAt(newPosY))
+                _precisePosition = newPosY;
+
             _collider.shape.Location = _precisePosition.ToPoint();
             _isMoving = true;
         }
@@ -137,65 +162,61 @@ public class Goblin : BaseEnemy
             _isMoving = false;
         }
 
-        // Reset walk animation to frame 0 when the goblin stops, so idle shows the first frame
         if (wasMoving && !_isMoving)
         {
-            _walkingAnimation = new AnimationManager(
-                numFrames: WalkFrameCount,
-                numColumns: SheetColumns,
-                size: new Vector2(FrameSize, FrameSize),
-                interval: 10,
-                loop: true,
-                offsetX: WalkStartColumn * FrameSize,
-                offsetY: WalkRightRow * FrameSize
-            );
+            ResetWalkAnimation();
         }
 
-        // Attack when in range and cooldown has elapsed
         if (distanceToTarget <= _attackRange && _attackTimer <= 0f)
         {
             _weapon.Attack(aimDirection, GetPosition());
             _attackTimer = _attackCooldown;
 
-            // Reset attack animation with correct facing offset
-            int attackOffsetX = _isFacingLeft ? AttackLeftStartColumn * FrameSize : AttackRightStartColumn * FrameSize;
+            int attackOffsetX = _isFacingLeft
+                ? AttackLeftStartColumn * FrameSize
+                : AttackRightStartColumn * FrameSize;
+
             _attackingAnimation = new AnimationManager(
-                numFrames: AttackFrameCount,
-                numColumns: SheetColumns,
-                size: new Vector2(FrameSize, FrameSize),
-                interval: 10,
-                loop: false,
-                offsetX: attackOffsetX,
-                offsetY: AttackRow * FrameSize
+                AttackFrameCount,
+                SheetColumns,
+                new Vector2(FrameSize, FrameSize),
+                10,
+                false,
+                attackOffsetX,
+                AttackRow * FrameSize
             );
+
+            // Bow animation sync
+            int bowRow = _isFacingLeft ? BowLeftRow : BowRightRow;
+
+            _bowAnimation = new AnimationManager(
+                BowFrameCount,
+                BowSheetColumns,
+                new Vector2(FrameSize, FrameSize),
+                10,
+                false,
+                0,
+                bowRow * FrameSize
+            );
+
             _isAttacking = true;
         }
 
-        // Update animations
         if (_isAttacking)
         {
             _attackingAnimation.Update();
+            _bowAnimation.Update();
+
             if (_attackingAnimation.isFinished)
             {
                 _isAttacking = false;
-                // Reset walking animation
-                _walkingAnimation = new AnimationManager(
-                    numFrames: WalkFrameCount,
-                    numColumns: SheetColumns,
-                    size: new Vector2(FrameSize, FrameSize),
-                    interval: 10,
-                    loop: true,
-                    offsetX: WalkStartColumn * FrameSize,
-                    offsetY: WalkRightRow * FrameSize
-                );
+                ResetWalkAnimation();
             }
         }
         else if (_isMoving)
         {
             _walkingAnimation.Update();
         }
-        // When idle (_isMoving == false), the animation simply doesn't advance,
-        // leaving it frozen on frame 0 as the idle pose.
 
         base.Update(gameTime);
     }
@@ -212,12 +233,10 @@ public class Goblin : BaseEnemy
         if (_isAttacking)
         {
             sourceRect = _attackingAnimation.GetSourceRect();
-            // Facing is already baked into the animation offset, no row override needed
         }
         else
         {
             sourceRect = _walkingAnimation.GetSourceRect();
-            // Override the row based on facing direction
             sourceRect.Y = (_isFacingLeft ? WalkLeftRow : WalkRightRow) * FrameSize;
         }
 
@@ -233,7 +252,42 @@ public class Goblin : BaseEnemy
             0f
         );
 
+        // Draw bow on top
+        if (_isAttacking)
+        {
+            Rectangle bowSource = _bowAnimation.GetSourceRect();
+
+            Vector2 bowOffset = _isFacingLeft
+                ? new Vector2(-10, 0)
+                : new Vector2(10, 0);
+
+            spriteBatch.Draw(
+                _bowTexture,
+                center + bowOffset,
+                bowSource,
+                Color.White,
+                0f,
+                new Vector2(FrameSize / 2f, FrameSize / 2f),
+                SpriteScale,
+                SpriteEffects.None,
+                0f
+            );
+        }
+
         base.Draw(gameTime, spriteBatch);
+    }
+
+    private void ResetWalkAnimation()
+    {
+        _walkingAnimation = new AnimationManager(
+            WalkFrameCount,
+            SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10,
+            true,
+            WalkStartColumn * FrameSize,
+            WalkRightRow * FrameSize
+        );
     }
 
     private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
@@ -247,12 +301,25 @@ public class Goblin : BaseEnemy
         spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
-    public override void OnCollision(GameObject other)
-    {
-    }
+    public override void OnCollision(GameObject other) { }
 
     public override Vector2 GetPosition()
     {
         return _collider.shape.Center.ToVector2();
+    }
+
+    private bool WouldCollideAt(Vector2 testPosition)
+    {
+        Rectangle current = _collider.shape;
+
+        Rectangle testRect = new Rectangle(
+            (int)testPosition.X,
+            (int)testPosition.Y,
+            current.Width,
+            current.Height
+        );
+
+        var testCollider = new RectangleCollider(testRect);
+        return CollisionWorld.CollidesWithStatic(testCollider);
     }
 }
