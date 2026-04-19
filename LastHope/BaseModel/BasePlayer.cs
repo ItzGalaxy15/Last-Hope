@@ -117,6 +117,47 @@ public abstract class BasePlayer : GameObject
         ApplyDashOffset(current - start);
     }
 
+    private const float TeleportMinTileDistance = 60f;
+
+    protected bool Teleport()
+    {
+        var gm = GameManager.GetGameManager();
+        var grid = gm.NavigationGrid;
+        if (grid == null) return false;
+
+        float mapW = grid.WidthInTiles * grid.TileSize;
+        float mapH = grid.HeightInTiles * grid.TileSize;
+        float minDist = TeleportMinTileDistance * grid.TileSize;
+
+        Vector2 current = GetPosition();
+        var rng = gm.RNG;
+
+        const int MaxAttempts = 50;
+        for (int i = 0; i < MaxAttempts; i++)
+        {
+            float x = (float)(rng.NextDouble() * mapW);
+            float y = (float)(rng.NextDouble() * mapH);
+            Vector2 candidate = new Vector2(x, y);
+
+            if (Vector2.Distance(current, candidate) < minDist)
+                continue;
+
+            if (WouldCollideAt(candidate))
+                continue;
+
+            if (!IsPositionSafe(candidate))
+                continue;
+
+            ApplyTeleportPosition(candidate);
+            return true;
+        }
+
+        return false;
+    }
+
+    protected virtual bool IsPositionSafe(Vector2 position) => true;
+    protected abstract void ApplyTeleportPosition(Vector2 newPosition);
+
 
     public override void Update(GameTime gameTime)
     {
