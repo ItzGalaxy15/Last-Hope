@@ -57,7 +57,7 @@ public class GameManager
     /// <summary>
     /// Tile grid for enemy pathfinding; set after level generation. Mark cells non-walkable when adding blocking collision.
     /// </summary>
-    public NavigationGrid? NavigationGrid { get; set; }
+    public NavigationGrid NavigationGrid { get; set; }
 
     public static GameManager GetGameManager()
     {

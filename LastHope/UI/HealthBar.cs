@@ -75,7 +75,7 @@ public class HealthBar : UIElement
 		BasePlayer? player = GetActivePlayer();
 		float healthProgress = player?.HealthProgress ?? 0f;
 
-        Color frame = new Color(210, 210, 210, 245);
+        Color frame = new Color(130, 140, 150, 255); // Matched premium metal border
         Color background = new Color(20, 20, 20, 245);
         Color fill = Color.Lerp(Color.Red, Color.LimeGreen, healthProgress);
 
