@@ -32,12 +32,15 @@ public class Warrior : BasePlayer
     private float AxeOffsetY => (_bodyWidth - _axePixelSize) * 0.5f;
 
     private const float DashCooldown = 0.75f;
+    private const float TeleportCooldownDuration = 60f;
+    private const float TeleportEnemyClearance = 160f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = false;
 
     private double timeSinceLastAttack = 0;
     private float _dashCooldown;
+    private float _teleportCooldown;
     private Vector2 _moveInput;
     private bool _facingLeft;
     private RectangleCollider _collider;
@@ -250,6 +253,15 @@ public class Warrior : BasePlayer
                     SetWalkRowFromDirection(towardMouse);
                     _dashCooldown = DashCooldown;
                 }
+            }
+
+            if (_teleportCooldown > 0f)
+                _teleportCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (_inputManager.IsKeyPress(Keys.R) && _teleportCooldown <= 0f)
+            {
+                if (Teleport())
+                    _teleportCooldown = TeleportCooldownDuration;
             }
         }
 
@@ -491,6 +503,28 @@ public class Warrior : BasePlayer
         Position += delta;
         ClampToMapBounds();
         SyncColliderToPosition();
+    }
+
+    protected override void ApplyTeleportPosition(Vector2 newPosition)
+    {
+        Position = newPosition;
+        ClampToMapBounds();
+        SyncColliderToPosition();
+    }
+
+    protected override bool IsPositionSafe(Vector2 position)
+    {
+        var gm = GameManager.GetGameManager();
+        Vector2 center = position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        foreach (var obj in gm._gameObjects)
+        {
+            if (obj is not BaseEnemy) continue;
+            var collider = obj.GetCollider();
+            if (collider == null) continue;
+            if (Vector2.Distance(center, collider.GetBoundingBox().Center.ToVector2()) < TeleportEnemyClearance)
+                return false;
+        }
+        return true;
     }
 
     public bool TryPickupItem(ItemType item)
