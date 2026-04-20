@@ -34,9 +34,9 @@ public class ItemSlotsBar : UIElement
 		GameManager gm = GameManager.GetGameManager();
 		InputManager input = gm.InputManager;
 
-		if (input.IsKeyPress(Keys.D1) || input.IsKeyPress(Keys.NumPad1))
+		if (input.IsGameplayKeyPress(KeybindId.ItemSlot1))
 			gm.SetSelectedItemSlot(0);
-		else if (input.IsKeyPress(Keys.D2) || input.IsKeyPress(Keys.NumPad2))
+		else if (input.IsGameplayKeyPress(KeybindId.ItemSlot2))
 			gm.SetSelectedItemSlot(1);
 
 		_selectedSlot = gm.SelectedItemSlot;

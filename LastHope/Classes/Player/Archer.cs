@@ -116,13 +116,13 @@ public class Archer : BasePlayer
     public override void HandleInput(InputManager inputManager)
     {
         _moveInput = Vector2.Zero;
-        if (inputManager.IsKeyDown(Keys.W) || inputManager.IsKeyDown(Keys.Up))
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp) || inputManager.IsKeyDown(Keys.Up))
             _moveInput.Y -= 1f;
-        if (inputManager.IsKeyDown(Keys.S) || inputManager.IsKeyDown(Keys.Down))
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown) || inputManager.IsKeyDown(Keys.Down))
             _moveInput.Y += 1f;
-        if (inputManager.IsKeyDown(Keys.A) || inputManager.IsKeyDown(Keys.Left))
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft) || inputManager.IsKeyDown(Keys.Left))
             _moveInput.X -= 1f;
-        if (inputManager.IsKeyDown(Keys.D) || inputManager.IsKeyDown(Keys.Right))
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveRight) || inputManager.IsKeyDown(Keys.Right))
             _moveInput.X += 1f;
     }
 
@@ -183,14 +183,14 @@ public class Archer : BasePlayer
             }
 
             // G = place bomb at feet
-            if (_inputManager.IsKeyPress(Keys.G) && _bombActionCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _bombActionCooldown <= 0f)
             {
                 PlaceSelectedItem();
                 _bombActionCooldown = BombActionCooldown;
             }
 
             // T = throw bomb toward mouse
-            if (_inputManager.IsKeyPress(Keys.T) && _bombActionCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _bombActionCooldown <= 0f)
             {
                 ThrowSelectedItemTowardMouse();
                 _bombActionCooldown = BombActionCooldown;
@@ -199,7 +199,7 @@ public class Archer : BasePlayer
             if (_dashCooldown > 0f)
                 _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (_inputManager.IsKeyPress(Keys.LeftShift) && _dashCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
             {
                 Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
                 Vector2 towardMouse = mousePosition - Position;

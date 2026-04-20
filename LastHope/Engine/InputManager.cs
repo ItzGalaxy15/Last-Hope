@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope.Engine;
 
@@ -67,6 +67,70 @@ namespace Last_Hope.Engine;
             return CurrentKeyboardState.IsKeyDown(key) && LastKeyboardState.IsKeyUp(key);
         }
 
+        public bool IsGameplayKeyDown(KeybindId id)
+        {
+            GameInputBinding b = KeybindStore.GetBinding(id);
+            if (b.IsUnbound)
+                return false;
+            return b.Kind switch
+            {
+                BindingKind.Keyboard => CurrentKeyboardState.IsKeyDown(b.Key),
+                BindingKind.Mouse => IsMouseButtonDown(b.Mouse),
+                _ => false,
+            };
+        }
+
+        public bool IsGameplayKeyPress(KeybindId id)
+        {
+            GameInputBinding b = KeybindStore.GetBinding(id);
+            if (b.IsUnbound)
+                return false;
+            return b.Kind switch
+            {
+                BindingKind.Keyboard =>
+                    CurrentKeyboardState.IsKeyDown(b.Key) && LastKeyboardState.IsKeyUp(b.Key),
+                BindingKind.Mouse =>
+                    IsMouseButtonDown(b.Mouse) && WasMouseButtonUp(b.Mouse),
+                _ => false,
+            };
+        }
+
+        private bool IsMouseButtonDown(MouseBindButton mb) => mb switch
+        {
+            MouseBindButton.Left => CurrentMouseState.LeftButton == ButtonState.Pressed,
+            MouseBindButton.Right => CurrentMouseState.RightButton == ButtonState.Pressed,
+            MouseBindButton.Middle => CurrentMouseState.MiddleButton == ButtonState.Pressed,
+            _ => false,
+        };
+
+        private bool WasMouseButtonUp(MouseBindButton mb) => mb switch
+        {
+            MouseBindButton.Left => LastMouseState.LeftButton == ButtonState.Released,
+            MouseBindButton.Right => LastMouseState.RightButton == ButtonState.Released,
+            MouseBindButton.Middle => LastMouseState.MiddleButton == ButtonState.Released,
+            _ => false,
+        };
+
+        /// <summary>First keyboard key or mouse button that transitioned to down this frame (for rebinding).</summary>
+        public GameInputBinding? ConsumeFirstNewBindingPress()
+        {
+            foreach (Keys k in CurrentKeyboardState.GetPressedKeys())
+            {
+                if (k == Keys.None || k == Keys.Escape)
+                    continue;
+                if (LastKeyboardState.IsKeyUp(k) && CurrentKeyboardState.IsKeyDown(k))
+                    return GameInputBinding.Keyboard(k);
+            }
+
+            if (LeftMousePress())
+                return GameInputBinding.FromMouse(MouseBindButton.Left);
+            if (RightMousePress())
+                return GameInputBinding.FromMouse(MouseBindButton.Right);
+            if (MiddleMousePress())
+                return GameInputBinding.FromMouse(MouseBindButton.Middle);
+            return null;
+        }
+
 
         /// <summary>
         /// Gets whether the left mouse button was pressed in this frame.
@@ -85,5 +149,10 @@ namespace Last_Hope.Engine;
         public bool RightMousePress()
         {
             return CurrentMouseState.RightButton == ButtonState.Pressed && LastMouseState.RightButton == ButtonState.Released;
+        }
+
+        public bool MiddleMousePress()
+        {
+            return CurrentMouseState.MiddleButton == ButtonState.Pressed && LastMouseState.MiddleButton == ButtonState.Released;
         }
     }

@@ -22,7 +22,7 @@ public class CharacterSelectMenu : MenuBase
 
         if (InputManager.IsKeyPress(Keys.Escape) || InputManager.IsKeyPress(Keys.Q))
         {
-            _state = GameState.StartMenu;
+            _state = GameState.MainMenu;
             return;
         }
 

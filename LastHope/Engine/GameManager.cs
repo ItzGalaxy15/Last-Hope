@@ -82,7 +82,7 @@ public class GameManager
         Menu = new Menu();
         EnemySpawner = new EnemySpawner();
 
-        _state = GameState.ControlsMenu;
+        _state = GameState.MainMenu;
         SelectedItemSlot = 0;
     }
 
@@ -153,8 +153,8 @@ public class GameManager
         InputManager.Update();
         switch (_state)
         {
-            case GameState.StartMenu:
-                Menu.UpdateStartMenu(gameTime);
+            case GameState.MainMenu:
+                Menu.UpdateMainMenu(gameTime);
                 break;
             case GameState.Characters:
                 Menu.UpdateCharactersRosterMenu(gameTime);
@@ -162,8 +162,11 @@ public class GameManager
             case GameState.CharacterSelect:
                 Menu.UpdateCharacterSelectMenu(gameTime);
                 break;
-            case GameState.ControlsMenu:
-                Menu.UpdateControlsMenu(gameTime);
+            case GameState.ItemsIndex:
+                Menu.UpdateItemsIndexMenu(gameTime);
+                break;
+            case GameState.SettingsMenu:
+                Menu.UpdateSettingsMenu(gameTime);
                 break;
             case GameState.Running:
                 EnemySpawner.Update(gameTime);
@@ -185,8 +188,8 @@ public class GameManager
     {
         switch (_state)
         {
-            case GameState.StartMenu:
-                Menu.DrawStartMenu(gameTime, spriteBatch);
+            case GameState.MainMenu:
+                Menu.DrawMainMenu(gameTime, spriteBatch, transformMatrix);
                 break;
             case GameState.Characters:
                 Menu.DrawCharactersRosterMenu(gameTime, spriteBatch);
@@ -194,8 +197,11 @@ public class GameManager
             case GameState.CharacterSelect:
                 Menu.DrawCharacterSelectMenu(gameTime, spriteBatch);
                 break;
-            case GameState.ControlsMenu:
-                Menu.DrawControlsMenu(gameTime, spriteBatch, transformMatrix);
+            case GameState.ItemsIndex:
+                Menu.DrawItemsIndexMenu(gameTime, spriteBatch, transformMatrix);
+                break;
+            case GameState.SettingsMenu:
+                Menu.DrawSettingsMenu(gameTime, spriteBatch, transformMatrix);
                 break;
             case GameState.Running:
                 Menu.DrawRunningMenu(gameTime, spriteBatch, transformMatrix);
