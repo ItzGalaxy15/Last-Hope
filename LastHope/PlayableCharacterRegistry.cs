@@ -7,11 +7,14 @@ namespace Last_Hope;
 
 /// <summary>
 /// Single place to register playable heroes: roster, character select, and spawning all read from here.
-/// To add a character: add a <see cref="PlayerCharacterKind"/> value, then append one <see cref="Definition"/> to <see cref="Ordered"/>.
+/// To add a character: add a <see cref="PlayerCharacterKind"/> value, then append one <see cref="Definition"/> to the ordered list (end of the array in source) so UI shows them last.
 /// </summary>
 public static class PlayableCharacterRegistry
 {
-    /// <summary>Locked order used by character select grid and roster list (left-to-roster / top-to-bottom).</summary>
+    /// <summary>
+    /// Play order for UI: character select and roster use this sequence left-to-right, top-to-bottom (7 per row).
+    /// Append new heroes at the end of this array so they appear in the last roster slot.
+    /// </summary>
     private static readonly Definition[] OrderedDefinitions =
     [
         new Definition

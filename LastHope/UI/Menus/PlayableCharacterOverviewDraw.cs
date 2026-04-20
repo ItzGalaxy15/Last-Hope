@@ -14,18 +14,58 @@ internal static class PlayableCharacterOverviewDraw
     private const int CellW = 220;
     private const int CellH = 240;
     private const int CellGap = 40;
-    private const int PortraitRowY = 130;
+    private const int PortraitRowY = 100;
+    /// <summary>How many portrait cells fit on one row (roster / select grid).</summary>
+    internal const int PortraitsPerRow = 7;
+    private const int PortraitRowGap = 20;
+    private const int BottomPanelHeight = 200;
+    private const int BottomPanelMargin = 40;
+    private const int ConfirmButtonWidth = 220;
+    private const int ConfirmButtonHeight = 52;
+    private const int MarginBelowPortraitGrid = 16;
+
+    internal static int GetPortraitGridRowCount(int totalCount)
+    {
+        if (totalCount <= 0)
+            return 0;
+        return (totalCount + PortraitsPerRow - 1) / PortraitsPerRow;
+    }
+
+    /// <summary>Bottom Y of the portrait grid (exclusive of content below).</summary>
+    internal static int GetPortraitGridBottomY(int totalCount)
+    {
+        int rows = GetPortraitGridRowCount(totalCount);
+        if (rows == 0)
+            return PortraitRowY;
+        return PortraitRowY + rows * CellH + System.Math.Max(0, rows - 1) * PortraitRowGap;
+    }
 
     internal static Rectangle GetPortraitRect(Viewport vp, int index)
     {
-        int count = PlayableCharacterRegistry.Count;
-        int totalW = count * CellW + System.Math.Max(0, count - 1) * CellGap;
+        int n = PlayableCharacterRegistry.Count;
+        if (n <= 0 || index < 0 || index >= n)
+            return Rectangle.Empty;
+
+        int row = index / PortraitsPerRow;
+        int col = index % PortraitsPerRow;
+        int countThisRow = System.Math.Min(PortraitsPerRow, n - row * PortraitsPerRow);
+        int totalW = countThisRow * CellW + System.Math.Max(0, countThisRow - 1) * CellGap;
         int startX = vp.Width / 2 - totalW / 2;
-        return new Rectangle(startX + index * (CellW + CellGap), PortraitRowY, CellW, CellH);
+        int x = startX + col * (CellW + CellGap);
+        int y = PortraitRowY + row * (CellH + PortraitRowGap);
+        return new Rectangle(x, y, CellW, CellH);
     }
 
-    internal static Rectangle GetConfirmRect(Viewport vp) =>
-        new Rectangle(vp.Width / 2 - 110, 400, 220, 52);
+    internal static Rectangle GetConfirmRect(Viewport vp)
+    {
+        int n = PlayableCharacterRegistry.Count;
+        int panelTop = vp.Height - BottomPanelMargin - BottomPanelHeight;
+        int idealTop = GetPortraitGridBottomY(n) + MarginBelowPortraitGrid;
+        int confirmTop = System.Math.Min(idealTop, panelTop - ConfirmButtonHeight - 8);
+        confirmTop = System.Math.Max(confirmTop, PortraitRowY + 40);
+        int confirmLeft = vp.Width / 2 - ConfirmButtonWidth / 2;
+        return new Rectangle(confirmLeft, confirmTop, ConfirmButtonWidth, ConfirmButtonHeight);
+    }
 
     internal static Texture2D? LoadPortraitTexture(
         ContentManager content,
