@@ -141,6 +141,47 @@ public abstract class MenuBase
         return MathHelper.Clamp(s, 1.35f, 2.8f);
     }
 
+    private static readonly Color HubBackdropTop = new(14, 18, 34, 255);
+    private static readonly Color HubBackdropBottom = new(28, 38, 72, 255);
+    private static readonly Color HubBackdropRail = new(255, 255, 255, 18);
+
+    /// <summary>Full-screen gradient wash for title/settings style menus (replaces the gameplay map).</summary>
+    protected static void DrawHubMenuBackdrop(SpriteBatch spriteBatch, Texture2D pixel, in Viewport vp)
+    {
+        const int bands = 16;
+        int w = vp.Width;
+        int h = vp.Height;
+        for (int i = 0; i < bands; i++)
+        {
+            float t0 = i / (float)bands;
+            float t1 = (i + 1f) / bands;
+            int y0 = (int)(t0 * h);
+            int y1 = (int)(t1 * h);
+            int rh = System.Math.Max(1, y1 - y0);
+            Color c = Color.Lerp(HubBackdropTop, HubBackdropBottom, (t0 + t1) * 0.5f);
+            spriteBatch.Draw(pixel, new Rectangle(0, y0, w, rh), c);
+        }
+    }
+
+    protected static void DrawHubMenuLeftRail(SpriteBatch spriteBatch, Texture2D pixel, in Viewport vp, float uiScale)
+    {
+        int railW = (int)(52f * uiScale);
+        spriteBatch.Draw(pixel, new Rectangle(0, 0, railW, vp.Height), HubBackdropRail);
+    }
+
+    /// <summary>Thin border frame (settings panel, modals, hub boxes).</summary>
+    protected static void DrawPanelOutline(SpriteBatch spriteBatch, Texture2D pixel, Rectangle r, Color c, int thickness = 2)
+    {
+        int t = thickness;
+        spriteBatch.Draw(pixel, new Rectangle(r.Left, r.Top, r.Width, t), c);
+        spriteBatch.Draw(pixel, new Rectangle(r.Left, r.Bottom - t, r.Width, t), c);
+        spriteBatch.Draw(pixel, new Rectangle(r.Left, r.Top, t, r.Height), c);
+        spriteBatch.Draw(pixel, new Rectangle(r.Right - t, r.Top, t, r.Height), c);
+    }
+
+    protected void DrawPanelOutline(SpriteBatch spriteBatch, Rectangle r, Color c, int thickness = 2) =>
+        DrawPanelOutline(spriteBatch, Pixel, r, c, thickness);
+
     /// <summary>Optional compact font (<c>Fonts/MenuPixel</c>); falls back to the main UI font if missing.</summary>
     protected SpriteFont MenuUiFont
     {
@@ -172,11 +213,11 @@ public abstract class MenuBase
     protected Rectangle GetTextRectangle(string text, Vector2 position, float scale = 1)
         => GetTextRectangleForFont(_font, text, position, scale);
 
-    protected static Rectangle GetTextRectangleForFont(SpriteFont font, string text, Vector2 position, float scale = 1f)
+    protected Rectangle GetTextRectangleForFont(SpriteFont font, string text, Vector2 position, float scale = 1f)
     {
-        if (font == null)
+        if (font == null && gm.FontBitmap == null)
             return Rectangle.Empty;
-        Vector2 size = font.MeasureString(text) * scale;
+        Vector2 size = gm.MeasureUiString(font, text, scale);
         return new Rectangle(
             (int)position.X - 10,
             (int)position.Y - 5,
@@ -188,10 +229,10 @@ public abstract class MenuBase
     {
         Viewport viewport = Game.GraphicsDevice.Viewport;
         Vector2 center = new Vector2(viewport.Width / 2f, viewport.Height / 2f);
-        if (_font == null)
+        if (_font == null && gm.FontBitmap == null)
             return center;
 
-        Vector2 textSize = _font.MeasureString(text);
+        Vector2 textSize = gm.MeasureUiString(_font, text, 1f);
         return new Vector2(center.X - textSize.X / 2f, center.Y - textSize.Y / 2f);
     }
 
@@ -213,7 +254,7 @@ public abstract class MenuBase
                 switch (seg.Kind)
                 {
                     case SegKind.Text:
-                        w += bodyFont.MeasureString(seg.Text).X * bodyTs;
+                        w += gm.MeasureUiString(bodyFont, seg.Text, bodyTs).X;
                         break;
                     default:
                         w += spriteSize;
@@ -240,7 +281,7 @@ public abstract class MenuBase
             foreach (var seg in line)
             {
                 if (seg.Kind == SegKind.Text)
-                    w += bodyFont.MeasureString(seg.Text).X * bodyTextScale;
+                    w += gm.MeasureUiString(bodyFont, seg.Text, bodyTextScale).X;
                 else
                     w += spriteSize;
             }
@@ -260,7 +301,7 @@ public abstract class MenuBase
 
     private void DrawControlsLinesCore(SpriteBatch spriteBatch, GameTime gameTime, Vector2 basePos, float textScale, Segment[][] lines)
     {
-        if (_font == null)
+        if (_font == null && gm.FontBitmap == null)
             return;
 
         if (_lmbTexture == null) _lmbTexture = _content.Load<Texture2D>("menu/LeftMouseClick");
@@ -294,8 +335,8 @@ public abstract class MenuBase
                 switch (seg.Kind)
                 {
                     case SegKind.Text:
-                        spriteBatch.DrawString(bodyFont, seg.Text, new Vector2(x, y), Color.White, 0f, Vector2.Zero, bodyTs, SpriteEffects.None, 0f);
-                        x += bodyFont.MeasureString(seg.Text).X * bodyTs;
+                        gm.DrawUiString(spriteBatch, bodyFont, seg.Text, new Vector2(x, y), Color.White, bodyTs);
+                        x += gm.MeasureUiString(bodyFont, seg.Text, bodyTs).X;
                         break;
                     case SegKind.Key:
                     {
@@ -323,7 +364,7 @@ public abstract class MenuBase
         }
     }
 
-    private static void DrawControlsBoundKey(SpriteBatch spriteBatch, SpriteFont bodyFont, float bodyMul, float textScale, int frame,
+    private void DrawControlsBoundKey(SpriteBatch spriteBatch, SpriteFont bodyFont, float bodyMul, float textScale, int frame,
         float x, float y, float lineHeight, float spriteYOffset, float spriteScale, float spriteSize, GameInputBinding b)
     {
         switch (b.Kind)
@@ -340,8 +381,8 @@ public abstract class MenuBase
                 {
                     string s = GameInputBinding.Format(b);
                     float ts = 0.38f * textScale * bodyMul;
-                    Vector2 sz = bodyFont.MeasureString(s) * ts;
-                    spriteBatch.DrawString(bodyFont, s, new Vector2(x + (spriteSize - sz.X) / 2f, y + (lineHeight - sz.Y) / 2f), Color.White, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
+                    Vector2 sz = gm.MeasureUiString(bodyFont, s, ts);
+                    gm.DrawUiString(spriteBatch, bodyFont, s, new Vector2(x + (spriteSize - sz.X) / 2f, y + (lineHeight - sz.Y) / 2f), Color.White, ts);
                 }
                 break;
             }
@@ -356,8 +397,8 @@ public abstract class MenuBase
                 {
                     string s = GameInputBinding.Format(b);
                     float ts = 0.38f * textScale * bodyMul;
-                    Vector2 sz = bodyFont.MeasureString(s) * ts;
-                    spriteBatch.DrawString(bodyFont, s, new Vector2(x + (spriteSize - sz.X) / 2f, y + (lineHeight - sz.Y) / 2f), Color.White, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
+                    Vector2 sz = gm.MeasureUiString(bodyFont, s, ts);
+                    gm.DrawUiString(spriteBatch, bodyFont, s, new Vector2(x + (spriteSize - sz.X) / 2f, y + (lineHeight - sz.Y) / 2f), Color.White, ts);
                 }
                 break;
             }
@@ -365,8 +406,8 @@ public abstract class MenuBase
             {
                 string s = "(none)";
                 float ts = 0.38f * textScale * bodyMul;
-                Vector2 sz = bodyFont.MeasureString(s) * ts;
-                spriteBatch.DrawString(bodyFont, s, new Vector2(x + (spriteSize - sz.X) / 2f, y + (lineHeight - sz.Y) / 2f), Color.Gray, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
+                Vector2 sz = gm.MeasureUiString(bodyFont, s, ts);
+                gm.DrawUiString(spriteBatch, bodyFont, s, new Vector2(x + (spriteSize - sz.X) / 2f, y + (lineHeight - sz.Y) / 2f), Color.Gray, ts);
                 break;
             }
         }
@@ -388,7 +429,7 @@ public abstract class MenuBase
     /// <param name="wrapInnerWidth">Max width for wrapping item descriptions (excluding panel padding).</param>
     protected void DrawItemsText(SpriteBatch spriteBatch, GameTime gameTime, Vector2 basePos, float wrapInnerWidth, float textScale)
     {
-        if (_font == null)
+        if (_font == null && gm.FontBitmap == null)
             return;
 
         SpriteFont textFont = MenuUiFont;
@@ -467,11 +508,11 @@ public abstract class MenuBase
                     foreach (string word in words)
                     {
                         string testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-                        float testWidth = bodyFont.MeasureString(testLine).X * bodyTextScale;
+                        float testWidth = gm.MeasureUiString(bodyFont, testLine, bodyTextScale).X;
 
                         if (currentIndent + testWidth > wrapInnerWidth && !string.IsNullOrEmpty(currentLine))
                         {
-                            spriteBatch.DrawString(bodyFont, currentLine, new Vector2(x, y + extraLineHeight), Color.White, 0f, Vector2.Zero, bodyTextScale, SpriteEffects.None, 0f);
+                            gm.DrawUiString(spriteBatch, bodyFont, currentLine, new Vector2(x, y + extraLineHeight), Color.White, bodyTextScale);
                             extraLineHeight += lineHeight;
                             x = basePos.X + lineWrapIndent;
                             currentIndent = lineWrapIndent;
@@ -485,9 +526,9 @@ public abstract class MenuBase
 
                     if (!string.IsNullOrEmpty(currentLine))
                     {
-                        spriteBatch.DrawString(bodyFont, currentLine, new Vector2(x, y + extraLineHeight), Color.White, 0f, Vector2.Zero, bodyTextScale, SpriteEffects.None, 0f);
-                        x += bodyFont.MeasureString(currentLine).X * bodyTextScale;
-                        currentIndent += bodyFont.MeasureString(currentLine).X * bodyTextScale;
+                        gm.DrawUiString(spriteBatch, bodyFont, currentLine, new Vector2(x, y + extraLineHeight), Color.White, bodyTextScale);
+                        x += gm.MeasureUiString(bodyFont, currentLine, bodyTextScale).X;
+                        currentIndent += gm.MeasureUiString(bodyFont, currentLine, bodyTextScale).X;
                     }
                 }
             }

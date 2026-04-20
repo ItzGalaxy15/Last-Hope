@@ -29,6 +29,11 @@ public class Menu
     public void DrawMainMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
         => _mainMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
+    /// <summary>Removes Gum controls when leaving the title hub so they do not stay interactive.</summary>
+    public void ReleaseMainMenuGum() => _mainMenu.ReleaseGumUi();
+
+    public void ReleasePausedMenuGum() => _pausedMenu.ReleaseGumUi();
+
     public void UpdateCharactersRosterMenu(GameTime gameTime) => _charactersRosterMenu.Update(gameTime);
     public void DrawCharactersRosterMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
         => _charactersRosterMenu.Draw(gameTime, spriteBatch);

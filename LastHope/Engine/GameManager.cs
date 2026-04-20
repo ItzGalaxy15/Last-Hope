@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 using Last_Hope;
 using Last_Hope.BaseModel;
@@ -56,6 +57,9 @@ public class GameManager
 
     public GameState _state;
     public SpriteFont _font;
+
+    /// <summary>Bitmap font from <c>Content/Font.fnt</c> + <c>Content/Font.png</c> when present next to the executable.</summary>
+    public BmFont? FontBitmap { get; private set; }
     public Menu Menu { get; private set; }
     public EnemySpawner EnemySpawner { get; private set; }
 
@@ -103,7 +107,50 @@ public class GameManager
         }
 
         _font = content.Load<SpriteFont>("Fonts/font");
+
+        FontBitmap = null;
+        try
+        {
+            string fntPath = Path.Combine(AppContext.BaseDirectory, "Content", "Font.fnt");
+            if (File.Exists(fntPath) && Game?.GraphicsDevice != null)
+                FontBitmap = BmFont.TryLoad(Game.GraphicsDevice, fntPath);
+        }
+        catch
+        {
+            FontBitmap = null;
+        }
     }
+
+    public Vector2 MeasureUiString(SpriteFont? fallback, string text, float scale)
+    {
+        if (string.IsNullOrEmpty(text))
+            return Vector2.Zero;
+        if (FontBitmap != null)
+            return FontBitmap.MeasureString(text, scale);
+        if (fallback == null)
+            return Vector2.Zero;
+        return fallback.MeasureString(text) * scale;
+    }
+
+    public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effects, float layerDepth)
+    {
+        if (string.IsNullOrEmpty(text))
+            return;
+        if (FontBitmap != null)
+        {
+            FontBitmap.Draw(spriteBatch, text, position, color, scale, layerDepth);
+            return;
+        }
+
+        if (fallback != null)
+            spriteBatch.DrawString(fallback, text, position, color, rotation, origin, scale, effects, layerDepth);
+    }
+
+    public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color, float scale) =>
+        DrawUiString(spriteBatch, fallback, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+
+    public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color) =>
+        DrawUiString(spriteBatch, fallback, text, position, color, 1f);
 
     public void HandleInput(InputManager inputManager)
     {
@@ -151,6 +198,9 @@ public class GameManager
     public void Update(GameTime gameTime)
     {
         InputManager.Update();
+
+        GameState stateAtFrameStart = _state;
+
         switch (_state)
         {
             case GameState.MainMenu:
@@ -182,6 +232,12 @@ public class GameManager
                 Menu.UpdateWinnerMenu(gameTime);
                 break;
         }
+
+        if (stateAtFrameStart == GameState.MainMenu && _state != GameState.MainMenu)
+            Menu.ReleaseMainMenuGum();
+
+        if (stateAtFrameStart == GameState.Paused && _state != GameState.Paused)
+            Menu.ReleasePausedMenuGum();
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)

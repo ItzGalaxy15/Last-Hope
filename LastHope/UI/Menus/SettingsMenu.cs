@@ -34,16 +34,16 @@ public sealed class SettingsMenu : MenuBase
 
     public void Update(GameTime gameTime)
     {
-        SpriteFont font = MenuUiFont;
-        if (font == null)
+        SpriteFont layoutFont = MenuUiFont ?? _font;
+        if (layoutFont == null && gm.FontBitmap == null)
             return;
 
         Viewport vp = Game.GraphicsDevice.Viewport;
         float ui = MenuUiScale(vp);
-        _chrome = BuildChromeLayout(font, vp, ui);
+        _chrome = BuildChromeLayout(layoutFont, vp, ui);
         _bindTargets.Clear();
         if (_tab == SettingsTab.Controls)
-            RegisterBindTargets(_chrome.ContentRect, font, 0.56f * ui, ui);
+            RegisterBindTargets(_chrome.ContentRect, layoutFont, 0.56f * ui, ui);
 
         if (_awaitingRebind.HasValue && _pendingConflict.HasValue && _pendingNewBind.HasValue)
         {
@@ -161,32 +161,31 @@ public sealed class SettingsMenu : MenuBase
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
-        SpriteFont font = MenuUiFont;
-        if (font == null)
+        SpriteFont layoutFont = MenuUiFont ?? _font;
+        if (layoutFont == null && gm.FontBitmap == null)
             return;
 
         if (_keysTexture == null) _keysTexture = _content.Load<Texture2D>("menu/keys");
         if (_lmbTexture == null) _lmbTexture = _content.Load<Texture2D>("menu/LeftMouseClick");
 
-        if (transformMatrix != null)
-            DrawWorld(gameTime, spriteBatch, transformMatrix);
-
         Viewport vp = Game.GraphicsDevice.Viewport;
         float ui = MenuUiScale(vp);
-        var chrome = _chrome.PanelRect.Width > 0 ? _chrome : BuildChromeLayout(font, vp, ui);
+
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        DrawHubMenuBackdrop(spriteBatch, Pixel, vp);
+        DrawHubMenuLeftRail(spriteBatch, Pixel, vp, ui);
+        spriteBatch.End();
+        var chrome = _chrome.PanelRect.Width > 0 ? _chrome : BuildChromeLayout(layoutFont, vp, ui);
 
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-        spriteBatch.Draw(Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(0, 0, 0, 100));
+        spriteBatch.Draw(Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(0, 0, 0, 72));
 
-        spriteBatch.Draw(Pixel, chrome.PanelRect, new Color(14, 16, 22, 105));
-        DrawPanelOutline(spriteBatch, chrome.PanelRect, new Color(220, 225, 235, 70));
+        spriteBatch.Draw(Pixel, chrome.PanelRect, new Color(18, 24, 38, 200));
+        DrawPanelOutline(spriteBatch, chrome.PanelRect, new Color(140, 185, 255, 110));
 
-        float titleS = 0.68f * ui;
-        Vector2 titleSize = font.MeasureString("SETTINGS") * titleS;
-        spriteBatch.DrawString(font, "SETTINGS",
-            new Vector2(chrome.PanelRect.Center.X - titleSize.X / 2f, chrome.PanelRect.Y + 14f * ui),
-            Color.White, 0f, Vector2.Zero, titleS, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch, layoutFont, "SETTINGS", chrome.TitlePosition,
+            Color.White, 0f, Vector2.Zero, chrome.TitleTextScale, SpriteEffects.None, 0f);
 
         string[] tabLabels = { "CONTROLS", "SOUND", "DISPLAY" };
         for (int i = 0; i < chrome.TabRects.Length; i++)
@@ -195,8 +194,8 @@ public sealed class SettingsMenu : MenuBase
             Color fg = sel ? Color.Black : Color.White;
             spriteBatch.Draw(Pixel, chrome.TabRects[i], sel ? new Color(255, 255, 255, 240) : new Color(32, 36, 44, 200));
             DrawPanelOutline(spriteBatch, chrome.TabRects[i], new Color(255, 255, 255, 100));
-            Vector2 sz = font.MeasureString(tabLabels[i]) * chrome.TabTextScale;
-            spriteBatch.DrawString(font, tabLabels[i],
+            Vector2 sz = gm.MeasureUiString(layoutFont, tabLabels[i], chrome.TabTextScale);
+            gm.DrawUiString(spriteBatch, layoutFont, tabLabels[i],
                 new Vector2(chrome.TabRects[i].Center.X - sz.X / 2f, chrome.TabRects[i].Center.Y - sz.Y / 2f),
                 fg, 0f, Vector2.Zero, chrome.TabTextScale, SpriteEffects.None, 0f);
         }
@@ -205,24 +204,24 @@ public sealed class SettingsMenu : MenuBase
         switch (_tab)
         {
             case SettingsTab.Controls:
-                DrawControlsRebindable(spriteBatch, gameTime, font, chrome.ContentRect, textScale, ui);
+                DrawControlsRebindable(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
                 break;
             case SettingsTab.Sound:
             case SettingsTab.Display:
-                DrawPlaceholderInRect(spriteBatch, font, chrome.ContentRect, "Coming soon.", 0.62f * ui);
+                DrawPlaceholderInRect(spriteBatch, layoutFont, chrome.ContentRect, "Coming soon.", 0.62f * ui);
                 break;
         }
 
-        var (footFont, footMul) = BodyFontForMenuText(font);
+        var (footFont, footMul) = BodyFontForMenuText(layoutFont);
         float footS = 0.48f * ui * footMul;
         string foot = "Esc / Q - Back  |  1-3 tabs";
-        Vector2 fs = footFont.MeasureString(foot) * footS;
-        spriteBatch.DrawString(footFont, foot, new Vector2(chrome.PanelRect.Center.X - fs.X / 2f, chrome.PanelRect.Bottom - 36f * ui), Color.Gray, 0f, Vector2.Zero, footS, SpriteEffects.None, 0f);
+        Vector2 fs = gm.MeasureUiString(footFont, foot, footS);
+        gm.DrawUiString(spriteBatch,footFont, foot, new Vector2(chrome.PanelRect.Center.X - fs.X / 2f, chrome.PanelRect.Bottom - 36f * ui), Color.Gray, 0f, Vector2.Zero, footS, SpriteEffects.None, 0f);
 
         if (_awaitingRebind.HasValue && _pendingConflict.HasValue && _pendingNewBind.HasValue)
-            DrawOverrideConfirmModal(spriteBatch, font, vp, ui, _overrideLayout, _awaitingRebind.Value, _pendingConflict.Value, _pendingNewBind.Value);
+            DrawOverrideConfirmModal(spriteBatch, layoutFont, vp, ui, _overrideLayout, _awaitingRebind.Value, _pendingConflict.Value, _pendingNewBind.Value);
         else if (_awaitingRebind.HasValue)
-            DrawRebindModal(spriteBatch, font, vp, ui, _awaitingRebind.Value);
+            DrawRebindModal(spriteBatch, layoutFont, vp, ui, _awaitingRebind.Value);
 
         spriteBatch.End();
     }
@@ -241,17 +240,17 @@ public sealed class SettingsMenu : MenuBase
         float ts = 0.58f * ui * sm;
         GameInputBinding cur = KeybindStore.GetBinding(id);
         string headline = $"Set new key [{KeybindStore.Label(id)}]";
-        Vector2 s1 = bf.MeasureString(headline) * ts;
+        Vector2 s1 = gm.MeasureUiString(bf, headline, ts);
         float y = box.Y + 26f * ui;
-        spriteBatch.DrawString(bf, headline, new Vector2(box.Center.X - s1.X / 2f, y), Color.White, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch,bf, headline, new Vector2(box.Center.X - s1.X / 2f, y), Color.White, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
         string curLine = $"Current: {GameInputBinding.Format(cur)}";
         float cs = 0.42f * ui * sm;
-        Vector2 sCur = bf.MeasureString(curLine) * cs;
-        spriteBatch.DrawString(bf, curLine, new Vector2(box.Center.X - sCur.X / 2f, y + s1.Y + 6f * ui), new Color(200, 205, 215), 0f, Vector2.Zero, cs, SpriteEffects.None, 0f);
+        Vector2 sCur = gm.MeasureUiString(bf, curLine, cs);
+        gm.DrawUiString(spriteBatch,bf, curLine, new Vector2(box.Center.X - sCur.X / 2f, y + s1.Y + 6f * ui), new Color(200, 205, 215), 0f, Vector2.Zero, cs, SpriteEffects.None, 0f);
         string hint = "Press key / LMB / RMB / MMB  |  Esc cancel";
         float hs = 0.45f * ui * sm;
-        Vector2 hsZ = bf.MeasureString(hint) * hs;
-        spriteBatch.DrawString(bf, hint, new Vector2(box.Center.X - hsZ.X / 2f, box.Bottom - 36f * ui), Color.Gray, 0f, Vector2.Zero, hs, SpriteEffects.None, 0f);
+        Vector2 hsZ = gm.MeasureUiString(bf, hint, hs);
+        gm.DrawUiString(spriteBatch,bf, hint, new Vector2(box.Center.X - hsZ.X / 2f, box.Bottom - 36f * ui), Color.Gray, 0f, Vector2.Zero, hs, SpriteEffects.None, 0f);
     }
 
     private void DrawOverrideConfirmModal(SpriteBatch spriteBatch, SpriteFont menuFont, Viewport vp, float ui, in OverrideConfirmLayout lay,
@@ -267,12 +266,12 @@ public sealed class SettingsMenu : MenuBase
         string line1 = $"{GameInputBinding.Format(newBind)} is already bound to [{KeybindStore.Label(conflictId)}].";
         string line2 = $"Assign it to [{KeybindStore.Label(targetId)}] and unbind the other action?";
         float y = lay.Box.Y + 22f * ui;
-        Vector2 s1 = bf.MeasureString(line1) * ts;
-        Vector2 s2 = bf.MeasureString(line2) * bs;
+        Vector2 s1 = gm.MeasureUiString(bf, line1, ts);
+        Vector2 s2 = gm.MeasureUiString(bf, line2, bs);
         float x1 = lay.Box.Center.X - s1.X / 2f;
         float x2 = lay.Box.Center.X - s2.X / 2f;
-        spriteBatch.DrawString(bf, line1, new Vector2(x1, y), new Color(255, 200, 160), 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
-        spriteBatch.DrawString(bf, line2, new Vector2(x2, y + s1.Y + 10f * ui), Color.White, 0f, Vector2.Zero, bs, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch,bf, line1, new Vector2(x1, y), new Color(255, 200, 160), 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch,bf, line2, new Vector2(x2, y + s1.Y + 10f * ui), Color.White, 0f, Vector2.Zero, bs, SpriteEffects.None, 0f);
 
         spriteBatch.Draw(Pixel, lay.YesRect, new Color(60, 120, 70, 230));
         DrawPanelOutline(spriteBatch, lay.YesRect, Color.LightGreen * 0.7f);
@@ -280,15 +279,15 @@ public sealed class SettingsMenu : MenuBase
         DrawPanelOutline(spriteBatch, lay.NoRect, Color.Gray * 0.8f);
 
         float btnText = 0.44f * ui * sm;
-        Vector2 ys = bf.MeasureString("Yes") * btnText;
-        Vector2 ns = bf.MeasureString("No") * btnText;
-        spriteBatch.DrawString(bf, "Yes", new Vector2(lay.YesRect.Center.X - ys.X / 2f, lay.YesRect.Center.Y - ys.Y / 2f), Color.White, 0f, Vector2.Zero, btnText, SpriteEffects.None, 0f);
-        spriteBatch.DrawString(bf, "No", new Vector2(lay.NoRect.Center.X - ns.X / 2f, lay.NoRect.Center.Y - ns.Y / 2f), Color.White, 0f, Vector2.Zero, btnText, SpriteEffects.None, 0f);
+        Vector2 ys = gm.MeasureUiString(bf, "Yes", btnText);
+        Vector2 ns = gm.MeasureUiString(bf, "No", btnText);
+        gm.DrawUiString(spriteBatch,bf, "Yes", new Vector2(lay.YesRect.Center.X - ys.X / 2f, lay.YesRect.Center.Y - ys.Y / 2f), Color.White, 0f, Vector2.Zero, btnText, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch,bf, "No", new Vector2(lay.NoRect.Center.X - ns.X / 2f, lay.NoRect.Center.Y - ns.Y / 2f), Color.White, 0f, Vector2.Zero, btnText, SpriteEffects.None, 0f);
 
         string hint = "Y / Enter = Yes   |   N / Esc = No";
         float hs = 0.4f * ui * sm;
-        Vector2 hz = bf.MeasureString(hint) * hs;
-        spriteBatch.DrawString(bf, hint, new Vector2(lay.Box.Center.X - hz.X / 2f, lay.Box.Bottom - 32f * ui), Color.Gray, 0f, Vector2.Zero, hs, SpriteEffects.None, 0f);
+        Vector2 hz = gm.MeasureUiString(bf, hint, hs);
+        gm.DrawUiString(spriteBatch,bf, hint, new Vector2(lay.Box.Center.X - hz.X / 2f, lay.Box.Bottom - 32f * ui), Color.Gray, 0f, Vector2.Zero, hs, SpriteEffects.None, 0f);
     }
 
     private static OverrideConfirmLayout BuildOverrideConfirmLayout(Viewport vp, float ui)
@@ -325,7 +324,7 @@ public sealed class SettingsMenu : MenuBase
     {
         var (labelFont, labelMul) = BodyFontForMenuText(font);
         int frame = (int)(gameTime.TotalGameTime.TotalSeconds / KeyFrameDuration) % KeyFrameCount;
-        float lineH = font.LineSpacing * textScale;
+        float lineH = (gm.FontBitmap != null ? gm.FontBitmap.LineHeight : font.LineSpacing) * textScale;
         float chip = MathHelper.Max(lineH * 1.35f, 28f * ui);
         float x0 = content.X + 12f * ui;
         float y = content.Y + 8f * ui;
@@ -334,7 +333,7 @@ public sealed class SettingsMenu : MenuBase
         void Label(string t)
         {
             float ls = textScale * 1.05f * labelMul;
-            spriteBatch.DrawString(labelFont, t, new Vector2(x0, y), new Color(200, 210, 230), 0f, Vector2.Zero, ls, SpriteEffects.None, 0f);
+            gm.DrawUiString(spriteBatch,labelFont, t, new Vector2(x0, y), new Color(200, 210, 230), 0f, Vector2.Zero, ls, SpriteEffects.None, 0f);
             y += lineH * 1.35f;
         }
 
@@ -367,7 +366,7 @@ public sealed class SettingsMenu : MenuBase
             float yo = -(chip - lineH) / 2f;
             spriteBatch.Draw(_lmbTexture, new Vector2(lmbRect.X + 4f, y + yo), src, Color.White, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
             x += lmbRect.Width + gap;
-            spriteBatch.DrawString(labelFont, "-> Attack", new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale * labelMul, SpriteEffects.None, 0f);
+            gm.DrawUiString(spriteBatch,labelFont, "-> Attack", new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale * labelMul, SpriteEffects.None, 0f);
             y += chip + 14f * ui;
         }
 
@@ -377,7 +376,7 @@ public sealed class SettingsMenu : MenuBase
         RowChips(KeybindId.PlaceItem, KeybindId.ThrowItem);
 
         float ty = y;
-        spriteBatch.DrawString(labelFont, "Arrows still move if you keep them on a gamepad keyboard layout.", new Vector2(x0, ty), Color.Gray * 0.85f, 0f, Vector2.Zero, textScale * 0.72f * labelMul, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch,labelFont, "Arrows still move if you keep them on a gamepad keyboard layout.", new Vector2(x0, ty), Color.Gray * 0.85f, 0f, Vector2.Zero, textScale * 0.72f * labelMul, SpriteEffects.None, 0f);
     }
 
     private void DrawBoundKey(SpriteBatch spriteBatch, SpriteFont font, int frame, Rectangle rect, GameInputBinding bind, float chip)
@@ -400,8 +399,8 @@ public sealed class SettingsMenu : MenuBase
                     var (bf, sm) = BodyFontForMenuText(font);
                     string s = GameInputBinding.Format(bind);
                     float ts = 0.38f * sm;
-                    Vector2 sz = bf.MeasureString(s) * ts;
-                    spriteBatch.DrawString(bf, s, new Vector2(rect.Center.X - sz.X / 2f, rect.Center.Y - sz.Y / 2f), Color.White, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
+                    Vector2 sz = gm.MeasureUiString(bf, s, ts);
+                    gm.DrawUiString(spriteBatch,bf, s, new Vector2(rect.Center.X - sz.X / 2f, rect.Center.Y - sz.Y / 2f), Color.White, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
                 }
                 break;
             }
@@ -418,8 +417,8 @@ public sealed class SettingsMenu : MenuBase
                     var (bf, sm) = BodyFontForMenuText(font);
                     string s = GameInputBinding.Format(bind);
                     float ts = 0.38f * sm;
-                    Vector2 sz = bf.MeasureString(s) * ts;
-                    spriteBatch.DrawString(bf, s, new Vector2(rect.Center.X - sz.X / 2f, rect.Center.Y - sz.Y / 2f), Color.White, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
+                    Vector2 sz = gm.MeasureUiString(bf, s, ts);
+                    gm.DrawUiString(spriteBatch,bf, s, new Vector2(rect.Center.X - sz.X / 2f, rect.Center.Y - sz.Y / 2f), Color.White, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
                 }
                 break;
             }
@@ -428,8 +427,8 @@ public sealed class SettingsMenu : MenuBase
                 var (bf, sm) = BodyFontForMenuText(font);
                 string s = "(none)";
                 float ts = 0.38f * sm;
-                Vector2 sz = bf.MeasureString(s) * ts;
-                spriteBatch.DrawString(bf, s, new Vector2(rect.Center.X - sz.X / 2f, rect.Center.Y - sz.Y / 2f), Color.Gray, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
+                Vector2 sz = gm.MeasureUiString(bf, s, ts);
+                gm.DrawUiString(spriteBatch,bf, s, new Vector2(rect.Center.X - sz.X / 2f, rect.Center.Y - sz.Y / 2f), Color.Gray, 0f, Vector2.Zero, ts, SpriteEffects.None, 0f);
                 break;
             }
         }
@@ -438,7 +437,7 @@ public sealed class SettingsMenu : MenuBase
     /// <summary>Same geometry as <see cref="DrawControlsRebindable"/> for hit-testing.</summary>
     private void RegisterBindTargets(Rectangle content, SpriteFont font, float textScale, float ui)
     {
-        float lineH = font.LineSpacing * textScale;
+        float lineH = (gm.FontBitmap != null ? gm.FontBitmap.LineHeight : font.LineSpacing) * textScale;
         float chip = MathHelper.Max(lineH * 1.35f, 28f * ui);
         float x0 = content.X + 12f * ui;
         float y = content.Y + 8f * ui;
@@ -488,23 +487,11 @@ public sealed class SettingsMenu : MenuBase
         var (bf, sm) = BodyFontForMenuText(menuFont);
         float drawScale = textScale * sm;
         spriteBatch.Draw(Pixel, content, new Color(24, 28, 36, 120));
-        Vector2 sz = bf.MeasureString(message) * drawScale;
-        spriteBatch.DrawString(bf, message,
+        Vector2 sz = gm.MeasureUiString(bf, message, drawScale);
+        gm.DrawUiString(spriteBatch,bf, message,
             new Vector2(content.Center.X - sz.X / 2f, content.Center.Y - sz.Y / 2f),
             Color.LightGray, 0f, Vector2.Zero, drawScale, SpriteEffects.None, 0f);
     }
-
-    private static void DrawPanelOutline(SpriteBatch spriteBatch, Texture2D pixel, Rectangle r, Color c)
-    {
-        const int t = 2;
-        spriteBatch.Draw(pixel, new Rectangle(r.Left, r.Top, r.Width, t), c);
-        spriteBatch.Draw(pixel, new Rectangle(r.Left, r.Bottom - t, r.Width, t), c);
-        spriteBatch.Draw(pixel, new Rectangle(r.Left, r.Top, t, r.Height), c);
-        spriteBatch.Draw(pixel, new Rectangle(r.Right - t, r.Top, t, r.Height), c);
-    }
-
-    private void DrawPanelOutline(SpriteBatch spriteBatch, Rectangle r, Color c) =>
-        DrawPanelOutline(spriteBatch, Pixel, r, c);
 
     private readonly struct SettingsChromeLayout
     {
@@ -512,13 +499,23 @@ public sealed class SettingsMenu : MenuBase
         public readonly Rectangle[] TabRects;
         public readonly Rectangle ContentRect;
         public readonly float TabTextScale;
+        public readonly Vector2 TitlePosition;
+        public readonly float TitleTextScale;
 
-        public SettingsChromeLayout(Rectangle panelRect, Rectangle[] tabRects, Rectangle contentRect, float tabTextScale)
+        public SettingsChromeLayout(
+            Rectangle panelRect,
+            Rectangle[] tabRects,
+            Rectangle contentRect,
+            float tabTextScale,
+            Vector2 titlePosition,
+            float titleTextScale)
         {
             PanelRect = panelRect;
             TabRects = tabRects;
             ContentRect = contentRect;
             TabTextScale = tabTextScale;
+            TitlePosition = titlePosition;
+            TitleTextScale = titleTextScale;
         }
     }
 
@@ -530,18 +527,25 @@ public sealed class SettingsMenu : MenuBase
         int py = (int)(vp.Height / 2f - panelH / 2f);
         var panel = new Rectangle(px, py, (int)panelW, (int)panelH);
 
+        float titleTextScale = 0.72f * ui;
+        Vector2 titleSize = gm.MeasureUiString(font, "SETTINGS", titleTextScale);
+        float titleY = panel.Y + 22f * ui;
+        var titlePos = new Vector2(panel.X + panel.Width / 2f - titleSize.X / 2f, titleY);
+
         float tabScale = 0.48f * ui;
         string[] labels = { "CONTROLS", "SOUND", "DISPLAY" };
-        float padX = 16f * ui;
-        float tabY = panel.Y + (int)(18f * ui);
-        float tabH = font.LineSpacing * tabScale + 18f * ui;
+        float padX = 18f * ui;
+        float gapTitleToTabs = 24f * ui;
+        float tabY = titleY + titleSize.Y + gapTitleToTabs;
+        float tabH = (gm.FontBitmap != null ? gm.FontBitmap.LineHeight : font.LineSpacing) * tabScale + 20f * ui;
+        float tabGap = 28f * ui;
         var rects = new Rectangle[3];
         float totalW = 0f;
         for (int i = 0; i < 3; i++)
         {
-            float tw = font.MeasureString(labels[i]).X * tabScale + padX * 2f;
+            float tw = gm.MeasureUiString(font, labels[i], tabScale).X + padX * 2f;
             rects[i] = new Rectangle(0, (int)tabY, (int)tw, (int)tabH);
-            totalW += tw + (i < 2 ? 10f * ui : 0f);
+            totalW += tw + (i < 2 ? tabGap : 0f);
         }
 
         float startX = panel.X + panel.Width / 2f - totalW / 2f;
@@ -550,12 +554,12 @@ public sealed class SettingsMenu : MenuBase
         {
             var r = rects[i];
             rects[i] = new Rectangle((int)x, r.Y, r.Width, r.Height);
-            x += r.Width + 10f * ui;
+            x += r.Width + tabGap;
         }
 
-        int contentTop = (int)(tabY + tabH + 16f * ui);
+        int contentTop = (int)(tabY + tabH + 18f * ui);
         var content = new Rectangle(panel.X + (int)(16f * ui), contentTop, panel.Width - (int)(32f * ui), panel.Bottom - contentTop - (int)(48f * ui));
 
-        return new SettingsChromeLayout(panel, rects, content, tabScale);
+        return new SettingsChromeLayout(panel, rects, content, tabScale, titlePos, titleTextScale);
     }
 }

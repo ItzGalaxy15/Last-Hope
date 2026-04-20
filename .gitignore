@@ -7,6 +7,14 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
 
+# Custom MSBuild / dotnet output dirs (e.g. dotnet build -o LastHope\_align_check) — not source
+LastHope/_align_check/
+LastHope/_build_verify*/
+LastHope/_fontscale_check/
+LastHope/_itemsbox/
+LastHope/_run_test/
+LastHope/_stretchfix/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

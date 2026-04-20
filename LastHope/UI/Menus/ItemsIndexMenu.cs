@@ -15,8 +15,8 @@ public sealed class ItemsIndexMenu : MenuBase
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
-        SpriteFont font = MenuUiFont;
-        if (font == null)
+        SpriteFont layoutFont = MenuUiFont ?? _font;
+        if (layoutFont == null && gm.FontBitmap == null)
             return;
 
         if (transformMatrix != null)
@@ -24,23 +24,52 @@ public sealed class ItemsIndexMenu : MenuBase
 
         Viewport vp = Game.GraphicsDevice.Viewport;
         float ui = MenuUiScale(vp);
-        float textScale = 0.62f * ui;
-        float wrap = MathHelper.Clamp(MeasureItemsContentWidth(font, textScale) + 120f * ui, 480f * ui, vp.Width - 80f);
 
-        float panelTop = 110f * ui;
-        float titleScale = 1.05f * ui;
-        Vector2 titleSize = font.MeasureString("ITEMS INDEX") * titleScale;
-        Vector2 titlePos = new Vector2(vp.Width / 2f - titleSize.X * 0.5f, 40f * ui);
+        // Same shell as SettingsMenu: hub backdrop + rail, dim, framed panel, centered title/footer.
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        DrawHubMenuBackdrop(spriteBatch, Pixel, vp);
+        DrawHubMenuLeftRail(spriteBatch, Pixel, vp, ui);
+        spriteBatch.End();
+
+        float panelW = MathHelper.Min(720f * ui, vp.Width - 40f);
+        float panelH = vp.Height * 0.76f;
+        int px = (int)(vp.Width / 2f - panelW / 2f);
+        int py = (int)(vp.Height / 2f - panelH / 2f);
+        var panel = new Rectangle(px, py, (int)panelW, (int)panelH);
+
+        float titleTextScale = 0.72f * ui;
+        Vector2 titleSize = gm.MeasureUiString(layoutFont, "ITEMS INDEX", titleTextScale);
+        float titleY = panel.Y + 22f * ui;
+        var titlePos = new Vector2(panel.X + panel.Width / 2f - titleSize.X / 2f, titleY);
+
+        float contentTop = titleY + titleSize.Y + 28f * ui;
+        var content = new Rectangle(
+            panel.X + (int)(16f * ui),
+            (int)contentTop,
+            panel.Width - (int)(32f * ui),
+            panel.Bottom - (int)contentTop - (int)(48f * ui));
+
+        float textScale = 0.56f * ui;
+        float innerPad = 10f * ui;
+        float wrapInner = MathHelper.Max(content.Width - innerPad * 2f, 220f);
 
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        spriteBatch.DrawString(font, "ITEMS INDEX", titlePos, new Color(255, 220, 160), 0f, Vector2.Zero, titleScale, SpriteEffects.None, 0f);
+        spriteBatch.Draw(Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(0, 0, 0, 72));
+        spriteBatch.Draw(Pixel, panel, new Color(18, 24, 38, 200));
+        DrawPanelOutline(spriteBatch, panel, new Color(140, 185, 255, 110));
 
-        float panelLeft = vp.Width / 2f - (wrap + 20f) / 2f;
-        DrawItemsText(spriteBatch, gameTime, new Vector2(panelLeft + 10f * ui, panelTop), wrap, textScale);
+        gm.DrawUiString(spriteBatch, layoutFont, "ITEMS INDEX", titlePos, Color.White, 0f, Vector2.Zero, titleTextScale, SpriteEffects.None, 0f);
 
-        const string back = "Esc / Q - Back";
-        float backScale = 0.55f * ui;
-        spriteBatch.DrawString(font, back, new Vector2(40 * ui, vp.Height - 56f * ui), Color.Gray, 0f, Vector2.Zero, backScale, SpriteEffects.None, 0f);
+        DrawItemsText(spriteBatch, gameTime, new Vector2(content.X + innerPad, content.Y + 8f * ui), wrapInner, textScale);
+
+        var (footFont, footMul) = BodyFontForMenuText(layoutFont);
+        float footS = 0.48f * ui * footMul;
+        const string foot = "Esc / Q - Back";
+        Vector2 fs = gm.MeasureUiString(footFont, foot, footS);
+        gm.DrawUiString(spriteBatch, footFont, foot,
+            new Vector2(panel.Center.X - fs.X / 2f, panel.Bottom - 36f * ui),
+            Color.Gray, 0f, Vector2.Zero, footS, SpriteEffects.None, 0f);
+
         spriteBatch.End();
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Last_Hope;
+using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -104,61 +105,58 @@ internal static class PlayableCharacterOverviewDraw
     {
         spriteBatch.Draw(pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(12, 18, 32, 255));
 
+        GameManager gm = GameManager.GetGameManager();
+
         if (PlayableCharacterRegistry.Count == 0)
         {
             const string msg = "No playable characters. Add entries to PlayableCharacterRegistry.";
-            Vector2 ms = font.MeasureString(msg) * 0.45f;
-            spriteBatch.DrawString(
+            Vector2 ms = gm.MeasureUiString(font, msg, 0.45f);
+            gm.DrawUiString(
+                spriteBatch,
                 font,
                 msg,
                 new Vector2(vp.Width / 2f - ms.X / 2f, vp.Height / 2f),
                 Color.OrangeRed,
-                0f,
-                Vector2.Zero,
-                0.45f,
-                SpriteEffects.None,
-                0f);
+                0.45f);
             return;
         }
 
         selectedIndex = System.Math.Clamp(selectedIndex, 0, PlayableCharacterRegistry.Count - 1);
 
-        Vector2 titleSize = font.MeasureString(title) * titleScale;
+        Vector2 titleSize = gm.MeasureUiString(font, title, titleScale);
         Vector2 titlePos = new Vector2(vp.Width / 2f - titleSize.X / 2f, 48f);
-        spriteBatch.DrawString(font, title, titlePos, Color.White, 0f, Vector2.Zero, titleScale, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch, font, title, titlePos, Color.White, titleScale);
 
         int n = PlayableCharacterRegistry.Count;
         for (int i = 0; i < n; i++)
-            DrawPortraitCell(spriteBatch, font, pixel, content, portraitCache, vp, i, selectedIndex);
+            DrawPortraitCell(spriteBatch, gm, font, pixel, content, portraitCache, vp, i, selectedIndex);
 
-        DrawBottomPanel(spriteBatch, font, pixel, vp, selectedIndex);
+        DrawBottomPanel(spriteBatch, gm, font, pixel, vp, selectedIndex);
 
         if (showStartButton)
         {
             Rectangle confirmRect = GetConfirmRect(vp);
             spriteBatch.Draw(pixel, confirmRect, new Color(40, 55, 75, 255));
             const string confirm = "START";
-            Vector2 cs = font.MeasureString(confirm) * 0.55f;
+            Vector2 cs = gm.MeasureUiString(font, confirm, 0.55f);
             Vector2 cp = new Vector2(confirmRect.Center.X - cs.X / 2f, confirmRect.Center.Y - cs.Y / 2f);
-            spriteBatch.DrawString(font, confirm, cp, Color.White, 0f, Vector2.Zero, 0.55f, SpriteEffects.None, 0f);
+            gm.DrawUiString(spriteBatch, font, confirm, cp, Color.White, 0.55f);
         }
 
         const float hintScale = 0.38f;
-        Vector2 hintSize = font.MeasureString(footerHint) * hintScale;
-        spriteBatch.DrawString(
+        Vector2 hintSize = gm.MeasureUiString(font, footerHint, hintScale);
+        gm.DrawUiString(
+            spriteBatch,
             font,
             footerHint,
             new Vector2(vp.Width - hintSize.X - 24, vp.Height - hintSize.Y - 18),
             new Color(200, 210, 230, 255),
-            0f,
-            Vector2.Zero,
-            hintScale,
-            SpriteEffects.None,
-            0f);
+            hintScale);
     }
 
     private static void DrawPortraitCell(
         SpriteBatch spriteBatch,
+        GameManager gm,
         SpriteFont font,
         Texture2D pixel,
         ContentManager content,
@@ -200,21 +198,19 @@ internal static class PlayableCharacterOverviewDraw
 
         string name = def.DisplayName;
         const float nameScale = 0.5f;
-        Vector2 ns = font.MeasureString(name) * nameScale;
-        spriteBatch.DrawString(
+        Vector2 ns = gm.MeasureUiString(font, name, nameScale);
+        gm.DrawUiString(
+            spriteBatch,
             font,
             name,
             new Vector2(outer.Center.X - ns.X / 2f, outer.Bottom - ns.Y - 10),
             Color.White,
-            0f,
-            Vector2.Zero,
-            nameScale,
-            SpriteEffects.None,
-            0f);
+            nameScale);
     }
 
     private static void DrawBottomPanel(
         SpriteBatch spriteBatch,
+        GameManager gm,
         SpriteFont font,
         Texture2D pixel,
         Viewport vp,
@@ -229,41 +225,41 @@ internal static class PlayableCharacterOverviewDraw
 
         const float headScale = 0.55f;
         Vector2 textOrigin = new Vector2(panel.X + 20, panel.Y + 16);
-        spriteBatch.DrawString(font, def.DisplayName.ToUpperInvariant(), textOrigin, Color.White, 0f, Vector2.Zero, headScale, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch, font, def.DisplayName.ToUpperInvariant(), textOrigin, Color.White, headScale);
 
         const float lineScale = 0.42f;
-        float lineY = textOrigin.Y + font.LineSpacing * headScale + 8f;
+        float lineSpacing = gm.FontBitmap != null ? gm.FontBitmap.LineHeight : font.LineSpacing;
+        float lineY = textOrigin.Y + lineSpacing * headScale + 8f;
         const float barMaxW = 220f;
         const float rowGap = 30f;
 
-        DrawStatRow(spriteBatch, font, pixel, "HP", def.MaxHp, 150f, new Vector2(panel.X + 20, lineY), barMaxW, lineScale);
+        DrawStatRow(spriteBatch, gm, font, pixel, "HP", def.MaxHp, 150f, new Vector2(panel.X + 20, lineY), barMaxW, lineScale);
         lineY += rowGap;
-        DrawStatRow(spriteBatch, font, pixel, "ATK", def.Attack, 40f, new Vector2(panel.X + 20, lineY), barMaxW, lineScale);
+        DrawStatRow(spriteBatch, gm, font, pixel, "ATK", def.Attack, 40f, new Vector2(panel.X + 20, lineY), barMaxW, lineScale);
         lineY += rowGap;
-        DrawStatRow(spriteBatch, font, pixel, "SPD", def.Speed, 300f, new Vector2(panel.X + 20, lineY), barMaxW, lineScale);
+        DrawStatRow(spriteBatch, gm, font, pixel, "SPD", def.Speed, 300f, new Vector2(panel.X + 20, lineY), barMaxW, lineScale);
         lineY += rowGap;
-        DrawStatRow(spriteBatch, font, pixel, "CRT", def.CritPercent, 100f, new Vector2(panel.X + 20, lineY), barMaxW, lineScale);
+        DrawStatRow(spriteBatch, gm, font, pixel, "CRT", def.CritPercent, 100f, new Vector2(panel.X + 20, lineY), barMaxW, lineScale);
 
         const float descScale = 0.4f;
         string desc = $"{def.WeaponName} - {def.Tagline}";
         Vector2 descPos = new Vector2(panel.Right - 520, panel.Y + 22);
-        spriteBatch.DrawString(font, desc, descPos, new Color(210, 220, 235), 0f, Vector2.Zero, descScale, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch, font, desc, descPos, new Color(210, 220, 235), descScale);
 
         string critDmg = $"Crit damage: {def.CritDamageLabel}";
-        spriteBatch.DrawString(
+        float descLineSpacing = gm.FontBitmap != null ? gm.FontBitmap.LineHeight : font.LineSpacing;
+        gm.DrawUiString(
+            spriteBatch,
             font,
             critDmg,
-            new Vector2(descPos.X, descPos.Y + font.LineSpacing * descScale + 6),
+            new Vector2(descPos.X, descPos.Y + descLineSpacing * descScale + 6),
             new Color(180, 200, 255),
-            0f,
-            Vector2.Zero,
-            descScale,
-            SpriteEffects.None,
-            0f);
+            descScale);
     }
 
     private static void DrawStatRow(
         SpriteBatch spriteBatch,
+        GameManager gm,
         SpriteFont font,
         Texture2D pixel,
         string label,
@@ -281,11 +277,11 @@ internal static class PlayableCharacterOverviewDraw
         };
 
         string line = $"{label}: {valueText}";
-        spriteBatch.DrawString(font, line, origin, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch, font, line, origin, Color.White, scale);
 
         float t = MathHelper.Clamp(value / barMax, 0f, 1f);
         const float gapAfterValue = 26f;
-        float textWidth = font.MeasureString(line).X * scale;
+        float textWidth = gm.MeasureUiString(font, line, scale).X;
         int barLeft = (int)(origin.X + textWidth + gapAfterValue);
         Rectangle barBack = new Rectangle(barLeft, (int)origin.Y + 4, (int)barPixelWidth, 12);
         spriteBatch.Draw(pixel, barBack, new Color(30, 35, 50, 255));

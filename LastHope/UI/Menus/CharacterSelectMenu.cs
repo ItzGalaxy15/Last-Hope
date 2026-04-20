@@ -17,7 +17,7 @@ public class CharacterSelectMenu : MenuBase
 
     public void Update(GameTime gameTime)
     {
-        if (_font == null)
+        if (_font == null && gm.FontBitmap == null)
             return;
 
         if (InputManager.IsKeyPress(Keys.Escape) || InputManager.IsKeyPress(Keys.Q))
@@ -60,7 +60,7 @@ public class CharacterSelectMenu : MenuBase
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        if (_font == null)
+        if (_font == null && gm.FontBitmap == null)
             return;
 
         Viewport vp = Game.GraphicsDevice.Viewport;
