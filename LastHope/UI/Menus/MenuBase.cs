@@ -64,6 +64,16 @@ public abstract class MenuBase
         new[] { Segment.K(KeyRowT), Segment.T(" -> Use Item") },
     };
 
+    private static readonly Segment[][] ItemsSegments =
+    {
+        new[] { Segment.T("Items") },
+        Array.Empty<Segment>(),
+        new[] { Segment.T("Bomb: Drops a bomb that damages nearby enemies") },
+        new[] { Segment.T("Decoy: Places a decoy to distract enemies") },
+        new[] { Segment.T("Healing Potion: Heals 50 HP") },
+        new[] { Segment.T("1-Up: Grants an extra revive upon death") },
+    };
+
     protected GameManager gm => GameManager.GetGameManager();
 
     protected SpriteFont _font => gm._font;
@@ -166,6 +176,82 @@ public abstract class MenuBase
                         spriteBatch.Draw(_lmbTexture, new Vector2(x, y + spriteYOffset), src, Color.White, 0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0f);
                         x += spriteSize;
                         break;
+                    }
+                }
+            }
+        }
+    }
+
+    protected void DrawItemsText(SpriteBatch spriteBatch, GameTime gameTime)
+    {
+        float textScale = 0.5f;
+        float lineHeight = _font.LineSpacing * textScale;
+        float spriteScale = (lineHeight * 1.4f) / FrameSize;
+        float spriteSize = FrameSize * spriteScale;
+
+        float maxWidth = 0f;
+        foreach (var line in ControlsLines)
+        {
+            float w = 0f;
+            foreach (var seg in line)
+            {
+                if (seg.Kind == SegKind.Text) w += _font.MeasureString(seg.Text).X * textScale;
+                else w += spriteSize;
+            }
+            if (w > maxWidth) maxWidth = w;
+        }
+
+        float totalHeight = ControlsLines.Length * lineHeight;
+
+        Viewport viewport = Game.GraphicsDevice.Viewport;
+        Vector2 basePos = new Vector2(viewport.Width - maxWidth - 50, 250);
+
+        Rectangle backgroundRect = new Rectangle(
+            (int)basePos.X - 10,
+            (int)basePos.Y - 5,
+            (int)maxWidth + 20,
+            (int)totalHeight + 10);
+        spriteBatch.Draw(Pixel, backgroundRect, Color.Black * 0.60f);
+
+        float y = basePos.Y;
+        for (int lineIdx = 0; lineIdx < ItemsSegments.Length; lineIdx++)
+        {
+            if (ItemsSegments[lineIdx].Length == 0)
+            {
+                y += lineHeight;
+                continue;
+            }
+
+            foreach (var seg in ItemsSegments[lineIdx])
+            {
+                if (seg.Kind == SegKind.Text)
+                {
+                    string text = seg.Text;
+                    string[] words = text.Split(' ');
+                    string currentLine = "";
+                    float x = basePos.X;
+
+                    foreach (string word in words)
+                    {
+                        string testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+                        float testWidth = _font.MeasureString(testLine).X * textScale;
+
+                        if (testWidth > maxWidth && !string.IsNullOrEmpty(currentLine))
+                        {
+                            spriteBatch.DrawString(_font, currentLine, new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+                            y += lineHeight;
+                            currentLine = word;
+                        }
+                        else
+                        {
+                            currentLine = testLine;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(currentLine))
+                    {
+                        spriteBatch.DrawString(_font, currentLine, new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+                        y += lineHeight;
                     }
                 }
             }
