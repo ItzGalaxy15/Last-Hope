@@ -86,7 +86,7 @@ public class Archer : BasePlayer
     {
         base.Load(content);
         BowSprite = content.Load<Texture2D>("Bow sheet");
-        ArcherSprite = content.Load<Texture2D>("WarriorSheet");
+        ArcherSprite = content.Load<Texture2D>("ArcherSheet");
         _inputManager = GameManager.GetGameManager().InputManager;
         _Weapon.SetOwner(this);
 
