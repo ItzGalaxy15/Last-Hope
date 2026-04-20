@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 
+using Last_Hope;
 using Last_Hope.BaseModel;
 using Last_Hope.UI;
 using Last_Hope.Classes.Items;
@@ -25,7 +26,10 @@ public class GameManager
     public ContentManager _content;
 
     public Random RNG { get; private set; }
-    public BasePlayer _player { get; private set; }
+    public BasePlayer? _player { get; private set; }
+
+    /// <summary>Chosen from the character select screen; used for new runs and restarts.</summary>
+    public PlayerCharacterKind SelectedCharacter { get; set; } = PlayerCharacterKind.Warrior;
     public InputManager InputManager { get; private set; }
     public Game Game { get; private set; }
     public bool playerAlive = true;
@@ -81,7 +85,7 @@ public class GameManager
         SelectedItemSlot = 0;
     }
 
-    public void Initialize(ContentManager content, Game game, BasePlayer player)
+    public void Initialize(ContentManager content, Game game, BasePlayer? player)
     {
         Game = game;
         _content = content;
@@ -151,6 +155,12 @@ public class GameManager
             case GameState.StartMenu:
                 Menu.UpdateStartMenu(gameTime);
                 break;
+            case GameState.Characters:
+                Menu.UpdateCharactersRosterMenu(gameTime);
+                break;
+            case GameState.CharacterSelect:
+                Menu.UpdateCharacterSelectMenu(gameTime);
+                break;
             case GameState.ControlsMenu:
                 Menu.UpdateControlsMenu(gameTime);
                 break;
@@ -176,6 +186,12 @@ public class GameManager
         {
             case GameState.StartMenu:
                 Menu.DrawStartMenu(gameTime, spriteBatch);
+                break;
+            case GameState.Characters:
+                Menu.DrawCharactersRosterMenu(gameTime, spriteBatch);
+                break;
+            case GameState.CharacterSelect:
+                Menu.DrawCharacterSelectMenu(gameTime, spriteBatch);
                 break;
             case GameState.ControlsMenu:
                 Menu.DrawControlsMenu(gameTime, spriteBatch, transformMatrix);
@@ -305,9 +321,16 @@ public class GameManager
 
         EnemySpawner.Reset();
 
-        Warrior player = new Warrior(new Vector2(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2));
-        _player = player;
+        Vector2 spawn = new Vector2(WorldWidth / 2f, WorldHeight / 2f);
+        _player = CreatePlayerFromSelection(spawn);
         AddGameObject(_player);
+    }
+
+    public BasePlayer CreatePlayerFromSelection(Vector2 spawnPosition)
+    {
+        if (!PlayableCharacterRegistry.TryGet(SelectedCharacter, out _))
+            SelectedCharacter = PlayableCharacterRegistry.DefaultKind;
+        return PlayableCharacterRegistry.Create(SelectedCharacter, spawnPosition);
     }
 
     public Vector2 GetWorldMousePosition()
