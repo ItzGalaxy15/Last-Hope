@@ -55,8 +55,6 @@ public class Warrior : BasePlayer
 
     private const float DecoyThrowSpeed = 420f;
 
-    public ItemType[] Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
-    public new int ExtraLives { get; private set; } = 0;
     private float _greenGlowTimer = 0f;
     private SoundEffect _deathSound;
     private SoundEffect _attackSound;
@@ -79,6 +77,7 @@ public class Warrior : BasePlayer
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
         _collider = new RectangleCollider(new Rectangle(origin, Point.Zero));
         SetCollider(_collider);
+        Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
     }
 
     public override Vector2 GetPosition()
@@ -139,6 +138,8 @@ public class Warrior : BasePlayer
 
         SyncColliderToPosition();
         SetCollider(_collider);
+        ClampToMapBounds();
+        SyncColliderToPosition();
     }
 
     public override void HandleInput(InputManager inputManager)
@@ -527,25 +528,13 @@ public class Warrior : BasePlayer
         return true;
     }
 
-    public bool TryPickupItem(ItemType item)
-    {
-        for (int i = 0; i < Inventory.Length; i++)
-        {
-            if (Inventory[i] == ItemType.None)
-            {
-                Inventory[i] = item;
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void PlaceSelectedItem()
     {
         GameManager gm = GameManager.GetGameManager();
         Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
 
-        ItemType currentItem = Inventory[gm.SelectedItemSlot];
+        ItemType[] inv = Inventory!;
+        ItemType currentItem = inv[gm.SelectedItemSlot];
         if (currentItem == ItemType.None) return;
 
         if (currentItem == ItemType.Decoy)
@@ -563,12 +552,11 @@ public class Warrior : BasePlayer
         else if (currentItem == ItemType.OneUp)
         {
             AddLife(1);
-            ExtraLives++;
             _greenGlowTimer = 1.5f;
             gm.HasUsedOneUp = true;
         }
         
-        Inventory[gm.SelectedItemSlot] = ItemType.None;
+        inv[gm.SelectedItemSlot] = ItemType.None;
     }
 
     private void ThrowSelectedItemTowardMouse()
@@ -582,7 +570,8 @@ public class Warrior : BasePlayer
 
         direction.Normalize();
 
-        ItemType currentItem = Inventory[gm.SelectedItemSlot];
+        ItemType[] inv = Inventory!;
+        ItemType currentItem = inv[gm.SelectedItemSlot];
         if (currentItem == ItemType.None) return;
 
         if (currentItem == ItemType.Decoy)
@@ -600,12 +589,11 @@ public class Warrior : BasePlayer
         else if (currentItem == ItemType.OneUp)
         {
             AddLife(1);
-            ExtraLives++;
             _greenGlowTimer = 1.5f;
             gm.HasUsedOneUp = true;
         }
         
-        Inventory[gm.SelectedItemSlot] = ItemType.None;
+        inv[gm.SelectedItemSlot] = ItemType.None;
     }
 
     private static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
@@ -630,8 +618,6 @@ public class Warrior : BasePlayer
             (int)hitboxSize
         );
 
-        var testCollider = new RectangleCollider(testRect);
-
-        return CollisionWorld.CollidesWithStatic(testCollider);
+        return CollisionWorld.CollidesWithStaticForMovement(testRect);
     }
 }

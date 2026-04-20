@@ -1,3 +1,4 @@
+using Last_Hope.Classes.Items;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -15,6 +16,9 @@ public abstract class BasePlayer : GameObject
     protected abstract void ApplyDashOffset(Vector2 delta);
 
     public int ExtraLives { get; protected set; } = 0;
+
+    /// <summary>Two-slot utility hotbar. When null, pickups and the item HUD skip this player.</summary>
+    public ItemType[]? Inventory { get; protected set; }
 
     // Level EXP
     public int _Level { get; protected set; }
@@ -66,6 +70,23 @@ public abstract class BasePlayer : GameObject
     public void AddLife(int count = 1)
     {
         ExtraLives += count;
+    }
+
+    public bool TryPickupItem(ItemType item)
+    {
+        if (Inventory is null || Inventory.Length == 0)
+            return false;
+
+        for (int i = 0; i < Inventory.Length; i++)
+        {
+            if (Inventory[i] == ItemType.None)
+            {
+                Inventory[i] = item;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void AddExperience(float amount)
