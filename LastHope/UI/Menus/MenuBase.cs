@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
 using Last_Hope.BaseModel;
+using Last_Hope.Classes.Items;
 
 namespace Last_Hope.UI.Menus;
 
@@ -70,7 +71,7 @@ public abstract class MenuBase
         Array.Empty<Segment>(),
         new[] { Segment.T("Bomb: Drops a bomb that damages nearby enemies") },
         new[] { Segment.T("Decoy: Places a decoy to distract enemies") },
-        new[] { Segment.T("Healing Potion: Heals 50 HP") },
+        new[] { Segment.T($"Healing Potion: Heals {HealingPotion.DefaultHealAmount} HP") },
         new[] { Segment.T("1-Up: Grants an extra revive upon death") },
     };
 
