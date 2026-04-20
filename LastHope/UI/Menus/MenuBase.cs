@@ -174,7 +174,8 @@ public abstract class MenuBase
 
     protected void DrawWorld(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix)
     {
-        spriteBatch.Begin(transformMatrix: transformMatrix);
+        // Point sampling keeps upscaled pixel art sharp; default LinearClamp blurs scaled sprites.
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: transformMatrix);
         foreach (GameObject gameObject in _gameObjects)
         {
             gameObject.Draw(gameTime, spriteBatch);

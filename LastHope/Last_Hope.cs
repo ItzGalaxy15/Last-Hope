@@ -26,7 +26,6 @@ public class Last_Hope : Game
     private Texture2D? _itemSpriteSheet;
     private LevelGenerator _levelGenerator;
     private Camera _camera;
-    private Warrior _player;
     private Hud _hud;
 
     public Last_Hope()
@@ -49,10 +48,7 @@ public class Last_Hope : Game
         _levelGenerator = new LevelGenerator(tileSize: 32);
         base.Initialize();
 
-        _player = new Warrior(new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2));
- 
-        _gameManager.AddGameObject(_player);
-        _gameManager.Initialize(Content, this, _player);
+        _gameManager.Initialize(Content, this, null);
     }
 
     protected override void LoadContent()
@@ -112,7 +108,7 @@ public class Last_Hope : Game
 
         _gameManager.Camera = _camera;
 
-        _hud = new Hud(_player, _gameManager.Pixel, _itemSpriteSheet);
+        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet);
     }
 
     protected override void Update(GameTime gameTime)
@@ -121,7 +117,9 @@ public class Last_Hope : Game
         if (_gameManager.playerAlive && _gameManager._player != null)
             _camera.Update(_gameManager._player.GetPosition());
 
-        _hud?.Update(gameTime, GraphicsDevice.Viewport);
+        if (ShouldShowHud(_gameManager._state))
+            _hud?.Update(gameTime, GraphicsDevice.Viewport);
+
         base.Update(gameTime);
     }
 
@@ -135,12 +133,18 @@ public class Last_Hope : Game
 
         _gameManager.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
 
-        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        _hud?.Draw(gameTime, _spriteBatch);
-        _spriteBatch.End();
+        if (ShouldShowHud(_gameManager._state))
+        {
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            _hud?.Draw(gameTime, _spriteBatch);
+            _spriteBatch.End();
+        }
 
         base.Draw(gameTime);
     }
+
+    private static bool ShouldShowHud(GameState state) =>
+        state is GameState.Running or GameState.Paused;
 
     private Rectangle GetPlayerSpawnArea()
     {

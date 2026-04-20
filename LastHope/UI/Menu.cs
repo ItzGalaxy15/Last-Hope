@@ -16,6 +16,8 @@ public class Menu
     private GameState _previousState = GameState.StartMenu;
 
     private readonly StartMenu _startMenu = new();
+    private readonly CharactersRosterMenu _charactersRosterMenu = new();
+    private readonly CharacterSelectMenu _characterSelectMenu = new();
     private readonly ControlsMenu _controlsMenu;
     private readonly RunningMenu _runningMenu = new();
     private readonly PausedMenu _pausedMenu = new();
@@ -33,6 +35,14 @@ public class Menu
     public void UpdateStartMenu(GameTime gameTime) => _startMenu.Update(gameTime);
     public void DrawStartMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
         => _startMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    public void UpdateCharactersRosterMenu(GameTime gameTime) => _charactersRosterMenu.Update(gameTime);
+    public void DrawCharactersRosterMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
+        => _charactersRosterMenu.Draw(gameTime, spriteBatch);
+
+    public void UpdateCharacterSelectMenu(GameTime gameTime) => _characterSelectMenu.Update(gameTime);
+    public void DrawCharacterSelectMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
+        => _characterSelectMenu.Draw(gameTime, spriteBatch);
 
     public void UpdateControlsMenu(GameTime gameTime) => _controlsMenu.Update(gameTime);
     public void DrawControlsMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
