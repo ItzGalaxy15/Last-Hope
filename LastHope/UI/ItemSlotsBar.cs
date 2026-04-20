@@ -1,3 +1,4 @@
+using Last_Hope;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -91,14 +92,15 @@ public class ItemSlotsBar : UIElement
 
 		spriteBatch.Draw(pixel, _panelRect, panel);
 
+		ItemType[]? inv = PlayerInventoryHelper.GetInventorySlots(gm._player);
 		for (int i = 0; i < 2; i++)
 		{
 			spriteBatch.Draw(pixel, _slotFrameRects[i], frame);
 			spriteBatch.Draw(pixel, _slotInnerRects[i], background);
 
-			if (gm._player is Warrior warrior)
+			if (inv is not null)
 			{
-			    ItemType item = warrior.Inventory[i];
+			    ItemType item = inv[i];
 			    if (item != ItemType.None)
 			    {
 			        if (item == ItemType.OneUp)
@@ -138,9 +140,9 @@ public class ItemSlotsBar : UIElement
 				DrawOutline(spriteBatch, pixel, _slotFrameRects[i], 3, selectedRing);
 		}
 
-		if (gm._font != null && gm._player is Warrior selectedWarrior)
+		if (gm._font != null && inv is not null)
 		{
-			ItemType selectedItem = selectedWarrior.Inventory[_selectedSlot];
+			ItemType selectedItem = inv[_selectedSlot];
 			if (selectedItem != ItemType.None)
 			{
 				string label = GetItemLabel(selectedItem);

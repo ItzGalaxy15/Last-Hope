@@ -3,13 +3,14 @@ using System.Collections.Generic;
 
 using Last_Hope;
 using Last_Hope.BaseModel;
-using Last_Hope.UI;
 using Last_Hope.Classes.Items;
+using Last_Hope.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Camera;
+using Last_Hope.Collision;
 using Last_Hope.Engine.Pathfinding;
 
 namespace Last_Hope.Engine;
@@ -227,11 +228,13 @@ public class GameManager
     {
         if (HasUsedOneUp) return true;
 
-        if (_player is Warrior warrior)
+        if (PlayerInventoryHelper.GetHudExtraLives(_player) > 0)
+            return true;
+
+        ItemType[]? slots = PlayerInventoryHelper.GetInventorySlots(_player);
+        if (slots != null)
         {
-            if (warrior.ExtraLives > 0) return true;
-            
-            foreach (ItemType item in warrior.Inventory)
+            foreach (ItemType item in slots)
             {
                 if (item == ItemType.OneUp) return true;
             }
@@ -321,9 +324,90 @@ public class GameManager
 
         EnemySpawner.Reset();
 
-        Vector2 spawn = new Vector2(WorldWidth / 2f, WorldHeight / 2f);
+        Vector2 spawn = GetDefaultPlayerSpawn();
         _player = CreatePlayerFromSelection(spawn);
         AddGameObject(_player);
+    }
+
+    /// <summary>Matches player draw scale (32px frame × 3) for spawn search and clamping.</summary>
+    private const float SpawnBodyWidthPx = 96f;
+    /// <summary>Same fraction as <see cref="Warrior"/> / <see cref="Archer"/> hitbox vs body.</summary>
+    private const float SpawnHitboxFraction = 0.55f;
+
+    private static bool PlayerFootprintOverlapsStatic(float bodyWidth, Vector2 topLeftWorld)
+    {
+        float hitboxSize = bodyWidth * SpawnHitboxFraction;
+        float inset = (bodyWidth - hitboxSize) * 0.5f;
+        var rect = new Rectangle(
+            (int)(topLeftWorld.X + inset),
+            (int)(topLeftWorld.Y + inset),
+            (int)hitboxSize,
+            (int)hitboxSize);
+        return CollisionWorld.CollidesWithStatic(new RectangleCollider(rect));
+    }
+
+    /// <summary>
+    /// First walkable nav tile (from map center outward) whose footprint does not overlap static geometry.
+    /// </summary>
+    private bool TryFindSpawnTopLeft(out Vector2 spawnTopLeft)
+    {
+        spawnTopLeft = Vector2.Zero;
+        if (NavigationGrid == null)
+            return false;
+
+        int ts = NavigationGrid.TileSize;
+        float mapW = NavigationGrid.WidthInTiles * ts;
+        float mapH = NavigationGrid.HeightInTiles * ts;
+        float body = SpawnBodyWidthPx;
+
+        int cx = NavigationGrid.WidthInTiles / 2;
+        int cy = NavigationGrid.HeightInTiles / 2;
+        int maxD = Math.Max(NavigationGrid.WidthInTiles, NavigationGrid.HeightInTiles);
+
+        for (int d = 0; d <= maxD; d++)
+        {
+            for (int ty = cy - d; ty <= cy + d; ty++)
+            {
+                for (int tx = cx - d; tx <= cx + d; tx++)
+                {
+                    if (Math.Max(Math.Abs(tx - cx), Math.Abs(ty - cy)) != d)
+                        continue;
+
+                    if (!NavigationGrid.IsWalkable(tx, ty))
+                        continue;
+
+                    Vector2 pos = new Vector2(tx * ts, ty * ts);
+                    if (pos.X + body > mapW || pos.Y + body > mapH)
+                        continue;
+
+                    if (PlayerFootprintOverlapsStatic(body, pos))
+                        continue;
+
+                    spawnTopLeft = pos;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// World-space spawn on a free tile (not map geometric center — that often sits inside village colliders).
+    /// </summary>
+    public Vector2 GetDefaultPlayerSpawn()
+    {
+        if (NavigationGrid != null && TryFindSpawnTopLeft(out Vector2 spawn))
+            return spawn;
+
+        if (NavigationGrid != null)
+        {
+            float mapW = NavigationGrid.WidthInTiles * NavigationGrid.TileSize;
+            float mapH = NavigationGrid.HeightInTiles * NavigationGrid.TileSize;
+            return new Vector2((mapW - SpawnBodyWidthPx) * 0.5f, (mapH - SpawnBodyWidthPx) * 0.5f);
+        }
+
+        return new Vector2(WorldWidth / 2f - 48f, WorldHeight / 2f - 48f);
     }
 
     public BasePlayer CreatePlayerFromSelection(Vector2 spawnPosition)

@@ -1,4 +1,5 @@
-﻿﻿using System;
+﻿using System;
+using Last_Hope;
 using Last_Hope.BaseModel;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
@@ -95,7 +96,7 @@ public class HealthBar : UIElement
         if (_healthFillRect.Width > 0)
             spriteBatch.Draw(pixel, _healthFillRect, fill);
 
-        if (player is Warrior warrior && warrior.ExtraLives > 0)
+        if (player is not null && PlayerInventoryHelper.GetHudExtraLives(player) > 0)
         {
             if (!_triedLoadingHeart && _heartSprite == null)
             {
