@@ -31,6 +31,8 @@ public class WaveIndicator : UIElement
         if (gm._font == null || gm.EnemySpawner == null) return;
 
         if (gm._state == GameState.StartMenu) return;
+        if (gm._state == GameState.Characters) return;
+        if (gm._state == GameState.CharacterSelect) return;
         if (gm._state == GameState.ControlsMenu && gm.Menu.PreviousState == GameState.StartMenu) return;
 
         int displayWave = System.Math.Min(gm.EnemySpawner.CurrentWave, gm.EnemySpawner.TotalWaves);

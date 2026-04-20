@@ -9,6 +9,8 @@ namespace Last_Hope
     public enum GameState
     {
         StartMenu,
+        Characters,
+        CharacterSelect,
         ControlsMenu,
         Running,
         Paused,

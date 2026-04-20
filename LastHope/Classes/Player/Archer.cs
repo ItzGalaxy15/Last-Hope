@@ -34,6 +34,8 @@ public class Archer : BasePlayer
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = true;
+    private const float HitboxFraction = 0.55f;
+    private const float TeleportEnemyClearance = 160f;
 
     private double timeSinceLastAttack = 0;
     private float _dashCooldown;
@@ -77,6 +79,7 @@ public class Archer : BasePlayer
 
         direction.Normalize();
         Position += direction * _Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        ClampToMapBounds();
     }
 
     public override void Load(ContentManager content)
@@ -322,7 +325,62 @@ public class Archer : BasePlayer
     protected override void ApplyDashOffset(Vector2 delta)
     {
         Position += delta;
+        ClampToMapBounds();
         SyncColliderToPosition();
+    }
+
+    protected override void ApplyTeleportPosition(Vector2 newPosition)
+    {
+        Position = newPosition;
+        ClampToMapBounds();
+        SyncColliderToPosition();
+    }
+
+    protected override bool IsPositionSafe(Vector2 position)
+    {
+        var gm = GameManager.GetGameManager();
+        Vector2 center = position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        foreach (var obj in gm._gameObjects)
+        {
+            if (obj is not BaseEnemy) continue;
+            var collider = obj.GetCollider();
+            if (collider == null) continue;
+            if (Vector2.Distance(center, collider.GetBoundingBox().Center.ToVector2()) < TeleportEnemyClearance)
+                return false;
+        }
+        return true;
+    }
+
+    private void ClampToMapBounds()
+    {
+        var grid = GameManager.GetGameManager().NavigationGrid;
+        if (grid == null)
+            return;
+
+        float mapW = grid.WidthInTiles * grid.TileSize;
+        float mapH = grid.HeightInTiles * grid.TileSize;
+
+        Position = new Vector2(
+            MathHelper.Clamp(Position.X, 0f, mapW - _bodyWidth),
+            MathHelper.Clamp(Position.Y, 0f, mapH - _bodyWidth)
+        );
+    }
+
+    protected override bool WouldCollideAt(Vector2 testPosition)
+    {
+        float hitboxSize = _bodyWidth * HitboxFraction;
+        float offset = (_bodyWidth - hitboxSize) / 2f;
+
+        Rectangle testRect = new Rectangle(
+            (int)(testPosition.X + offset),
+            (int)(testPosition.Y + offset),
+            (int)hitboxSize,
+            (int)hitboxSize
+        );
+
+        var testCollider = new RectangleCollider(testRect);
+
+        return CollisionWorld.CollidesWithStatic(testCollider);
     }
 
     private void PlaceSelectedItem()
