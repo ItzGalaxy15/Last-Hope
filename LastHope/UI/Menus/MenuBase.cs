@@ -29,16 +29,18 @@ public abstract class MenuBase
 
     private const int KeyRowShift = 7;
 
-    private enum SegKind { Text, Key, Lmb }
+    private enum SegKind { Text, Key, Lmb, ItemSprite }
     private readonly struct Segment
     {
         public readonly SegKind Kind;
         public readonly string Text;
         public readonly int KeyRow;
-        private Segment(SegKind k, string t, int r) { Kind = k; Text = t; KeyRow = r; }
+        public readonly ItemType Item;
+        private Segment(SegKind k, string t, int r, ItemType i = ItemType.None) { Kind = k; Text = t; KeyRow = r; Item = i; }
         public static Segment T(string t) => new Segment(SegKind.Text, t, 0);
         public static Segment K(int row) => new Segment(SegKind.Key, null, row);
         public static Segment L() => new Segment(SegKind.Lmb, null, 0);
+        public static Segment I(ItemType item) => new Segment(SegKind.ItemSprite, null, 0, item);
     }
 
     private static readonly Segment[][] ControlsLines =
@@ -69,10 +71,13 @@ public abstract class MenuBase
     {
         new[] { Segment.T("Items") },
         Array.Empty<Segment>(),
-        new[] { Segment.T("Bomb: Drops a bomb that damages nearby enemies") },
-        new[] { Segment.T("Decoy: Places a decoy to distract enemies") },
-        new[] { Segment.T($"Healing Potion: Heals {HealingPotion.DefaultHealAmount} HP") },
-        new[] { Segment.T("1-Up: Grants an extra revive upon death") },
+        new[] { Segment.I(ItemType.Bomb), Segment.T(": A bomb that damages nearby enemies") },
+        Array.Empty<Segment>(),
+        new[] { Segment.I(ItemType.Decoy), Segment.T(": A decoy to distract enemies") },
+        Array.Empty<Segment>(),
+        new[] { Segment.I(ItemType.HealingPotion), Segment.T($": Heals {HealingPotion.DefaultHealAmount} HP") },
+        Array.Empty<Segment>(),
+        new[] { Segment.I(ItemType.OneUp), Segment.T(": Grants an extra revive upon death") },
     };
 
     protected GameManager gm => GameManager.GetGameManager();
@@ -143,7 +148,8 @@ public abstract class MenuBase
             }
             if (w > maxWidth) maxWidth = w;
         }
-        float totalHeight = ControlsLines.Length * lineHeight;
+        
+        float totalHeight = Math.Max(ControlsLines.Length, 15) * lineHeight;
 
         Rectangle backgroundRect = new Rectangle(
             (int)basePos.X - 10,
@@ -202,7 +208,7 @@ public abstract class MenuBase
             if (w > maxWidth) maxWidth = w;
         }
 
-        float totalHeight = ControlsLines.Length * lineHeight;
+        float totalHeight = Math.Max(ControlsLines.Length, 15) * lineHeight;
 
         Viewport viewport = Game.GraphicsDevice.Viewport;
         Vector2 basePos = new Vector2(viewport.Width - maxWidth - 50, 250);
@@ -214,6 +220,9 @@ public abstract class MenuBase
             (int)totalHeight + 10);
         spriteBatch.Draw(Pixel, backgroundRect, Color.Black * 0.60f);
 
+        Texture2D itemSheet = _content.Load<Texture2D>("itemSpriteSheet");
+        Texture2D heartSheet = _content.Load<Texture2D>("Heart");
+
         float y = basePos.Y;
         for (int lineIdx = 0; lineIdx < ItemsSegments.Length; lineIdx++)
         {
@@ -223,24 +232,53 @@ public abstract class MenuBase
                 continue;
             }
 
+            float x = basePos.X;
+            float currentIndent = 0f;
+            float extraLineHeight = 0f; // to accumulate multiline text height to add at the end of the segment loop
+            float lineWrapIndent = 0f;
+
             foreach (var seg in ItemsSegments[lineIdx])
             {
-                if (seg.Kind == SegKind.Text)
+                if (seg.Kind == SegKind.ItemSprite)
+                {
+                    lineWrapIndent = spriteSize;
+                    float yOffset = -(spriteSize - lineHeight) / 2f;
+                    if (seg.Item == ItemType.OneUp)
+                    {
+                        Rectangle src = new Rectangle(0, 0, heartSheet.Width, heartSheet.Height);
+                        float scale = spriteSize / heartSheet.Height;
+                        spriteBatch.Draw(heartSheet, new Vector2(x, y + yOffset + 4f), src, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                    }
+                    else
+                    {
+                        Rectangle src = seg.Item == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : 
+                                        seg.Item == ItemType.Decoy ? new Rectangle(0, 32, 32, 32) : 
+                                        new Rectangle(0, 64, 32, 32);
+                        spriteBatch.Draw(itemSheet, new Vector2(x, y + yOffset), src, Color.White, 0f, Vector2.Zero, spriteSize / 32f, SpriteEffects.None, 0f);
+                    }
+                    x += spriteSize;
+                    currentIndent += spriteSize;
+                }
+                else if (seg.Kind == SegKind.Text)
                 {
                     string text = seg.Text;
+                    // Pre-calculate spaces or split lines based on available width
                     string[] words = text.Split(' ');
                     string currentLine = "";
-                    float x = basePos.X;
 
                     foreach (string word in words)
                     {
                         string testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
                         float testWidth = _font.MeasureString(testLine).X * textScale;
 
-                        if (testWidth > maxWidth && !string.IsNullOrEmpty(currentLine))
+                        if (currentIndent + testWidth > maxWidth && !string.IsNullOrEmpty(currentLine))
                         {
-                            spriteBatch.DrawString(_font, currentLine, new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
-                            y += lineHeight;
+                            // Draw what we have so far
+                            spriteBatch.DrawString(_font, currentLine, new Vector2(x, y + extraLineHeight), Color.White, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+                            extraLineHeight += lineHeight;
+                            // reset x to keep text indented neatly aligned with the colon!
+                            x = basePos.X + lineWrapIndent;
+                            currentIndent = lineWrapIndent;
                             currentLine = word;
                         }
                         else
@@ -251,11 +289,13 @@ public abstract class MenuBase
 
                     if (!string.IsNullOrEmpty(currentLine))
                     {
-                        spriteBatch.DrawString(_font, currentLine, new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
-                        y += lineHeight;
+                        spriteBatch.DrawString(_font, currentLine, new Vector2(x, y + extraLineHeight), Color.White, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+                        x += _font.MeasureString(currentLine).X * textScale;
+                        currentIndent += _font.MeasureString(currentLine).X * textScale;
                     }
                 }
             }
+            y += lineHeight + extraLineHeight;
         }
     }
 
