@@ -121,7 +121,9 @@ public sealed class SettingsMenu : MenuBase
 
         if (InputManager.IsKeyPress(Keys.Escape) || InputManager.IsKeyPress(Keys.Q))
         {
-            _state = GameState.MainMenu;
+            GameState next = gm.StateAfterClosingSettings;
+            gm.StateAfterClosingSettings = GameState.MainMenu;
+            _state = next;
             return;
         }
 

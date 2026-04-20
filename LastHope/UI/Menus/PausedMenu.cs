@@ -53,7 +53,7 @@ public class PausedMenu : MenuBase
         float btnW = MathHelper.Min(340f * ui, vp.Width - 80f);
         float btnH = 50f * ui;
         float gap = 14f * ui;
-        float stackH = btnH * 3f + gap * 2f;
+        float stackH = btnH * 4f + gap * 3f;
         float startY = vp.Height / 2f - stackH / 2f;
         float btnX = vp.Width / 2f - btnW / 2f;
 
@@ -84,10 +84,24 @@ public class PausedMenu : MenuBase
         };
         _rootPanel.AddChild(restart);
 
+        var settings = new MenuAnimatedButton(Game.GraphicsDevice, btnW, btnH);
+        settings.Text = "Settings";
+        settings.X = btnX;
+        settings.Y = startY + (btnH + gap) * 2f;
+        settings.Width = btnW;
+        settings.Height = btnH;
+        settings.Click += (_, _) =>
+        {
+            ReleaseGumUi();
+            gm.StateAfterClosingSettings = GameState.Paused;
+            _state = GameState.SettingsMenu;
+        };
+        _rootPanel.AddChild(settings);
+
         var quit = new MenuAnimatedButton(Game.GraphicsDevice, btnW, btnH);
         quit.Text = "Quit Game";
         quit.X = btnX;
-        quit.Y = startY + (btnH + gap) * 2f;
+        quit.Y = startY + (btnH + gap) * 3f;
         quit.Width = btnW;
         quit.Height = btnH;
         quit.Click += (_, _) =>

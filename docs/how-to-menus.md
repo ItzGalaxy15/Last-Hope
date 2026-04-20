@@ -46,6 +46,8 @@ Gum is initialized once in `Last_Hope.LoadContent` via `GumBootstrap.Initialize`
 
 **Leaving pause to gameplay:** `Escape` already calls **`ReleaseGumUi()`** then sets **`GameState.Running`**.
 
+**Settings from pause:** the **Settings** button sets **`gm.StateAfterClosingSettings = GameState.Paused`** before switching to **`SettingsMenu`**, so **Esc / Q** in settings returns to the paused game. The title hub sets **`StateAfterClosingSettings`** to **`MainMenu`** when opening settings from there (`GameManager.StateAfterClosingSettings`).
+
 ---
 
 ## 4. Custom Gum button chrome (`MenuAnimatedButton`)

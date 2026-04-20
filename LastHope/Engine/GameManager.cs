@@ -58,6 +58,9 @@ public class GameManager
     public GameState _state;
     public SpriteFont _font;
 
+    /// <summary>State to enter when closing settings with Esc/Q (main menu from title hub, paused when opened from pause).</summary>
+    public GameState StateAfterClosingSettings { get; set; } = GameState.MainMenu;
+
     /// <summary>Bitmap font from <c>Content/Font.fnt</c> + <c>Content/Font.png</c> when present next to the executable.</summary>
     public BmFont? FontBitmap { get; private set; }
     public Menu Menu { get; private set; }

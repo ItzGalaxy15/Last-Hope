@@ -124,6 +124,7 @@ public sealed class MainMenuScreen : MenuBase
                 _state = GameState.ItemsIndex;
                 break;
             case 3:
+                gm.StateAfterClosingSettings = GameState.MainMenu;
                 _state = GameState.SettingsMenu;
                 break;
             case 4:
