@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Items;
 using Last_Hope.SkillTree; // Import Skill Tree structures
+using LastHope.Audio; 
 
 namespace Last_Hope;
 
@@ -223,7 +224,7 @@ public class Warrior : BasePlayer
             if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
-                // _attackSound.Play();
+                AudioManager.PlaySfx(_attackSound);
                 timeSinceLastAttack = 0;
             }
 
@@ -492,7 +493,7 @@ public class Warrior : BasePlayer
             else
             {
                 _currentHp = 0f;
-                _deathSound.Play();
+                AudioManager.PlaySfx(_deathSound);
                 GameManager.GetGameManager().playerAlive = false;
                 GameManager.GetGameManager()._state = GameState.GameOver;
             }

@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
+using LastHope.Audio;
 
 namespace Last_Hope.UI.Menus;
 
@@ -31,6 +32,14 @@ public sealed class SettingsMenu : MenuBase
 
     private SettingsChromeLayout _chrome;
     private List<(Rectangle rect, KeybindId id)> _bindTargets = new();
+
+    private float _masterVolume = 1f;
+    private float _musicVolume = 1f;
+    private float _sfxVolume = 1f;
+
+    private bool _draggingMaster;
+    private bool _draggingMusic;
+    private bool _draggingSfx;
 
     public void Update(GameTime gameTime)
     {
@@ -171,6 +180,12 @@ public sealed class SettingsMenu : MenuBase
             _tab = SettingsTab.Sound;
         else if (InputManager.IsKeyPress(Keys.D3) || InputManager.IsKeyPress(Keys.NumPad3))
             _tab = SettingsTab.Display;
+
+        //Apply audio settings immediately when dragging, but only if we're on the sound tab to avoid confusion
+        AudioManager.MasterVolume = _masterVolume;
+        AudioManager.MusicVolume = _musicVolume;
+        AudioManager.SfxVolume = _sfxVolume;
+        AudioManager.Apply();
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
@@ -227,6 +242,8 @@ public sealed class SettingsMenu : MenuBase
                 DrawControlsRebindable(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
                 break;
             case SettingsTab.Sound:
+                DrawSoundSettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
+                break;
             case SettingsTab.Display:
                 DrawPlaceholderInRect(spriteBatch, layoutFont, chrome.ContentRect, "Coming soon.", 0.62f * ui);
                 break;
@@ -393,6 +410,72 @@ public sealed class SettingsMenu : MenuBase
         SectionHeader("Inventory", ref yR, rightX);
         BindingRow("slot 1", KeybindId.ItemSlot1, ref yR, rightX, colW);
         BindingRow("slot 2", KeybindId.ItemSlot2, ref yR, rightX, colW);
+    }
+
+    private void DrawSoundSettings(SpriteBatch spriteBatch, GameTime gameTime, SpriteFont font, Rectangle content, float textScale, float ui)
+    {
+        var (bf, sm) = BodyFontForMenuText(font);
+
+        float x = content.X + 20f * ui;
+        float y = content.Y + 20f * ui;
+
+        float sliderWidth = 260f * ui;
+        float sliderHeight = 12f * ui;
+        float spacing = 60f * ui;
+
+        Point mouse = InputManager.CurrentMouseState.Position;
+        bool mouseDown = InputManager.CurrentMouseState.LeftButton == ButtonState.Pressed;
+
+        void DrawSlider(string label, ref float value, ref bool dragging)
+        {
+            // Label
+            string text = $"{label}: {(int)(value * 100)}%";
+            gm.DrawUiString(spriteBatch, bf, text, new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale * sm, SpriteEffects.None, 0f);
+
+            y += 22f * ui;
+
+            // Slider rects
+            var barRect = new Rectangle((int)x, (int)y, (int)sliderWidth, (int)sliderHeight);
+            var fillRect = new Rectangle((int)x, (int)y, (int)(sliderWidth * value), (int)sliderHeight);
+
+            // Interaction
+            if (InputManager.LeftMousePress() && barRect.Contains(mouse))
+                dragging = true;
+
+            if (!mouseDown)
+                dragging = false;
+
+            if (dragging)
+            {
+                float t = (mouse.X - barRect.X) / (float)barRect.Width;
+                value = MathHelper.Clamp(t, 0f, 1f);
+            }
+
+            // Draw
+            spriteBatch.Draw(Pixel, barRect, new Color(50, 55, 70, 220));
+            spriteBatch.Draw(Pixel, fillRect, new Color(120, 180, 255, 240));
+            DrawPanelOutline(spriteBatch, barRect, new Color(180, 200, 255, 120));
+
+            y += spacing;
+        }
+
+        DrawSlider("Master Volume", ref _masterVolume, ref _draggingMaster);
+        DrawSlider("Music Volume", ref _musicVolume, ref _draggingMusic);
+        DrawSlider("SFX Volume", ref _sfxVolume, ref _draggingSfx);
+
+        // Optional hint
+        gm.DrawUiString(
+            spriteBatch,
+            bf,
+            "Drag sliders with mouse",
+            new Vector2(x, y),
+            Color.Gray,
+            0f,
+            Vector2.Zero,
+            textScale * 0.7f * sm,
+            SpriteEffects.None,
+            0f
+        );
     }
 
     private void DrawBoundKey(SpriteBatch spriteBatch, SpriteFont font, int frame, Rectangle rect, GameInputBinding bind, float chip)
