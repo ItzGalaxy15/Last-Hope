@@ -57,21 +57,21 @@ public class PausedMenu : MenuBase
         float startY = vp.Height / 2f - stackH / 2f;
         float btnX = vp.Width / 2f - btnW / 2f;
 
-        var back = new MenuAnimatedButton(Game.GraphicsDevice, btnW, btnH);
-        back.Text = "Back to Menu";
-        back.X = btnX;
-        back.Y = startY;
-        back.Width = btnW;
-        back.Height = btnH;
-        back.Click += (_, _) =>
+        var continueBtn = new MenuAnimatedButton(Game.GraphicsDevice, btnW, btnH);
+        continueBtn.Text = "Continue";
+        continueBtn.X = btnX;
+        continueBtn.Y = startY;
+        continueBtn.Width = btnW;
+        continueBtn.Height = btnH;
+        continueBtn.Click += (_, _) =>
         {
             ReleaseGumUi();
-            _state = GameState.MainMenu;
+            _state = GameState.Running;
         };
-        _rootPanel.AddChild(back);
+        _rootPanel.AddChild(continueBtn);
 
         var restart = new MenuAnimatedButton(Game.GraphicsDevice, btnW, btnH);
-        restart.Text = "Restart Game";
+        restart.Text = "Restart game";
         restart.X = btnX;
         restart.Y = startY + btnH + gap;
         restart.Width = btnW;
@@ -98,20 +98,20 @@ public class PausedMenu : MenuBase
         };
         _rootPanel.AddChild(settings);
 
-        var quit = new MenuAnimatedButton(Game.GraphicsDevice, btnW, btnH);
-        quit.Text = "Quit Game";
-        quit.X = btnX;
-        quit.Y = startY + (btnH + gap) * 3f;
-        quit.Width = btnW;
-        quit.Height = btnH;
-        quit.Click += (_, _) =>
+        var backToMenu = new MenuAnimatedButton(Game.GraphicsDevice, btnW, btnH);
+        backToMenu.Text = "Back To Menu";
+        backToMenu.X = btnX;
+        backToMenu.Y = startY + (btnH + gap) * 3f;
+        backToMenu.Width = btnW;
+        backToMenu.Height = btnH;
+        backToMenu.Click += (_, _) =>
         {
             ReleaseGumUi();
-            Game.Exit();
+            _state = GameState.MainMenu;
         };
-        _rootPanel.AddChild(quit);
+        _rootPanel.AddChild(backToMenu);
 
-        back.IsFocused = true;
+        continueBtn.IsFocused = true;
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)

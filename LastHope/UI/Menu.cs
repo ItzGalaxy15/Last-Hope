@@ -7,6 +7,7 @@ using Last_Hope.SkillTree;
 using System.IO;
 using System.Text.Json;
 using Last_Hope.UI.Menus;
+using System;
 
 namespace Last_Hope.UI;
 
@@ -62,7 +63,10 @@ public class Menu
             _showSkillTree = !_showSkillTree;
             if (_showSkillTree && _skillTreeCanvas == null)
             {
-                string jsonPath = "SkillTree/WarriorSkillTree.json";
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string projectRoot = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\"));
+                string jsonPath = Path.Combine(projectRoot, "SkillTree", "WarriorSkillTree.json");
+                
                 ClassSkillTreeData treeData = null;
 
                 if (File.Exists(jsonPath))

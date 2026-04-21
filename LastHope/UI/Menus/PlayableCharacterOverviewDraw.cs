@@ -20,7 +20,9 @@ internal static class PlayableCharacterOverviewDraw
     internal const int PortraitsPerRow = 7;
     private const int PortraitRowGap = 20;
     private const int BottomPanelHeight = 200;
-    private const int BottomPanelMargin = 40;
+    /// <summary>Space from viewport bottom to the stats panel (larger keeps footer + bottom stats readable).</summary>
+    private const int BottomPanelMargin = 76;
+    private const int FooterHintBottomMargin = 52;
     private const int ConfirmButtonWidth = 220;
     private const int ConfirmButtonHeight = 52;
     private const int MarginBelowPortraitGrid = 16;
@@ -149,7 +151,7 @@ internal static class PlayableCharacterOverviewDraw
             spriteBatch,
             font,
             footerHint,
-            new Vector2(vp.Width - hintSize.X - 24, vp.Height - hintSize.Y - 18),
+            new Vector2(vp.Width - hintSize.X - 24, vp.Height - hintSize.Y - FooterHintBottomMargin),
             new Color(200, 210, 230, 255),
             hintScale);
     }
@@ -216,8 +218,8 @@ internal static class PlayableCharacterOverviewDraw
         Viewport vp,
         int selectedIndex)
     {
-        const int panelH = 200;
-        Rectangle panel = new Rectangle(40, vp.Height - panelH - 40, vp.Width - 80, panelH);
+        int panelH = BottomPanelHeight;
+        Rectangle panel = new Rectangle(40, vp.Height - panelH - BottomPanelMargin, vp.Width - 80, panelH);
         spriteBatch.Draw(pixel, panel, new Color(0, 0, 0, 200));
         DrawThickRect(spriteBatch, pixel, panel, new Color(230, 235, 245), 2);
 

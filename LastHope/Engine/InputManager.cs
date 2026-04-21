@@ -112,8 +112,16 @@ namespace Last_Hope.Engine;
         };
 
         /// <summary>First keyboard key or mouse button that transitioned to down this frame (for rebinding).</summary>
+        /// <remarks>Mouse is checked before keyboard so LMB/RMB/MMB are not lost to incidental key edges on the same frame.</remarks>
         public GameInputBinding? ConsumeFirstNewBindingPress()
         {
+            if (LeftMousePress())
+                return GameInputBinding.FromMouse(MouseBindButton.Left);
+            if (RightMousePress())
+                return GameInputBinding.FromMouse(MouseBindButton.Right);
+            if (MiddleMousePress())
+                return GameInputBinding.FromMouse(MouseBindButton.Middle);
+
             foreach (Keys k in CurrentKeyboardState.GetPressedKeys())
             {
                 if (k == Keys.None || k == Keys.Escape)
@@ -122,12 +130,6 @@ namespace Last_Hope.Engine;
                     return GameInputBinding.Keyboard(k);
             }
 
-            if (LeftMousePress())
-                return GameInputBinding.FromMouse(MouseBindButton.Left);
-            if (RightMousePress())
-                return GameInputBinding.FromMouse(MouseBindButton.Right);
-            if (MiddleMousePress())
-                return GameInputBinding.FromMouse(MouseBindButton.Middle);
             return null;
         }
 

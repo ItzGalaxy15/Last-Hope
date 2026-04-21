@@ -176,7 +176,7 @@ public class Archer : BasePlayer
         if (_inputManager is not null)
         {
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.LeftMousePress() && timeSinceLastAttack >= AttackCooldown && !_isDrawingBow)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && timeSinceLastAttack >= AttackCooldown && !_isDrawingBow)
             {
                 StartBowDraw();
                 timeSinceLastAttack = 0;
