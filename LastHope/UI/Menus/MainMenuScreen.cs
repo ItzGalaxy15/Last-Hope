@@ -58,13 +58,6 @@ public sealed class MainMenuScreen : MenuBase
         fill.Color = new Color(8, 10, 20, 220);
         _rootPanel.AddChild(fill);
 
-        float railW = 52f * ui;
-        var leftRail = new ColoredRectangleRuntime();
-        leftRail.Dock(Gum.Wireframe.Dock.Left);
-        leftRail.Width = railW;
-        leftRail.Color = new Color(0, 0, 0, 115);
-        _rootPanel.AddChild(leftRail);
-
         float marginX = 40f * ui;
         float startY = 72f * ui;
         float rowGap = 12f * ui;
@@ -139,10 +132,8 @@ public sealed class MainMenuScreen : MenuBase
         Texture2D px = Pixel;
 
         // Screen-space menu backdrop (do not use gameplay camera transform or the level map).
-        float ui = MenuUiScale(vp);
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         DrawHubMenuBackdrop(spriteBatch, px, vp);
-        DrawHubMenuLeftRail(spriteBatch, px, vp, ui);
         spriteBatch.End();
     }
 }

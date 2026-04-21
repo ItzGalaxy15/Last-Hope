@@ -340,56 +340,59 @@ public sealed class SettingsMenu : MenuBase
         int frame = (int)(gameTime.TotalGameTime.TotalSeconds / KeyFrameDuration) % KeyFrameCount;
         float lineH = (gm.FontBitmap != null ? gm.FontBitmap.LineHeight : font.LineSpacing) * textScale;
         float chip = MathHelper.Max(lineH * 1.35f, 28f * ui);
-        float x0 = content.X + 12f * ui;
-        float y = content.Y + 8f * ui;
-        float gap = 8f * ui;
+        float colPad = 12f * ui;
+        float gutter = 22f * ui;
+        float colW = (content.Width - colPad * 2f - gutter) / 2f;
+        float leftX = content.X + colPad;
+        float rightX = content.X + colPad + colW + gutter;
+        float yTop = content.Y + 8f * ui;
+        float yL = yTop;
+        float yR = yTop;
 
-        void Label(string t)
+        void SectionHeader(string title, ref float columnY, float colX)
         {
             float ls = textScale * 1.05f * labelMul;
-            gm.DrawUiString(spriteBatch,labelFont, t, new Vector2(x0, y), new Color(200, 210, 230), 0f, Vector2.Zero, ls, SpriteEffects.None, 0f);
-            y += lineH * 1.35f;
+            gm.DrawUiString(spriteBatch, labelFont, title, new Vector2(colX, columnY), new Color(200, 210, 230), 0f, Vector2.Zero, ls, SpriteEffects.None, 0f);
+            columnY += lineH * 1.35f;
         }
 
-        void RowChips(params KeybindId[] ids)
+        void BindingRow(string labelWithSep, KeybindId id, ref float columnY, float colX, float colW)
         {
-            float x = x0;
-            foreach (var id in ids)
-            {
-                GameInputBinding bind = KeybindStore.GetBinding(id);
-                var rect = new Rectangle((int)x, (int)(y - 2), (int)chip + 4, (int)chip + 8);
-                spriteBatch.Draw(Pixel, rect, new Color(40, 48, 62, 200));
-                DrawPanelOutline(spriteBatch, rect, new Color(120, 140, 170, 120));
-                DrawBoundKey(spriteBatch, font, frame, rect, bind, chip);
-                x += rect.Width + gap;
-            }
-            y += chip + 14f * ui;
+            float rowScale = textScale * labelMul;
+            GameInputBinding bind = KeybindStore.GetBinding(id);
+            int chipW = (int)chip + 4;
+            int chipH = (int)chip + 8;
+            int rectX = (int)(colX + colW - chipW);
+            var bindRect = new Rectangle(rectX, (int)(columnY - 2), chipW, chipH);
+
+            Vector2 labSz = gm.MeasureUiString(labelFont, labelWithSep, rowScale);
+            float textY = columnY + (chipH - labSz.Y) * 0.5f;
+            gm.DrawUiString(spriteBatch, labelFont, labelWithSep, new Vector2(colX, textY), Color.White, 0f, Vector2.Zero, rowScale, SpriteEffects.None, 0f);
+
+            spriteBatch.Draw(Pixel, bindRect, new Color(40, 48, 62, 200));
+            DrawPanelOutline(spriteBatch, bindRect, new Color(120, 140, 170, 120));
+            DrawBoundKey(spriteBatch, font, frame, bindRect, bind, chip);
+
+            columnY += chip + 14f * ui;
         }
 
-        Label("Movement");
-        RowChips(KeybindId.MoveUp, KeybindId.MoveDown, KeybindId.MoveLeft, KeybindId.MoveRight);
-        Label("Dash");
-        RowChips(KeybindId.Dash);
-        Label("Combat");
-        {
-            float x = x0;
-            GameInputBinding attackBind = KeybindStore.GetBinding(KeybindId.Attack);
-            var attackRect = new Rectangle((int)x, (int)(y - 2), (int)chip + 4, (int)chip + 8);
-            spriteBatch.Draw(Pixel, attackRect, new Color(40, 48, 62, 200));
-            DrawPanelOutline(spriteBatch, attackRect, new Color(120, 140, 170, 120));
-            DrawBoundKey(spriteBatch, font, frame, attackRect, attackBind, chip);
-            x += attackRect.Width + gap;
-            gm.DrawUiString(spriteBatch,labelFont, "-> Attack", new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale * labelMul, SpriteEffects.None, 0f);
-            y += chip + 14f * ui;
-        }
+        SectionHeader("Movement", ref yL, leftX);
+        BindingRow("Up", KeybindId.MoveUp, ref yL, leftX, colW);
+        BindingRow("Down", KeybindId.MoveDown, ref yL, leftX, colW);
+        BindingRow("Left", KeybindId.MoveLeft, ref yL, leftX, colW);
+        BindingRow("Right", KeybindId.MoveRight, ref yL, leftX, colW);
+        BindingRow("Dash", KeybindId.Dash, ref yL, leftX, colW);
 
-        Label("Hotbar");
-        RowChips(KeybindId.ItemSlot1, KeybindId.ItemSlot2);
-        Label("Items");
-        RowChips(KeybindId.PlaceItem, KeybindId.ThrowItem);
+        SectionHeader("Combat", ref yR, rightX);
+        BindingRow("Attack", KeybindId.Attack, ref yR, rightX, colW);
+        BindingRow("Place Item:", KeybindId.PlaceItem, ref yR, rightX, colW);
+        BindingRow("Throw Item:", KeybindId.ThrowItem, ref yR, rightX, colW);
 
-        float ty = y;
-        gm.DrawUiString(spriteBatch,labelFont, "Arrows still move if you keep them on a gamepad keyboard layout.", new Vector2(x0, ty), Color.Gray * 0.85f, 0f, Vector2.Zero, textScale * 0.72f * labelMul, SpriteEffects.None, 0f);
+        yR += 24f * ui;
+
+        SectionHeader("Inventory", ref yR, rightX);
+        BindingRow("slot 1", KeybindId.ItemSlot1, ref yR, rightX, colW);
+        BindingRow("slot 2", KeybindId.ItemSlot2, ref yR, rightX, colW);
     }
 
     private void DrawBoundKey(SpriteBatch spriteBatch, SpriteFont font, int frame, Rectangle rect, GameInputBinding bind, float chip)
@@ -452,34 +455,44 @@ public sealed class SettingsMenu : MenuBase
     {
         float lineH = (gm.FontBitmap != null ? gm.FontBitmap.LineHeight : font.LineSpacing) * textScale;
         float chip = MathHelper.Max(lineH * 1.35f, 28f * ui);
-        float x0 = content.X + 12f * ui;
-        float y = content.Y + 8f * ui;
-        float gap = 8f * ui;
+        float colPad = 12f * ui;
+        float gutter = 22f * ui;
+        float colW = (content.Width - colPad * 2f - gutter) / 2f;
+        float leftX = content.X + colPad;
+        float rightX = content.X + colPad + colW + gutter;
+        float yTop = content.Y + 8f * ui;
+        float yL = yTop;
+        float yR = yTop;
 
-        void AfterLabel() => y += lineH * 1.35f;
+        void AfterSectionHeader(ref float columnY) => columnY += lineH * 1.35f;
 
-        void RowChipsRegister(params KeybindId[] ids)
+        void RegisterRow(KeybindId id, ref float columnY, float colX, float colW)
         {
-            float x = x0;
-            foreach (var id in ids)
-            {
-                var rect = new Rectangle((int)x, (int)(y - 2), (int)chip + 4, (int)chip + 8);
-                _bindTargets.Add((rect, id));
-                x += rect.Width + gap;
-            }
-            y += chip + 14f * ui;
+            int chipW = (int)chip + 4;
+            int chipH = (int)chip + 8;
+            int rectX = (int)(colX + colW - chipW);
+            var rect = new Rectangle(rectX, (int)(columnY - 2), chipW, chipH);
+            _bindTargets.Add((rect, id));
+            columnY += chip + 14f * ui;
         }
 
-        AfterLabel();
-        RowChipsRegister(KeybindId.MoveUp, KeybindId.MoveDown, KeybindId.MoveLeft, KeybindId.MoveRight);
-        AfterLabel();
-        RowChipsRegister(KeybindId.Dash);
-        AfterLabel();
-        RowChipsRegister(KeybindId.Attack);
-        AfterLabel();
-        RowChipsRegister(KeybindId.ItemSlot1, KeybindId.ItemSlot2);
-        AfterLabel();
-        RowChipsRegister(KeybindId.PlaceItem, KeybindId.ThrowItem);
+        AfterSectionHeader(ref yL);
+        RegisterRow(KeybindId.MoveUp, ref yL, leftX, colW);
+        RegisterRow(KeybindId.MoveDown, ref yL, leftX, colW);
+        RegisterRow(KeybindId.MoveLeft, ref yL, leftX, colW);
+        RegisterRow(KeybindId.MoveRight, ref yL, leftX, colW);
+        RegisterRow(KeybindId.Dash, ref yL, leftX, colW);
+
+        AfterSectionHeader(ref yR);
+        RegisterRow(KeybindId.Attack, ref yR, rightX, colW);
+        RegisterRow(KeybindId.PlaceItem, ref yR, rightX, colW);
+        RegisterRow(KeybindId.ThrowItem, ref yR, rightX, colW);
+
+        yR += 24f * ui;
+
+        AfterSectionHeader(ref yR);
+        RegisterRow(KeybindId.ItemSlot1, ref yR, rightX, colW);
+        RegisterRow(KeybindId.ItemSlot2, ref yR, rightX, colW);
     }
 
     private static int? KeySpriteRow(Keys k) => k switch
