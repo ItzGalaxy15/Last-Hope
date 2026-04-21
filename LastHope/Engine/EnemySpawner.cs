@@ -9,8 +9,8 @@ namespace Last_Hope.Engine;
 public class EnemySpawner
 {
     public int TotalWaves { get; set; } = 1;
-    public float EnemyMultiplierPerWave { get; set; } = 2.0f;
-    public int StartingEnemies { get; set; } = 1;
+    public float EnemyMultiplierPerWave { get; set; } = 1.5f;
+    public int StartingEnemies { get; set; } = 20;
     public bool BossAppearsOnLastWave { get; set; } = true;
     public bool UseMaxEnemyLimit { get; set; } = true;
     public int MaxEnemiesPerWave { get; set; } = 35;
