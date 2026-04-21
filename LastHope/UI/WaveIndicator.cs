@@ -6,24 +6,11 @@ namespace Last_Hope.UI;
 
 public class WaveIndicator : UIElement
 {
-    private Vector2 _position;
     private const float TextScale = 0.4f;
     private Texture2D _pixel;
 
     public override void Update(GameTime gameTime, Viewport viewport)
     {
-        var gm = GameManager.GetGameManager();
-        if (gm._font != null && gm.EnemySpawner != null)
-        {
-            int displayWave = System.Math.Min(gm.EnemySpawner.CurrentWave, gm.EnemySpawner.TotalWaves);
-            string text = $"Wave {displayWave}/{gm.EnemySpawner.TotalWaves}";
-            Vector2 size = gm._font.MeasureString(text) * TextScale;
-
-            // Top right corner with some padding
-            float x = viewport.Width - size.X - 15;
-            float y = 60;
-            _position = new Vector2(x, y);
-        }
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -37,6 +24,7 @@ public class WaveIndicator : UIElement
 
         int displayWave = System.Math.Min(gm.EnemySpawner.CurrentWave, gm.EnemySpawner.TotalWaves);
         string waveText = $"Wave {displayWave}/{gm.EnemySpawner.TotalWaves}";
+        string enemiesText = $"Enemies left: {gm.EnemySpawner.GetEnemiesLeftCount()}";
 
         if (_pixel == null)
         {
@@ -44,18 +32,38 @@ public class WaveIndicator : UIElement
             _pixel.SetData(new[] { Color.White });
         }
 
-        Vector2 size = gm._font.MeasureString(waveText) * TextScale;
+        Vector2 waveSize = gm._font.MeasureString(waveText) * TextScale;
+        Vector2 enemiesSize = gm._font.MeasureString(enemiesText) * TextScale;
+
+        // Determine bounding box
+        float maxTextWidth = System.Math.Max(waveSize.X, enemiesSize.X);
+        float totalHeight = waveSize.Y + enemiesSize.Y + 2f;
+
+        // Top right corner with padding from edge
+        float rightEdgePadding = 15;
+        float topEdgePadding = 60;
+
+        float boxX = spriteBatch.GraphicsDevice.Viewport.Width - maxTextWidth - rightEdgePadding;
+        float boxY = topEdgePadding;
+
         int padding = 5;
         Rectangle bgRect = new Rectangle(
-            (int)_position.X - padding,
-            (int)_position.Y - padding,
-            (int)size.X + padding * 2,
-            (int)size.Y + padding * 2
+            (int)boxX - padding,
+            (int)boxY - padding,
+            (int)maxTextWidth + padding * 2,
+            (int)totalHeight + padding * 2
         );
+
         Color bgRectColor = new (0, 0, 0, 170);
         Color textColor = new (255, 245, 210, 255);
 
         spriteBatch.Draw(_pixel, bgRect, bgRectColor);
-        spriteBatch.DrawString(gm._font, waveText, _position, textColor, 0f, Vector2.Zero, TextScale, SpriteEffects.None, 0f);
+
+        // Left align the text within the box
+        Vector2 wavePos = new (boxX, boxY);
+        Vector2 enemiesPos = new (boxX, boxY + waveSize.Y + 2f);
+
+        spriteBatch.DrawString(gm._font, waveText, wavePos, textColor, 0f, Vector2.Zero, TextScale, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(gm._font, enemiesText, enemiesPos, textColor, 0f, Vector2.Zero, TextScale, SpriteEffects.None, 0f);
     }
 }

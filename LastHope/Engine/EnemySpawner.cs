@@ -8,7 +8,7 @@ namespace Last_Hope.Engine;
 
 public class EnemySpawner
 {
-    public int TotalWaves { get; set; } = 6;
+    public int TotalWaves { get; set; } = 2;
     public float EnemyMultiplierPerWave { get; set; } = 2.0f;
     public int StartingEnemies { get; set; } = 1;
     public bool BossAppearsOnLastWave { get; set; } = true;
@@ -27,6 +27,32 @@ public class EnemySpawner
     private bool waitingForNextWave = false;
     private float wavePause = 3f; // pause between the waves
     private bool bossSpawned = false;
+
+    public int GetEnemiesLeftCount()
+    {
+        var gm = GameManager.GetGameManager();
+        int currentEnemyCount = 0;
+        foreach (var gameObject in gm._gameObjects)
+        {
+            if (gameObject is BaseEnemy) currentEnemyCount++;
+        }
+        foreach (var gameObject in gm._toBeAdded)
+        {
+            if (gameObject is BaseEnemy) currentEnemyCount++;
+        }
+
+        int unspawned = GetTargetEnemiesForWave(currentWave) - spawnedThisWave;
+        if (unspawned < 0) unspawned = 0;
+
+        int total = currentEnemyCount + unspawned;
+
+        if (BossAppearsOnLastWave && currentWave == TotalWaves && !bossSpawned)
+        {
+            total++;
+        }
+
+        return total;
+    }
 
     public void Update(GameTime gameTime)
     {
