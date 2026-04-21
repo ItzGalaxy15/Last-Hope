@@ -89,7 +89,7 @@ public abstract class MenuBase
         new[] { Segment.B(KeybindId.Dash), Segment.T(" -> Dash") },
         Array.Empty<Segment>(),
         new[] { Segment.T("Combat") },
-        new[] { Segment.L(), Segment.T(" -> Attack") },
+        new[] { Segment.B(KeybindId.Attack), Segment.T(" -> Attack") },
         Array.Empty<Segment>(),
         new[] { Segment.T("Hotbar") },
         new[] {
@@ -324,7 +324,7 @@ public abstract class MenuBase
             (int)basePos.Y - 5,
             (int)maxWidth + 20,
             (int)totalHeight + 10);
-        spriteBatch.Draw(Pixel, backgroundRect, Color.Black * 0.60f);
+        spriteBatch.Draw(Pixel, backgroundRect, new Color(18, 24, 38, 255));
 
         for (int lineIdx = 0; lineIdx < lines.Length; lineIdx++)
         {
@@ -451,7 +451,7 @@ public abstract class MenuBase
             (int)basePos.Y - 5,
             (int)panelInnerWidth + 20,
             (int)totalHeight + 10);
-        spriteBatch.Draw(Pixel, backgroundRect, Color.Black * 0.60f);
+        spriteBatch.Draw(Pixel, backgroundRect, new Color(18, 24, 38, 255));
 
         Texture2D itemSheet = null;
         Texture2D heartSheet = null;
@@ -533,6 +533,60 @@ public abstract class MenuBase
                 }
             }
             y += lineHeight + extraLineHeight;
+        }
+    }
+
+    /// <summary>Top-left Back control + shortcut hint (shared by hub-style menus).</summary>
+    protected readonly struct MenuHubBackChrome
+    {
+        public readonly Rectangle BackHitRect;
+        public readonly Vector2 BackTextPos;
+        public readonly Vector2 HintTextPos;
+        public readonly float BackTextScale;
+        public readonly float HintTextScale;
+        public readonly SpriteFont LabelFont;
+
+        public MenuHubBackChrome(Rectangle backHitRect, Vector2 backTextPos, Vector2 hintTextPos, float backTextScale, float hintTextScale, SpriteFont labelFont)
+        {
+            BackHitRect = backHitRect;
+            BackTextPos = backTextPos;
+            HintTextPos = hintTextPos;
+            BackTextScale = backTextScale;
+            HintTextScale = hintTextScale;
+            LabelFont = labelFont;
+        }
+    }
+
+    /// <param name="anchorPanel">Top-left anchor (typically the framed menu panel, or full viewport).</param>
+    protected MenuHubBackChrome LayoutMenuHubBackChrome(Rectangle anchorPanel, float uiScale, SpriteFont layoutFont)
+    {
+        var (bf, mul) = BodyFontForMenuText(layoutFont);
+        float backS = 0.58f * uiScale * mul;
+        const string backLabel = "Back";
+        Vector2 pos = new Vector2(anchorPanel.X + 18f * uiScale, anchorPanel.Y + 14f * uiScale);
+        Vector2 sz = gm.MeasureUiString(bf, backLabel, backS);
+        int padX = (int)System.Math.Ceiling(10f * uiScale);
+        int padY = (int)System.Math.Ceiling(6f * uiScale);
+        var hit = new Rectangle((int)pos.X - padX, (int)pos.Y - padY, (int)sz.X + padX * 2, (int)sz.Y + padY * 2);
+        float hintS = 0.4f * uiScale * mul;
+        var hintPos = new Vector2(pos.X, pos.Y + sz.Y + 5f * uiScale);
+
+        return new MenuHubBackChrome(hit, pos, hintPos, backS, hintS, bf);
+    }
+
+    protected void DrawMenuHubBackChrome(SpriteBatch spriteBatch, in MenuHubBackChrome chrome, bool backHovered, float uiScale, string? extraHintLine = null)
+    {
+        var (bf, mul) = BodyFontForMenuText(chrome.LabelFont);
+        Color fill = backHovered ? new Color(50, 62, 86, 255) : new Color(32, 40, 56, 255);
+        spriteBatch.Draw(Pixel, chrome.BackHitRect, fill);
+        DrawPanelOutline(spriteBatch, chrome.BackHitRect, new Color(140, 185, 255, backHovered ? 200 : 130));
+        gm.DrawUiString(spriteBatch, bf, "Back", chrome.BackTextPos, Color.White, 0f, Vector2.Zero, chrome.BackTextScale, SpriteEffects.None, 0f);
+        gm.DrawUiString(spriteBatch, bf, "Esc / Q", chrome.HintTextPos, new Color(175, 182, 198), 0f, Vector2.Zero, chrome.HintTextScale, SpriteEffects.None, 0f);
+        if (!string.IsNullOrEmpty(extraHintLine))
+        {
+            float extraS = 0.36f * uiScale * mul;
+            float y = chrome.HintTextPos.Y + gm.MeasureUiString(bf, "Esc / Q", chrome.HintTextScale).Y + 3f * uiScale;
+            gm.DrawUiString(spriteBatch, bf, extraHintLine, new Vector2(chrome.HintTextPos.X, y), new Color(130, 138, 155), 0f, Vector2.Zero, extraS, SpriteEffects.None, 0f);
         }
     }
 

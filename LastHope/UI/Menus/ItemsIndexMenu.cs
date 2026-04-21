@@ -9,6 +9,28 @@ public sealed class ItemsIndexMenu : MenuBase
 {
     public void Update(GameTime gameTime)
     {
+        SpriteFont layoutFont = MenuUiFont ?? _font;
+        if (layoutFont == null && gm.FontBitmap == null)
+            return;
+
+        Viewport vp = Game.GraphicsDevice.Viewport;
+        float ui = MenuUiScale(vp);
+        float panelW = MathHelper.Min(720f * ui, vp.Width - 40f);
+        float panelH = vp.Height * 0.76f;
+        int px = (int)(vp.Width / 2f - panelW / 2f);
+        int py = (int)(vp.Height / 2f - panelH / 2f);
+        var panel = new Rectangle(px, py, (int)panelW, (int)panelH);
+
+        MenuHubBackChrome back = LayoutMenuHubBackChrome(panel, ui, layoutFont);
+        Point mouse = InputManager.CurrentMouseState.Position;
+        bool overBack = back.BackHitRect.Contains(mouse);
+
+        if (InputManager.LeftMousePress() && overBack)
+        {
+            _state = GameState.MainMenu;
+            return;
+        }
+
         if (InputManager.IsKeyPress(Keys.Escape) || InputManager.IsKeyPress(Keys.Q))
             _state = GameState.MainMenu;
     }
@@ -25,10 +47,8 @@ public sealed class ItemsIndexMenu : MenuBase
         Viewport vp = Game.GraphicsDevice.Viewport;
         float ui = MenuUiScale(vp);
 
-        // Same shell as SettingsMenu: hub backdrop + rail, dim, framed panel, centered title/footer.
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         DrawHubMenuBackdrop(spriteBatch, Pixel, vp);
-        DrawHubMenuLeftRail(spriteBatch, Pixel, vp, ui);
         spriteBatch.End();
 
         float panelW = MathHelper.Min(720f * ui, vp.Width - 40f);
@@ -53,22 +73,19 @@ public sealed class ItemsIndexMenu : MenuBase
         float innerPad = 10f * ui;
         float wrapInner = MathHelper.Max(content.Width - innerPad * 2f, 220f);
 
+        MenuHubBackChrome back = LayoutMenuHubBackChrome(panel, ui, layoutFont);
+        bool backHover = back.BackHitRect.Contains(InputManager.CurrentMouseState.Position);
+
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         spriteBatch.Draw(Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(0, 0, 0, 72));
         spriteBatch.Draw(Pixel, panel, new Color(18, 24, 38, 200));
         DrawPanelOutline(spriteBatch, panel, new Color(140, 185, 255, 110));
 
+        DrawMenuHubBackChrome(spriteBatch, in back, backHover, ui);
+
         gm.DrawUiString(spriteBatch, layoutFont, "ITEMS INDEX", titlePos, Color.White, 0f, Vector2.Zero, titleTextScale, SpriteEffects.None, 0f);
 
         DrawItemsText(spriteBatch, gameTime, new Vector2(content.X + innerPad, content.Y + 8f * ui), wrapInner, textScale);
-
-        var (footFont, footMul) = BodyFontForMenuText(layoutFont);
-        float footS = 0.48f * ui * footMul;
-        const string foot = "Esc / Q - Back";
-        Vector2 fs = gm.MeasureUiString(footFont, foot, footS);
-        gm.DrawUiString(spriteBatch, footFont, foot,
-            new Vector2(panel.Center.X - fs.X / 2f, panel.Bottom - 36f * ui),
-            Color.Gray, 0f, Vector2.Zero, footS, SpriteEffects.None, 0f);
 
         spriteBatch.End();
     }

@@ -129,6 +129,18 @@ public sealed class SettingsMenu : MenuBase
 
         Point mouse = InputManager.CurrentMouseState.Position;
 
+        if (!_awaitingRebind.HasValue && InputManager.LeftMousePress())
+        {
+            MenuHubBackChrome back = LayoutMenuHubBackChrome(_chrome.PanelRect, ui, layoutFont);
+            if (back.BackHitRect.Contains(mouse))
+            {
+                GameState next = gm.StateAfterClosingSettings;
+                gm.StateAfterClosingSettings = GameState.MainMenu;
+                _state = next;
+                return;
+            }
+        }
+
         if (InputManager.LeftMousePress())
         {
             for (int i = 0; i < _chrome.TabRects.Length; i++)
@@ -175,7 +187,6 @@ public sealed class SettingsMenu : MenuBase
 
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         DrawHubMenuBackdrop(spriteBatch, Pixel, vp);
-        DrawHubMenuLeftRail(spriteBatch, Pixel, vp, ui);
         spriteBatch.End();
         var chrome = _chrome.PanelRect.Width > 0 ? _chrome : BuildChromeLayout(layoutFont, vp, ui);
 
@@ -185,6 +196,13 @@ public sealed class SettingsMenu : MenuBase
 
         spriteBatch.Draw(Pixel, chrome.PanelRect, new Color(18, 24, 38, 200));
         DrawPanelOutline(spriteBatch, chrome.PanelRect, new Color(140, 185, 255, 110));
+
+        if (!_awaitingRebind.HasValue)
+        {
+            MenuHubBackChrome backChrome = LayoutMenuHubBackChrome(chrome.PanelRect, ui, layoutFont);
+            bool backHover = backChrome.BackHitRect.Contains(InputManager.CurrentMouseState.Position);
+            DrawMenuHubBackChrome(spriteBatch, in backChrome, backHover, ui);
+        }
 
         gm.DrawUiString(spriteBatch, layoutFont, "SETTINGS", chrome.TitlePosition,
             Color.White, 0f, Vector2.Zero, chrome.TitleTextScale, SpriteEffects.None, 0f);
@@ -213,12 +231,6 @@ public sealed class SettingsMenu : MenuBase
                 DrawPlaceholderInRect(spriteBatch, layoutFont, chrome.ContentRect, "Coming soon.", 0.62f * ui);
                 break;
         }
-
-        var (footFont, footMul) = BodyFontForMenuText(layoutFont);
-        float footS = 0.48f * ui * footMul;
-        string foot = "Esc / Q - Back  |  1-3 tabs";
-        Vector2 fs = gm.MeasureUiString(footFont, foot, footS);
-        gm.DrawUiString(spriteBatch,footFont, foot, new Vector2(chrome.PanelRect.Center.X - fs.X / 2f, chrome.PanelRect.Bottom - 36f * ui), Color.Gray, 0f, Vector2.Zero, footS, SpriteEffects.None, 0f);
 
         if (_awaitingRebind.HasValue && _pendingConflict.HasValue && _pendingNewBind.HasValue)
             DrawOverrideConfirmModal(spriteBatch, layoutFont, vp, ui, _overrideLayout, _awaitingRebind.Value, _pendingConflict.Value, _pendingNewBind.Value);
@@ -361,13 +373,12 @@ public sealed class SettingsMenu : MenuBase
         Label("Combat");
         {
             float x = x0;
-            var lmbRect = new Rectangle((int)x, (int)(y - 2), (int)chip + 4, (int)chip + 8);
-            spriteBatch.Draw(Pixel, lmbRect, new Color(40, 48, 62, 180));
-            Rectangle src = new Rectangle(frame * KeyFrameSize, 0, KeyFrameSize, KeyFrameSize);
-            float sc = chip / KeyFrameSize;
-            float yo = -(chip - lineH) / 2f;
-            spriteBatch.Draw(_lmbTexture, new Vector2(lmbRect.X + 4f, y + yo), src, Color.White, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
-            x += lmbRect.Width + gap;
+            GameInputBinding attackBind = KeybindStore.GetBinding(KeybindId.Attack);
+            var attackRect = new Rectangle((int)x, (int)(y - 2), (int)chip + 4, (int)chip + 8);
+            spriteBatch.Draw(Pixel, attackRect, new Color(40, 48, 62, 200));
+            DrawPanelOutline(spriteBatch, attackRect, new Color(120, 140, 170, 120));
+            DrawBoundKey(spriteBatch, font, frame, attackRect, attackBind, chip);
+            x += attackRect.Width + gap;
             gm.DrawUiString(spriteBatch,labelFont, "-> Attack", new Vector2(x, y), Color.White, 0f, Vector2.Zero, textScale * labelMul, SpriteEffects.None, 0f);
             y += chip + 14f * ui;
         }
@@ -464,7 +475,7 @@ public sealed class SettingsMenu : MenuBase
         AfterLabel();
         RowChipsRegister(KeybindId.Dash);
         AfterLabel();
-        y += chip + 14f * ui;
+        RowChipsRegister(KeybindId.Attack);
         AfterLabel();
         RowChipsRegister(KeybindId.ItemSlot1, KeybindId.ItemSlot2);
         AfterLabel();

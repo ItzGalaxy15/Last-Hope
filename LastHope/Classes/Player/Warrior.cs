@@ -220,7 +220,7 @@ public class Warrior : BasePlayer
         if (_inputManager is not null)
         {
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.LeftMousePress() && timeSinceLastAttack >= _currentAttackCooldown)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
                 // _attackSound.Play();
