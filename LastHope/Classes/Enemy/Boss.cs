@@ -236,7 +236,7 @@ public class Boss : BaseEnemy
         Rectangle testRect = new Rectangle(
             (int)testPosition.X, (int)testPosition.Y,
             current.Width, current.Height);
-        return CollisionWorld.CollidesWithStatic(new RectangleCollider(testRect));
+        return CollisionWorld.CollidesWithStaticForMovement(testRect);
     }
 
     private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)

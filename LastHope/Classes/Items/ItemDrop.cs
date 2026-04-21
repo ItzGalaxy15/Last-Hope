@@ -1,3 +1,4 @@
+using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
@@ -62,10 +63,13 @@ public class ItemDrop : GameObject
     public override void Update(GameTime gameTime)
     {
         GameManager gm = GameManager.GetGameManager();
-        if (gm._player is not Warrior player) return;
+        BasePlayer? player = gm._player;
+        ItemType[]? inv = PlayerInventoryHelper.GetInventorySlots(player);
+        if (player is null || inv is null)
+            return;
 
         // Prevent rare items from being sucked in and destroyed for XP if inventory is full
-        bool isInventoryFull = player.Inventory[0] != ItemType.None && player.Inventory[1] != ItemType.None;
+        bool isInventoryFull = inv[0] != ItemType.None && inv[1] != ItemType.None;
         if (isInventoryFull && (_type == ItemType.OneUp || _type == ItemType.HealingPotion))
             return;
 
@@ -84,7 +88,7 @@ public class ItemDrop : GameObject
 
             if (distance < 25f)
             {
-                if (player.TryPickupItem(_type))
+                if (PlayerInventoryHelper.TryPickup(player, _type))
                 {
                     gm.RemoveGameObject(this);
                 }

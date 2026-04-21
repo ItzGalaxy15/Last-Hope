@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 using Last_Hope;
 using Last_Hope.BaseModel;
-using Last_Hope.UI;
 using Last_Hope.Classes.Items;
+using Last_Hope.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Camera;
+using Last_Hope.Collision;
 using Last_Hope.Engine.Pathfinding;
 
 namespace Last_Hope.Engine;
@@ -55,6 +57,12 @@ public class GameManager
 
     public GameState _state;
     public SpriteFont _font;
+
+    /// <summary>State to enter when closing settings with Esc/Q (main menu from title hub, paused when opened from pause).</summary>
+    public GameState StateAfterClosingSettings { get; set; } = GameState.MainMenu;
+
+    /// <summary>Bitmap font from <c>Content/Font.fnt</c> + <c>Content/Font.png</c> when present next to the executable.</summary>
+    public BmFont? FontBitmap { get; private set; }
     public Menu Menu { get; private set; }
     public EnemySpawner EnemySpawner { get; private set; }
 
@@ -81,7 +89,7 @@ public class GameManager
         Menu = new Menu();
         EnemySpawner = new EnemySpawner();
 
-        _state = GameState.ControlsMenu;
+        _state = GameState.MainMenu;
         SelectedItemSlot = 0;
     }
 
@@ -102,7 +110,50 @@ public class GameManager
         }
 
         _font = content.Load<SpriteFont>("Fonts/font");
+
+        FontBitmap = null;
+        try
+        {
+            string fntPath = Path.Combine(AppContext.BaseDirectory, "Content", "Font.fnt");
+            if (File.Exists(fntPath) && Game?.GraphicsDevice != null)
+                FontBitmap = BmFont.TryLoad(Game.GraphicsDevice, fntPath);
+        }
+        catch
+        {
+            FontBitmap = null;
+        }
     }
+
+    public Vector2 MeasureUiString(SpriteFont? fallback, string text, float scale)
+    {
+        if (string.IsNullOrEmpty(text))
+            return Vector2.Zero;
+        if (FontBitmap != null)
+            return FontBitmap.MeasureString(text, scale);
+        if (fallback == null)
+            return Vector2.Zero;
+        return fallback.MeasureString(text) * scale;
+    }
+
+    public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effects, float layerDepth)
+    {
+        if (string.IsNullOrEmpty(text))
+            return;
+        if (FontBitmap != null)
+        {
+            FontBitmap.Draw(spriteBatch, text, position, color, scale, layerDepth);
+            return;
+        }
+
+        if (fallback != null)
+            spriteBatch.DrawString(fallback, text, position, color, rotation, origin, scale, effects, layerDepth);
+    }
+
+    public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color, float scale) =>
+        DrawUiString(spriteBatch, fallback, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+
+    public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color) =>
+        DrawUiString(spriteBatch, fallback, text, position, color, 1f);
 
     public void HandleInput(InputManager inputManager)
     {
@@ -150,10 +201,13 @@ public class GameManager
     public void Update(GameTime gameTime)
     {
         InputManager.Update();
+
+        GameState stateAtFrameStart = _state;
+
         switch (_state)
         {
-            case GameState.StartMenu:
-                Menu.UpdateStartMenu(gameTime);
+            case GameState.MainMenu:
+                Menu.UpdateMainMenu(gameTime);
                 break;
             case GameState.Characters:
                 Menu.UpdateCharactersRosterMenu(gameTime);
@@ -161,8 +215,11 @@ public class GameManager
             case GameState.CharacterSelect:
                 Menu.UpdateCharacterSelectMenu(gameTime);
                 break;
-            case GameState.ControlsMenu:
-                Menu.UpdateControlsMenu(gameTime);
+            case GameState.ItemsIndex:
+                Menu.UpdateItemsIndexMenu(gameTime);
+                break;
+            case GameState.SettingsMenu:
+                Menu.UpdateSettingsMenu(gameTime);
                 break;
             case GameState.Running:
                 EnemySpawner.Update(gameTime);
@@ -178,14 +235,20 @@ public class GameManager
                 Menu.UpdateWinnerMenu(gameTime);
                 break;
         }
+
+        if (stateAtFrameStart == GameState.MainMenu && _state != GameState.MainMenu)
+            Menu.ReleaseMainMenuGum();
+
+        if (stateAtFrameStart == GameState.Paused && _state != GameState.Paused)
+            Menu.ReleasePausedMenuGum();
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         switch (_state)
         {
-            case GameState.StartMenu:
-                Menu.DrawStartMenu(gameTime, spriteBatch);
+            case GameState.MainMenu:
+                Menu.DrawMainMenu(gameTime, spriteBatch, transformMatrix);
                 break;
             case GameState.Characters:
                 Menu.DrawCharactersRosterMenu(gameTime, spriteBatch);
@@ -193,8 +256,11 @@ public class GameManager
             case GameState.CharacterSelect:
                 Menu.DrawCharacterSelectMenu(gameTime, spriteBatch);
                 break;
-            case GameState.ControlsMenu:
-                Menu.DrawControlsMenu(gameTime, spriteBatch, transformMatrix);
+            case GameState.ItemsIndex:
+                Menu.DrawItemsIndexMenu(gameTime, spriteBatch, transformMatrix);
+                break;
+            case GameState.SettingsMenu:
+                Menu.DrawSettingsMenu(gameTime, spriteBatch, transformMatrix);
                 break;
             case GameState.Running:
                 Menu.DrawRunningMenu(gameTime, spriteBatch, transformMatrix);
@@ -227,11 +293,13 @@ public class GameManager
     {
         if (HasUsedOneUp) return true;
 
-        if (_player is Warrior warrior)
+        if (PlayerInventoryHelper.GetHudExtraLives(_player) > 0)
+            return true;
+
+        ItemType[]? slots = PlayerInventoryHelper.GetInventorySlots(_player);
+        if (slots != null)
         {
-            if (warrior.ExtraLives > 0) return true;
-            
-            foreach (ItemType item in warrior.Inventory)
+            foreach (ItemType item in slots)
             {
                 if (item == ItemType.OneUp) return true;
             }
@@ -321,9 +389,90 @@ public class GameManager
 
         EnemySpawner.Reset();
 
-        Vector2 spawn = new Vector2(WorldWidth / 2f, WorldHeight / 2f);
+        Vector2 spawn = GetDefaultPlayerSpawn();
         _player = CreatePlayerFromSelection(spawn);
         AddGameObject(_player);
+    }
+
+    /// <summary>Matches player draw scale (32px frame × 3) for spawn search and clamping.</summary>
+    private const float SpawnBodyWidthPx = 96f;
+    /// <summary>Same fraction as <see cref="Warrior"/> / <see cref="Archer"/> hitbox vs body.</summary>
+    private const float SpawnHitboxFraction = 0.55f;
+
+    private static bool PlayerFootprintOverlapsStatic(float bodyWidth, Vector2 topLeftWorld)
+    {
+        float hitboxSize = bodyWidth * SpawnHitboxFraction;
+        float inset = (bodyWidth - hitboxSize) * 0.5f;
+        var rect = new Rectangle(
+            (int)(topLeftWorld.X + inset),
+            (int)(topLeftWorld.Y + inset),
+            (int)hitboxSize,
+            (int)hitboxSize);
+        return CollisionWorld.CollidesWithStatic(new RectangleCollider(rect));
+    }
+
+    /// <summary>
+    /// First walkable nav tile (from map center outward) whose footprint does not overlap static geometry.
+    /// </summary>
+    private bool TryFindSpawnTopLeft(out Vector2 spawnTopLeft)
+    {
+        spawnTopLeft = Vector2.Zero;
+        if (NavigationGrid == null)
+            return false;
+
+        int ts = NavigationGrid.TileSize;
+        float mapW = NavigationGrid.WidthInTiles * ts;
+        float mapH = NavigationGrid.HeightInTiles * ts;
+        float body = SpawnBodyWidthPx;
+
+        int cx = NavigationGrid.WidthInTiles / 2;
+        int cy = NavigationGrid.HeightInTiles / 2;
+        int maxD = Math.Max(NavigationGrid.WidthInTiles, NavigationGrid.HeightInTiles);
+
+        for (int d = 0; d <= maxD; d++)
+        {
+            for (int ty = cy - d; ty <= cy + d; ty++)
+            {
+                for (int tx = cx - d; tx <= cx + d; tx++)
+                {
+                    if (Math.Max(Math.Abs(tx - cx), Math.Abs(ty - cy)) != d)
+                        continue;
+
+                    if (!NavigationGrid.IsWalkable(tx, ty))
+                        continue;
+
+                    Vector2 pos = new Vector2(tx * ts, ty * ts);
+                    if (pos.X + body > mapW || pos.Y + body > mapH)
+                        continue;
+
+                    if (PlayerFootprintOverlapsStatic(body, pos))
+                        continue;
+
+                    spawnTopLeft = pos;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// World-space spawn on a free tile (not map geometric center — that often sits inside village colliders).
+    /// </summary>
+    public Vector2 GetDefaultPlayerSpawn()
+    {
+        if (NavigationGrid != null && TryFindSpawnTopLeft(out Vector2 spawn))
+            return spawn;
+
+        if (NavigationGrid != null)
+        {
+            float mapW = NavigationGrid.WidthInTiles * NavigationGrid.TileSize;
+            float mapH = NavigationGrid.HeightInTiles * NavigationGrid.TileSize;
+            return new Vector2((mapW - SpawnBodyWidthPx) * 0.5f, (mapH - SpawnBodyWidthPx) * 0.5f);
+        }
+
+        return new Vector2(WorldWidth / 2f - 48f, WorldHeight / 2f - 48f);
     }
 
     public BasePlayer CreatePlayerFromSelection(Vector2 spawnPosition)

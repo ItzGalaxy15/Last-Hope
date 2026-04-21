@@ -4,6 +4,7 @@ using Last_Hope.Engine.LevelGenerator;
 using Last_Hope.Engine.Pathfinding;
 using Last_Hope.UI;
 using Microsoft.Xna.Framework;
+using MonoGameGum;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -109,11 +110,14 @@ public class Last_Hope : Game
         _gameManager.Camera = _camera;
 
         _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet);
+
+        GumBootstrap.Initialize(this, Content);
     }
 
     protected override void Update(GameTime gameTime)
     {
         _gameManager.Update(gameTime);
+        GumService.Default.Update(gameTime);
         if (_gameManager.playerAlive && _gameManager._player != null)
             _camera.Update(_gameManager._player.GetPosition());
 
@@ -132,6 +136,8 @@ public class Last_Hope : Game
         _spriteBatch.End();
 
         _gameManager.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
+
+        GumService.Default.Draw();
 
         if (ShouldShowHud(_gameManager._state))
         {

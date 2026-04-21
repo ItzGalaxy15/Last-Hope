@@ -85,6 +85,18 @@
 /processorParam:TextureFormat=Color
 /build:demon.png
 
+#begin EnemyArrow.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:EnemyArrow.png
+
 #begin explosion.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -139,6 +151,13 @@
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
 /build:Fonts/font.spritefont
+
+#begin Fonts/MenuPixel.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/MenuPixel.spritefont
 
 #begin Goblin spritesheet attempt-sheet.png
 /importer:TextureImporter

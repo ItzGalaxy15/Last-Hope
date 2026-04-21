@@ -23,7 +23,7 @@ public class Bomb : GameObject
     private int _currentFuseFrame;
 
     private const float ExplosionRadius = 100f;
-    private const float ExplosionDamage = 55f;
+    private const float ExplosionDamage = 100f;
 
     private const int BombFrameSize = 32;
     private const int BombFrameCount = 8;

@@ -319,7 +319,6 @@ public class Goblin : BaseEnemy
             current.Height
         );
 
-        var testCollider = new RectangleCollider(testRect);
-        return CollisionWorld.CollidesWithStatic(testCollider);
+        return CollisionWorld.CollidesWithStaticForMovement(testRect);
     }
 }

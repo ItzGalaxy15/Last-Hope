@@ -1,22 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace Last_Hope;
 
-namespace Last_Hope
+public enum GameState
 {
-    public enum GameState
-    {
-        StartMenu,
-        Characters,
-        CharacterSelect,
-        ControlsMenu,
-        Running,
-        Paused,
-        GameOver,
-        Winner
-    }
+    MainMenu,
+    Characters,
+    CharacterSelect,
+    ItemsIndex,
+    SettingsMenu,
+    Running,
+    Paused,
+    GameOver,
+    Winner
 }
-
-

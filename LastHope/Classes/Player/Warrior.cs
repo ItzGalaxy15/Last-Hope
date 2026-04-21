@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Items;
 using Last_Hope.SkillTree; // Import Skill Tree structures
+using LastHope.Audio; 
 
 namespace Last_Hope;
 
@@ -55,8 +56,6 @@ public class Warrior : BasePlayer
 
     private const float DecoyThrowSpeed = 420f;
 
-    public ItemType[] Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
-    public new int ExtraLives { get; private set; } = 0;
     private float _greenGlowTimer = 0f;
     private SoundEffect _deathSound;
     private SoundEffect _attackSound;
@@ -79,6 +78,7 @@ public class Warrior : BasePlayer
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
         _collider = new RectangleCollider(new Rectangle(origin, Point.Zero));
         SetCollider(_collider);
+        Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
     }
 
     public override Vector2 GetPosition()
@@ -139,18 +139,20 @@ public class Warrior : BasePlayer
 
         SyncColliderToPosition();
         SetCollider(_collider);
+        ClampToMapBounds();
+        SyncColliderToPosition();
     }
 
     public override void HandleInput(InputManager inputManager)
     {
         _moveInput = Vector2.Zero;
-        if (inputManager.IsKeyDown(Keys.W) || inputManager.IsKeyDown(Keys.Up))
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp) || inputManager.IsKeyDown(Keys.Up))
             _moveInput.Y -= 1f;
-        if (inputManager.IsKeyDown(Keys.S) || inputManager.IsKeyDown(Keys.Down))
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown) || inputManager.IsKeyDown(Keys.Down))
             _moveInput.Y += 1f;
-        if (inputManager.IsKeyDown(Keys.A) || inputManager.IsKeyDown(Keys.Left))
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft) || inputManager.IsKeyDown(Keys.Left))
             _moveInput.X -= 1f;
-        if (inputManager.IsKeyDown(Keys.D) || inputManager.IsKeyDown(Keys.Right))
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveRight) || inputManager.IsKeyDown(Keys.Right))
             _moveInput.X += 1f;
     }
 
@@ -219,22 +221,22 @@ public class Warrior : BasePlayer
         if (_inputManager is not null)
         {
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.LeftMousePress() && timeSinceLastAttack >= _currentAttackCooldown)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
-                // _attackSound.Play();
+                AudioManager.PlaySfx(_attackSound);
                 timeSinceLastAttack = 0;
             }
 
             // G = place bomb at feet
-            if (_inputManager.IsKeyPress(Keys.G) && _bombActionCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _bombActionCooldown <= 0f)
             {
                 PlaceSelectedItem();
                 _bombActionCooldown = BombActionCooldown;
             }
 
             // T = throw bomb toward mouse
-            if (_inputManager.IsKeyPress(Keys.T) && _bombActionCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _bombActionCooldown <= 0f)
             {
                 ThrowSelectedItemTowardMouse();
                 _bombActionCooldown = BombActionCooldown;
@@ -243,7 +245,7 @@ public class Warrior : BasePlayer
             if (_dashCooldown > 0f)
                 _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (_inputManager.IsKeyPress(Keys.LeftShift) && _dashCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
             {
                 Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
                 Vector2 towardMouse = mousePosition - Position;
@@ -491,7 +493,7 @@ public class Warrior : BasePlayer
             else
             {
                 _currentHp = 0f;
-                _deathSound.Play();
+                AudioManager.PlaySfx(_deathSound);
                 GameManager.GetGameManager().playerAlive = false;
                 GameManager.GetGameManager()._state = GameState.GameOver;
             }
@@ -527,25 +529,13 @@ public class Warrior : BasePlayer
         return true;
     }
 
-    public bool TryPickupItem(ItemType item)
-    {
-        for (int i = 0; i < Inventory.Length; i++)
-        {
-            if (Inventory[i] == ItemType.None)
-            {
-                Inventory[i] = item;
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void PlaceSelectedItem()
     {
         GameManager gm = GameManager.GetGameManager();
         Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
 
-        ItemType currentItem = Inventory[gm.SelectedItemSlot];
+        ItemType[] inv = Inventory!;
+        ItemType currentItem = inv[gm.SelectedItemSlot];
         if (currentItem == ItemType.None) return;
 
         if (currentItem == ItemType.Decoy)
@@ -563,12 +553,11 @@ public class Warrior : BasePlayer
         else if (currentItem == ItemType.OneUp)
         {
             AddLife(1);
-            ExtraLives++;
             _greenGlowTimer = 1.5f;
             gm.HasUsedOneUp = true;
         }
         
-        Inventory[gm.SelectedItemSlot] = ItemType.None;
+        inv[gm.SelectedItemSlot] = ItemType.None;
     }
 
     private void ThrowSelectedItemTowardMouse()
@@ -582,7 +571,8 @@ public class Warrior : BasePlayer
 
         direction.Normalize();
 
-        ItemType currentItem = Inventory[gm.SelectedItemSlot];
+        ItemType[] inv = Inventory!;
+        ItemType currentItem = inv[gm.SelectedItemSlot];
         if (currentItem == ItemType.None) return;
 
         if (currentItem == ItemType.Decoy)
@@ -600,12 +590,11 @@ public class Warrior : BasePlayer
         else if (currentItem == ItemType.OneUp)
         {
             AddLife(1);
-            ExtraLives++;
             _greenGlowTimer = 1.5f;
             gm.HasUsedOneUp = true;
         }
         
-        Inventory[gm.SelectedItemSlot] = ItemType.None;
+        inv[gm.SelectedItemSlot] = ItemType.None;
     }
 
     private static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
@@ -630,8 +619,6 @@ public class Warrior : BasePlayer
             (int)hitboxSize
         );
 
-        var testCollider = new RectangleCollider(testRect);
-
-        return CollisionWorld.CollidesWithStatic(testCollider);
+        return CollisionWorld.CollidesWithStaticForMovement(testRect);
     }
 }
