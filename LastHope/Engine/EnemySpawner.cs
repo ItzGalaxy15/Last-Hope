@@ -8,7 +8,7 @@ namespace Last_Hope.Engine;
 
 public class EnemySpawner
 {
-    public int TotalWaves { get; set; } = 2;
+    public int TotalWaves { get; set; } = 1;
     public float EnemyMultiplierPerWave { get; set; } = 2.0f;
     public int StartingEnemies { get; set; } = 1;
     public bool BossAppearsOnLastWave { get; set; } = true;
@@ -27,6 +27,7 @@ public class EnemySpawner
     private bool waitingForNextWave = false;
     private float wavePause = 3f; // pause between the waves
     private bool bossSpawned = false;
+    public bool BossSpawned => bossSpawned;
 
     public int GetEnemiesLeftCount()
     {
