@@ -152,6 +152,13 @@
 /processorParam:TextureFormat=Compressed
 /build:Fonts/font.spritefont
 
+#begin Fonts/MenuPixel.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/MenuPixel.spritefont
+
 #begin Goblin spritesheet attempt-sheet.png
 /importer:TextureImporter
 /processor:TextureProcessor

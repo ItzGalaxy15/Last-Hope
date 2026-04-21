@@ -44,11 +44,11 @@ public class GameOverMenu : MenuBase
         DrawWorld(gameTime, spriteBatch, transformMatrix);
 
         spriteBatch.Begin();
-        spriteBatch.DrawString(_font, gameOverText, positrionGameOver, Color.Red);
+        gm.DrawUiString(spriteBatch, _font, gameOverText, positrionGameOver, Color.Red);
         spriteBatch.Draw(Pixel, restartRect, Color.DarkSlateGray);
         spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
-        spriteBatch.DrawString(_font, restartText, restartPos, Color.White);
-        spriteBatch.DrawString(_font, quitText, quitPos, Color.Red);
+        gm.DrawUiString(spriteBatch, _font, restartText, restartPos, Color.White);
+        gm.DrawUiString(spriteBatch, _font, quitText, quitPos, Color.Red);
         spriteBatch.End();
     }
 }

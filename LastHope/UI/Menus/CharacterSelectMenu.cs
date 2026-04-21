@@ -17,12 +17,23 @@ public class CharacterSelectMenu : MenuBase
 
     public void Update(GameTime gameTime)
     {
-        if (_font == null)
+        SpriteFont layoutFont = MenuUiFont ?? _font;
+        if (layoutFont == null && gm.FontBitmap == null)
             return;
+
+        Viewport vp = Game.GraphicsDevice.Viewport;
+        float ui = MenuUiScale(vp);
+        var anchor = new Rectangle(0, 0, vp.Width, vp.Height);
+        MenuHubBackChrome back = LayoutMenuHubBackChrome(anchor, ui, layoutFont);
+        if (InputManager.LeftMousePress() && back.BackHitRect.Contains(InputManager.CurrentMouseState.Position))
+        {
+            _state = GameState.MainMenu;
+            return;
+        }
 
         if (InputManager.IsKeyPress(Keys.Escape) || InputManager.IsKeyPress(Keys.Q))
         {
-            _state = GameState.StartMenu;
+            _state = GameState.MainMenu;
             return;
         }
 
@@ -37,7 +48,6 @@ public class CharacterSelectMenu : MenuBase
         if (InputManager.IsKeyPress(Keys.D) || InputManager.IsKeyPress(Keys.Right))
             _selectedIndex = (_selectedIndex + 1) % n;
 
-        Viewport vp = Game.GraphicsDevice.Viewport;
         for (int i = 0; i < n; i++)
         {
             if (!PlayableCharacterOverviewDraw.GetPortraitRect(vp, i).Contains(InputManager.CurrentMouseState.Position))
@@ -60,10 +70,15 @@ public class CharacterSelectMenu : MenuBase
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        if (_font == null)
+        SpriteFont layoutFont = MenuUiFont ?? _font;
+        if (layoutFont == null && gm.FontBitmap == null)
             return;
 
         Viewport vp = Game.GraphicsDevice.Viewport;
+        float ui = MenuUiScale(vp);
+        var anchor = new Rectangle(0, 0, vp.Width, vp.Height);
+        MenuHubBackChrome back = LayoutMenuHubBackChrome(anchor, ui, layoutFont);
+        bool backHover = back.BackHitRect.Contains(InputManager.CurrentMouseState.Position);
 
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
@@ -78,7 +93,9 @@ public class CharacterSelectMenu : MenuBase
             "CHOOSE YOUR HERO",
             0.85f,
             showStartButton: true,
-            "Confirm: Space / Enter  |  Back: Esc / Q");
+            "Confirm: Space / Enter");
+
+        DrawMenuHubBackChrome(spriteBatch, in back, backHover, ui);
 
         spriteBatch.End();
     }

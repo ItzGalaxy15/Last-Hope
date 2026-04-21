@@ -34,9 +34,9 @@ public class ItemSlotsBar : UIElement
 		GameManager gm = GameManager.GetGameManager();
 		InputManager input = gm.InputManager;
 
-		if (input.IsKeyPress(Keys.D1) || input.IsKeyPress(Keys.NumPad1))
+		if (input.IsGameplayKeyPress(KeybindId.ItemSlot1))
 			gm.SetSelectedItemSlot(0);
-		else if (input.IsKeyPress(Keys.D2) || input.IsKeyPress(Keys.NumPad2))
+		else if (input.IsGameplayKeyPress(KeybindId.ItemSlot2))
 			gm.SetSelectedItemSlot(1);
 
 		_selectedSlot = gm.SelectedItemSlot;
@@ -140,14 +140,14 @@ public class ItemSlotsBar : UIElement
 				DrawOutline(spriteBatch, pixel, _slotFrameRects[i], 3, selectedRing);
 		}
 
-		if (gm._font != null && inv is not null)
+		if ((gm._font != null || gm.FontBitmap != null) && inv is not null)
 		{
 			ItemType selectedItem = inv[_selectedSlot];
 			if (selectedItem != ItemType.None)
 			{
 				string label = GetItemLabel(selectedItem);
 				const float labelScale = 0.45f;
-				Vector2 labelSize = gm._font.MeasureString(label) * labelScale;
+				Vector2 labelSize = gm.MeasureUiString(gm._font, label, labelScale);
 
 				Rectangle selectedRect = _slotFrameRects[_selectedSlot];
 				Vector2 labelPos = new Vector2(
@@ -161,7 +161,7 @@ public class ItemSlotsBar : UIElement
 					(int)labelSize.Y + 6);
 
 				spriteBatch.Draw(pixel, labelBgRect, labelBackground);
-				spriteBatch.DrawString(gm._font, label, labelPos, labelText, 0f, Vector2.Zero, labelScale, SpriteEffects.None, 0f);
+				gm.DrawUiString(spriteBatch, gm._font, label, labelPos, labelText, labelScale);
 			}
 		}
 	}
