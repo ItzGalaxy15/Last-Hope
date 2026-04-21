@@ -20,7 +20,11 @@ public class BossWarningIndicator : UIElement
         var gm = GameManager.GetGameManager();
         if (gm.EnemySpawner == null) return;
 
-        if (gm.EnemySpawner.BossSpawned && !_hasStarted)
+        if (!gm.EnemySpawner.BossSpawned)
+        {
+            _hasStarted = false;
+        }
+        else if (gm.EnemySpawner.BossSpawned && !_hasStarted)
         {
             _hasStarted = true;
             _timer = DisplayDuration;
