@@ -71,6 +71,8 @@ public class GameManager
     /// </summary>
     public NavigationGrid NavigationGrid { get; set; }
 
+    public Effect DeathFade { get; private set; }
+
     public static GameManager GetGameManager()
     {
         if (gameManager == null)
@@ -110,6 +112,7 @@ public class GameManager
         }
 
         _font = content.Load<SpriteFont>("Fonts/font");
+        DeathFade = content.Load<Effect>("Effects/DeathFade");
 
         FontBitmap = null;
         try
