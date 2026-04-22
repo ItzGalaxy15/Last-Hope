@@ -11,7 +11,7 @@ namespace Last_Hope.SkillTree
     // ==========================================
     // 1. ENUMS & CONSTANTS
     // ==========================================
-    public enum SkillNodeType { Stat = 0, Modifier = 1, Ultimate = 2 }
+    public enum SkillNodeType { Standard = 0, Minor = 1, Major = 2 }
     public enum NodeShape { Circle, Square }
     public enum NodeState { Locked, Available, Partial, Maxed }
 
@@ -99,13 +99,17 @@ namespace Last_Hope.SkillTree
         private readonly ClassSkillTreeData _data;
         private SkillTreeState _state;
         
+        // Pending state for point allocation planning
+        private readonly Dictionary<string, int> _pendingAllocations = new Dictionary<string, int>();
+
         // Fast lookup cache
         private readonly Dictionary<string, SkillNodeData> _nodeMap;
 
         // --- The Stats Bus ---
         public event Action<NodeEffect> OnEffectApplied;
         public event Action OnTreeRespec;
-        public int UnspentPoints => _state.UnspentSkillPoints;
+        public int UnspentPoints => _state.UnspentSkillPoints - _pendingAllocations.Values.Sum();
+        public int PendingPoints => _pendingAllocations.Values.Sum();
 
         public BaseSkillTree(ClassSkillTreeData data, SkillTreeState state)
         {
@@ -114,36 +118,42 @@ namespace Last_Hope.SkillTree
             _nodeMap = _data.Nodes.ToDictionary(n => n.Id);
         }
 
-        public NodeState GetNodeState(string nodeId)
+        public NodeState GetNodeState(string nodeId, bool includePending = true)
         {
             var nodeData = _nodeMap[nodeId];
-            int allocated = GetAllocatedPoints(nodeId);
+            int allocated = GetAllocatedPoints(nodeId, includePending);
 
             if (allocated >= nodeData.MaxPoints) return NodeState.Maxed;
             if (allocated > 0) return NodeState.Partial;
-            return CanUnlockNode(nodeId) ? NodeState.Available : NodeState.Locked;
+            return CanUnlockNode(nodeId, includePending) ? NodeState.Available : NodeState.Locked;
         }
 
-        public int GetAllocatedPoints(string nodeId)
+        public int GetAllocatedPoints(string nodeId, bool includePending = true)
         {
-            return _state.AllocatedNodes.TryGetValue(nodeId, out int pts) ? pts : 0;
+            int pts = _state.AllocatedNodes.TryGetValue(nodeId, out int p) ? p : 0;
+            if (includePending && _pendingAllocations.TryGetValue(nodeId, out int pend))
+            {
+                pts += pend;
+            }
+            return pts;
         }
 
-        public bool CanUnlockNode(string nodeId)
+        public bool CanUnlockNode(string nodeId, bool includePending = true)
         {
             var node = _nodeMap[nodeId];
 
             // Check 1: Do we have enough total points to access this layer?
             if (_data.LayerUnlockRequirements.TryGetValue(node.Layer, out int reqPoints))
             {
-                if (_state.TotalPointsSpent < reqPoints) return false;
+                int totalSpent = _state.TotalPointsSpent + (includePending ? PendingPoints : 0);
+                if (totalSpent < reqPoints) return false;
             }
 
             // Check 2: Are all prerequisite nodes MAXED out?
             foreach (var depId in node.Dependencies)
             {
                 var depNode = _nodeMap[depId];
-                if (GetAllocatedPoints(depId) < depNode.MaxPoints)
+                if (GetAllocatedPoints(depId, includePending) < depNode.MaxPoints)
                 {
                     return false;
                 }
@@ -157,7 +167,7 @@ namespace Last_Hope.SkillTree
                 bool hasActiveParent = false;
                 foreach (var conn in parentConnections)
                 {
-                    if (GetAllocatedPoints(conn.FromNodeId) > 0)
+                    if (GetAllocatedPoints(conn.FromNodeId, includePending) > 0)
                     {
                         hasActiveParent = true;
                         break;
@@ -172,32 +182,91 @@ namespace Last_Hope.SkillTree
             return true;
         }
 
-        public bool AllocatePoint(string nodeId)
+        public bool AddPendingPoint(string nodeId)
         {
-            if (_state.UnspentSkillPoints <= 0) return false;
-            if (!CanUnlockNode(nodeId)) return false;
+            if (UnspentPoints <= 0) return false;
+            if (!CanUnlockNode(nodeId, true)) return false;
             
             var node = _nodeMap[nodeId];
-            int currentPts = GetAllocatedPoints(nodeId);
+            int currentPts = GetAllocatedPoints(nodeId, true);
             
             if (currentPts >= node.MaxPoints) return false; // Already maxed
 
-            // Apply allocation
-            _state.AllocatedNodes[nodeId] = currentPts + 1;
-            _state.TotalPointsSpent++;
-            _state.UnspentSkillPoints--;
+            if (!_pendingAllocations.ContainsKey(nodeId))
+                _pendingAllocations[nodeId] = 0;
             
-            // Fire events to tell the Player to update their runtime stats
-            foreach(var effect in node.Effects)
-                OnEffectApplied?.Invoke(effect);
-
-            // Auto-save whenever a point is allocated
-            SkillTreeSaveManager.Save(_state);
+            _pendingAllocations[nodeId]++;
             return true;
+        }
+
+        public bool RemovePendingPoint(string nodeId)
+        {
+            if (!_pendingAllocations.ContainsKey(nodeId) || _pendingAllocations[nodeId] <= 0)
+                return false;
+
+            _pendingAllocations[nodeId]--;
+            if (_pendingAllocations[nodeId] == 0)
+                _pendingAllocations.Remove(nodeId);
+            
+            // Validation: Ensure removing this doesn't break dependencies for other pending nodes.
+            // If it does, we might need a recursive check, but for a clean UX, wiping all downstream pending is safest.
+            ValidatePendingDownstream();
+            return true;
+        }
+
+        private void ValidatePendingDownstream()
+        {
+            bool changed = true;
+            while (changed)
+            {
+                changed = false;
+                foreach (var pend in _pendingAllocations.Keys.ToList())
+                {
+                    if (!CanUnlockNode(pend, true))
+                    {
+                        _pendingAllocations.Remove(pend);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        public void ConfirmPendingPoints()
+        {
+            if (_pendingAllocations.Count == 0) return;
+
+            foreach (var kvp in _pendingAllocations)
+            {
+                string nodeId = kvp.Key;
+                int ptsToApply = kvp.Value;
+                
+                if (!_state.AllocatedNodes.ContainsKey(nodeId))
+                    _state.AllocatedNodes[nodeId] = 0;
+                
+                _state.AllocatedNodes[nodeId] += ptsToApply;
+                _state.TotalPointsSpent += ptsToApply;
+                _state.UnspentSkillPoints -= ptsToApply;
+
+                var node = _nodeMap[nodeId];
+                for (int i = 0; i < ptsToApply; i++)
+                {
+                    foreach(var effect in node.Effects)
+                        OnEffectApplied?.Invoke(effect);
+                }
+            }
+
+            _pendingAllocations.Clear();
+            SkillTreeSaveManager.Save(_state);
+        }
+
+        public void CancelPendingPoints()
+        {
+            _pendingAllocations.Clear();
         }
 
         public void Respec()
         {
+            CancelPendingPoints();
             // Refund points and wipe dictionary for easy recalculation
             _state.UnspentSkillPoints += _state.TotalPointsSpent;
             _state.TotalPointsSpent = 0;
