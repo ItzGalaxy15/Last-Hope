@@ -27,8 +27,12 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 {
 	float4 color = tex2D(SpriteTextureSampler, input.TextureCoordinates) * input.Color;
 
-	float3 blackColor = float3(0.1, 0.1, 0.1); 
-	color.rgb = lerp(color.rgb, blackColor, FadeAmount);
+	// Only apply the fade to visible pixels so the transparent pixels are skipped.
+	if (color.a > 0)
+	{
+		float3 targetColor = float3(0.1, 0.1, 0.1) * color.a;
+		color.rgb = lerp(color.rgb, targetColor, FadeAmount);
+	}
 
 	return color;
 }
