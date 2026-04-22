@@ -131,7 +131,9 @@ public class Last_Hope : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp);
+        Effect backgroundEffect = _gameManager._state == GameState.GameOver ? _gameManager.DeathFade : null;
+
+        _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp, effect: backgroundEffect);
         _levelGenerator.Draw(_spriteBatch, Vector2.Zero);
         _spriteBatch.End();
 

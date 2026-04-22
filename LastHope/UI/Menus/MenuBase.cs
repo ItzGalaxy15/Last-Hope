@@ -590,9 +590,9 @@ public abstract class MenuBase
         }
     }
 
-    protected void DrawWorld(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix)
+    protected void DrawWorld(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix, Effect effect = null)
     {
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: transformMatrix);
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp, effect: effect, transformMatrix: transformMatrix);
         foreach (GameObject gameObject in _gameObjects)
         {
             gameObject.Draw(gameTime, spriteBatch);
