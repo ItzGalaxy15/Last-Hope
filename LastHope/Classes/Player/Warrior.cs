@@ -11,6 +11,7 @@ using Last_Hope.Classes.Items;
 using Last_Hope.SkillTree; // Import Skill Tree structures
 using LastHope.Audio;
 using Last_Hope.Helpers;
+using Last_Hope.Systems.ItemSystem;
 
 namespace Last_Hope;
 
@@ -181,17 +182,17 @@ public class Warrior : BasePlayer
                 timeSinceLastAttack = 0;
             }
 
-            // G = place bomb at feet
+            // place bomb at feet
             if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _bombActionCooldown <= 0f)
             {
-                PlaceSelectedItem();
+                ItemSystem.PlaceSelectedItem(this);
                 _bombActionCooldown = BombActionCooldown;
             }
 
-            // T = throw bomb toward mouse
+            // throw bomb toward mouse
             if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _bombActionCooldown <= 0f)
             {
-                ThrowSelectedItemTowardMouse();
+                ItemSystem.ThrowSelectedItemTowardMouse(this);
                 _bombActionCooldown = BombActionCooldown;
             }
 
@@ -477,83 +478,5 @@ public class Warrior : BasePlayer
                 return false;
         }
         return true;
-    }
-
-    private void PlaceSelectedItem()
-    {
-        GameManager gm = GameManager.GetGameManager();
-        Vector2 spawnPosition = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-
-        ItemType[] inv = Inventory!;
-        ItemType currentItem = inv[gm.SelectedItemSlot];
-        if (currentItem == ItemType.None) return;
-
-        if (currentItem == ItemType.Decoy)
-        {
-            SpawnDecoy(gm, spawnPosition, Vector2.Zero);
-        }
-        else if (currentItem == ItemType.Bomb)
-        {
-            gm.AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
-        }
-        else if (currentItem == ItemType.HealingPotion)
-        {
-            Heal(50f);
-        }
-        else if (currentItem == ItemType.OneUp)
-        {
-            AddLife(1);
-            _greenGlowTimer = 1.5f;
-            gm.HasUsedOneUp = true;
-        }
-        
-        inv[gm.SelectedItemSlot] = ItemType.None;
-    }
-
-    private void ThrowSelectedItemTowardMouse()
-    {
-        GameManager gm = GameManager.GetGameManager();
-        Vector2 spawnPosition = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        Vector2 mouseWorld = gm.GetWorldMousePosition();
-        Vector2 direction = mouseWorld - spawnPosition;
-        if (direction == Vector2.Zero)
-            return;
-
-        direction.Normalize();
-
-        ItemType[] inv = Inventory!;
-        ItemType currentItem = inv[gm.SelectedItemSlot];
-        if (currentItem == ItemType.None) return;
-
-        if (currentItem == ItemType.Decoy)
-        {
-            SpawnDecoy(gm, spawnPosition, direction * DecoyThrowSpeed);
-        }
-        else if (currentItem == ItemType.Bomb)
-        {
-            gm.AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
-        }
-        else if (currentItem == ItemType.HealingPotion)
-        {
-            Heal(50f);
-        }
-        else if (currentItem == ItemType.OneUp)
-        {
-            AddLife(1);
-            _greenGlowTimer = 1.5f;
-            gm.HasUsedOneUp = true;
-        }
-        
-        inv[gm.SelectedItemSlot] = ItemType.None;
-    }
-
-    private static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
-    {
-        if (gm.ActiveDecoy is not null)
-            gm.RemoveGameObject(gm.ActiveDecoy);
-
-        Decoy decoy = new Decoy(spawnPosition, initialVelocity, lifetimeSeconds: 5f);
-        gm.AddGameObject(decoy);
-        gm.ActiveDecoy = decoy;
     }
 }
