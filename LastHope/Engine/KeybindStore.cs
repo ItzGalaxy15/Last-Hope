@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope.Engine;
 
+//Reference used for inspiration: https://community.monogame.net/t/custom-key-binding-am-i-on-the-right-track/7740
+
 public enum KeybindId
 {
     MoveUp,
