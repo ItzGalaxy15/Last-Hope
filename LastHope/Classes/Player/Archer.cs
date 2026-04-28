@@ -14,7 +14,6 @@ namespace Last_Hope;
 
 public class Archer : BasePlayer
 {
-    public Vector2 Position { get; private set; }
     public Texture2D BowSprite;
     public Texture2D ArcherSprite;
     public InputManager _inputManager { get; private set; }
@@ -176,7 +175,7 @@ public class Archer : BasePlayer
             if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
             {
                 Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
-                Vector2 towardMouse = mousePosition - Position;
+                Vector2 towardMouse = mousePosition - _position;
                 if (towardMouse != Vector2.Zero)
                 {
                     Dash(towardMouse, _DashDistance);
@@ -205,7 +204,7 @@ public class Archer : BasePlayer
         if (_inputManager is null)
             return;
 
-        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
         Vector2 direction = mousePosition - center;
         if (direction == Vector2.Zero)
@@ -219,7 +218,7 @@ public class Archer : BasePlayer
 
     private void FireArrow()
     {
-        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         _Weapon.Attack(_bowAimDirection, center);
     }
 
@@ -230,7 +229,7 @@ public class Archer : BasePlayer
         if (_greenGlowTimer > 0f)
             drawColor = Color.Lerp(drawColor, Color.LimeGreen, 0.5f);
 
-        spriteBatch.Draw(ArcherSprite, Position, archerSource, drawColor, 0f, Vector2.Zero, ArcherDrawScale, SpriteEffects.None, 0f);
+        spriteBatch.Draw(ArcherSprite, _position, archerSource, drawColor, 0f, Vector2.Zero, ArcherDrawScale, SpriteEffects.None, 0f);
 
         // Draw bow sprite
         int bowFrame = 0;
@@ -248,7 +247,7 @@ public class Archer : BasePlayer
             ? new Vector2(_bodyWidth - bowW - 40f, y)
             : new Vector2(40f, y);
 
-        spriteBatch.Draw(BowSprite, Position + bowOffset, bowSource, Color.White, 0f, Vector2.Zero, BowDrawScale, bowFlip, 0f);
+        spriteBatch.Draw(BowSprite, _position + bowOffset, bowSource, Color.White, 0f, Vector2.Zero, BowDrawScale, bowFlip, 0f);
 
         if (DebugDrawHitbox && _collider is not null)
             DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
@@ -298,8 +297,8 @@ public class Archer : BasePlayer
         float offset = (_bodyWidth - hitboxSize) / 2f;
 
         _collider.shape = new Rectangle(
-            (int)(Position.X + offset),
-            (int)(Position.Y + offset),
+            (int)(_position.X + offset),
+            (int)(_position.Y + offset),
             (int)hitboxSize,
             (int)hitboxSize);
         SetCollider(_collider);
@@ -332,14 +331,14 @@ public class Archer : BasePlayer
 
     protected override void ApplyDashOffset(Vector2 delta)
     {
-        Position += delta;
+        _position += delta;
         MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
     }
 
     protected override void ApplyTeleportPosition(Vector2 newPosition)
     {
-        Position = newPosition;
+        _position = newPosition;
         MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
     }
@@ -362,7 +361,7 @@ public class Archer : BasePlayer
     private void PlaceSelectedItem()
     {
         GameManager gm = GameManager.GetGameManager();
-        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 spawnPosition = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
 
         ItemType[] inv = Inventory!;
         ItemType currentItem = inv[gm.SelectedItemSlot];
@@ -388,7 +387,7 @@ public class Archer : BasePlayer
     private void ThrowSelectedItemTowardMouse()
     {
         GameManager gm = GameManager.GetGameManager();
-        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 spawnPosition = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         Vector2 mouseWorld = gm.GetWorldMousePosition();
         Vector2 direction = mouseWorld - spawnPosition;
         if (direction == Vector2.Zero)
