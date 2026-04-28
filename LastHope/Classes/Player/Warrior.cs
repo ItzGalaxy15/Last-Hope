@@ -40,13 +40,25 @@ public class Warrior : BasePlayer
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = false;
 
-    private double timeSinceLastAttack = 0;
+    // --- TIMERS & COOLDOWNS ---
+    private double _timeSinceLastAttack = 0;
+    private float _currentAttackCooldown = 0.7f;
     private float _dashCooldown;
     private float _teleportCooldown;
+    private float _hurtCooldown;
+    private float _bombActionCooldown;
+    private float _greenGlowTimer = 0f;
+    private float _whirlwindDurationTimer = 0f;
+    private float _whirlwindTickTimer = 0f;
+    private float _abilityCooldownTimer = 0f; // Shared cooldown logic for major active abilities
+    private float _speedBuffTimer = 0f;
+    private float _dmgBuffTimer = 0f;
+    private float _defBuffTimer = 0f;
+
+    // --- STATE & PHYSICS ---
     private Vector2 _moveInput;
     private bool _facingLeft;
     private RectangleCollider _collider;
-    private float _hurtCooldown;
 
     private const float SlashDistance = 105f;
     private const float SlashCastHeightOffset = 10f;
@@ -65,11 +77,8 @@ public class Warrior : BasePlayer
 
     private const float BombThrowSpeed = 520f;
     private const float BombActionCooldown = 0.25f;
-    private float _bombActionCooldown;
 
     private const float DecoyThrowSpeed = 420f;
-
-    private float _greenGlowTimer = 0f;
     private SoundEffect _deathSound;
     private SoundEffect _attackSound;
 
@@ -99,14 +108,6 @@ public class Warrior : BasePlayer
 
     public int HasteLevel { get; set; }
     public int DmgLevel { get; set; }
-
-    private float _currentAttackCooldown = 0.7f;
-    private float _whirlwindDurationTimer = 0f;
-    private float _whirlwindTickTimer = 0f;
-    private float _abilityCooldownTimer = 0f; // Shared cooldown logic for major active abilities
-    private float _speedBuffTimer = 0f;
-    private float _dmgBuffTimer = 0f;
-    private float _defBuffTimer = 0f;
 
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 0.1f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -271,32 +272,35 @@ public class Warrior : BasePlayer
             }
         }
 
-        if (_inputManager is not null && _inputManager.IsGameplayKeyPress(KeybindId.Ability1) && _abilityCooldownTimer <= 0f)
+        if (_inputManager is not null && _abilityCooldownTimer <= 0f)
         {
-            if (WhirlwindUnlocked)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
             {
-                _whirlwindDurationTimer = 2.0f;
-                _abilityCooldownTimer = MajorAbilityCooldown;
-                _whirlwindTickTimer = 0f;
-            }
-            else if (AxeSlamUnlocked)
-            {
-                PerformAxeSlam();
-            }
-            else if (ShieldSlamUnlocked)
-            {
-                PerformShieldSlam();
+                if (WhirlwindUnlocked)
+                {
+                    _whirlwindDurationTimer = 2.0f;
+                    _abilityCooldownTimer = MajorAbilityCooldown;
+                    _whirlwindTickTimer = 0f;
+                }
+                else if (AxeSlamUnlocked)
+                {
+                    PerformAxeSlam();
+                }
+                else if (ShieldSlamUnlocked)
+                {
+                    PerformShieldSlam();
+                }
             }
         }
 
         if (_inputManager is not null)
         {
-            timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && timeSinceLastAttack >= _currentAttackCooldown)
+            _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && _timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
                 AudioManager.PlaySfx(_attackSound);
-                timeSinceLastAttack = 0;
+                _timeSinceLastAttack = 0;
             }
 
             // G = place bomb at feet
@@ -360,6 +364,10 @@ public class Warrior : BasePlayer
 
         int damage = (int)(_Weapon.Damage * AxeSlamDamageMultiplier);
         HitFrontalArea(aimDir, AxeSlamRange, damage, 0f);
+
+        AudioManager.PlaySfx(_attackSound);
+        _timeSinceLastAttack = 0;
+        _Weapon.Attack(aimDir, Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset));
     }
 
     private void PerformShieldSlam()
@@ -370,6 +378,10 @@ public class Warrior : BasePlayer
 
         int damage = (int)(_Weapon.Damage * ShieldSlamDamageMultiplier);
         HitFrontalArea(aimDir, ShieldSlamRange, damage, ShieldSlamStunDuration);
+
+        AudioManager.PlaySfx(_attackSound);
+        _timeSinceLastAttack = 0;
+        _Weapon.Attack(aimDir, Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset));
     }
 
     private void HitFrontalArea(Vector2 direction, float range, int damage, float stunDuration)
@@ -392,7 +404,7 @@ public class Warrior : BasePlayer
                         if (Vector2.Dot(direction, toEnemy) > 0.5f)
                         {
                             enemy.Damage(damage);
-                            // enemy.ApplyStun(stunDuration); // Provided as snippet
+                            if (stunDuration > 0f) enemy.ApplyStun(stunDuration);
                         }
                     }
                 }
@@ -578,37 +590,40 @@ public class Warrior : BasePlayer
         
         spriteBatch.Draw(WarriorSprite, Position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
-        Rectangle axeSource = GetAxeSourceRect();
-        var axeFlip = GetAxeSpriteEffects();
-        float axeW = _axePixelSize;
-        float y = AxeOffsetY;
+        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 weaponOrigin = new Vector2(FrameSize * 0.5f, FrameSize * 0.5f);
         
-        Vector2 leftAxeOffset = new Vector2(40f, y);
-        Vector2 rightAxeOffset = new Vector2(_bodyWidth - axeW - 40f, y);
+        // Dynamic horizontal offset from the center of the Warrior
+        float handOffsetX = 28f;
+        Vector2 rightHand = center + new Vector2(handOffsetX, 0);
+        Vector2 leftHand = center + new Vector2(-handOffsetX, 0);
 
-        Texture2D activeTexture = AxeSprite;
-        if (IsSwordActive) activeTexture = SwordSprite;
+        Texture2D activeTexture = IsSwordActive ? SwordSprite : AxeSprite;
+        Rectangle weaponSource = GetAxeSourceRect();
+        SpriteEffects weaponFlip = GetAxeSpriteEffects();
 
         if (IsSwordActive && DualWieldUnlocked)
         {
-            // Draw Two Axes
-            spriteBatch.Draw(activeTexture, Position + leftAxeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, SpriteEffects.None, 0f);
-            spriteBatch.Draw(activeTexture, Position + rightAxeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, SpriteEffects.FlipHorizontally, 0f);
+            spriteBatch.Draw(activeTexture, rightHand, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, SpriteEffects.FlipHorizontally, 0f);
+            spriteBatch.Draw(activeTexture, leftHand, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, SpriteEffects.None, 0f);
         }
         else if (IsShieldActive)
         {
-            // Draw Default Weapon in right + Shield in left
-            Vector2 wpnOffset = _facingLeft ? rightAxeOffset : leftAxeOffset;
-            Vector2 sldOffset = _facingLeft ? leftAxeOffset : rightAxeOffset;
-            spriteBatch.Draw(activeTexture, Position + wpnOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, axeFlip, 0f);
-            spriteBatch.Draw(ShieldSprite, Position + sldOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, SpriteEffects.None, 0f);
+            Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
+            Vector2 shieldPos = _facingLeft ? rightHand : leftHand;
+            
+            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+            
+            Rectangle shieldSource = new Rectangle(0, 0, ShieldSprite.Width, ShieldSprite.Height);
+            Vector2 shieldOrigin = new Vector2(ShieldSprite.Width * 0.5f, ShieldSprite.Height * 0.5f);
+            SpriteEffects shieldFlip = _facingLeft ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
+            spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, shieldOrigin, AxeDrawScale, shieldFlip, 0f);
         }
         else
         {
-            // Draw Original single Axe
-            Vector2 axeOffset = _facingLeft ? rightAxeOffset : leftAxeOffset;
+            Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
             float drawScale = IsAxeActive ? AxeDrawScale * 1.3f : AxeDrawScale;
-            spriteBatch.Draw(activeTexture, Position + axeOffset, axeSource, Color.White, 0f, Vector2.Zero, drawScale, axeFlip, 0f);
+            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, drawScale, weaponFlip, 0f);
         }
 
         if (DebugDrawHitbox && _collider is not null)

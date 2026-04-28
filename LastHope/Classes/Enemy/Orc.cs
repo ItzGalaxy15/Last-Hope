@@ -1,3 +1,4 @@
+using System;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
@@ -28,9 +29,13 @@ public class Orc : BaseEnemy
     private const int AttackFrameCount = 1;
     private const int SheetColumns = 8;
     private const int FrameSize = 32;
+    
+    private float FullSize => FrameSize * SpriteScale;
+    private float HitboxSize => FullSize * 0.55f;
+    private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
     public Orc(Point position)
-        : base(maxHealth: 100, currentHealth: 100, speed: 50, experienceValue: 4)
+        : base(maxHealth: 100, currentHealth: 100, speed: 50f, experienceValue: 4f)
     {
         int size = (int)(FrameSize * SpriteScale);
 
@@ -73,22 +78,18 @@ public class Orc : BaseEnemy
         _precisePosition = _collider.shape.Location.ToVector2();
     }
 
-    public override void Update(GameTime gameTime)
+    protected override void UpdateBehavior(GameTime gameTime)
     {
         var gameManager = GameManager.GetGameManager();
         var player = gameManager._player;
         var decoy = gameManager.ActiveDecoy;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+        if (_attackCooldownTimer > 0f)
+            _attackCooldownTimer = Math.Max(0f, _attackCooldownTimer - dt);
+
         if (player == null && decoy == null)
             return;
-
-        if (_attackCooldownTimer > 0f)
-        {
-            _attackCooldownTimer -= dt;
-            if (_attackCooldownTimer < 0f)
-                _attackCooldownTimer = 0f;
-        }
 
         Vector2 targetPos = decoy != null
             ? decoy.GetPosition()
@@ -102,7 +103,7 @@ public class Orc : BaseEnemy
         Vector2 direction;
 
         if (gameManager.NavigationGrid != null &&
-            gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
+            gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir) && pathDir != Vector2.Zero)
         {
             direction = pathDir;
         }
@@ -117,15 +118,15 @@ public class Orc : BaseEnemy
 
         // X axis
         Vector2 newPosX = new Vector2(_precisePosition.X + movement.X, _precisePosition.Y);
-        if (!WouldCollideAt(newPosX))
+        if (!WouldCollideAt(newPosX, HitboxSize, HitboxOffset))
             _precisePosition = newPosX;
 
         // Y axis
         Vector2 newPosY = new Vector2(_precisePosition.X, _precisePosition.Y + movement.Y);
-        if (!WouldCollideAt(newPosY))
+        if (!WouldCollideAt(newPosY, HitboxSize, HitboxOffset))
             _precisePosition = newPosY;
 
-        _collider.shape.Location = _precisePosition.ToPoint();
+        _collider.shape = new Rectangle((int)(_precisePosition.X + HitboxOffset), (int)(_precisePosition.Y + HitboxOffset), (int)HitboxSize, (int)HitboxSize);
 
         if (!_isAttacking)
         {
@@ -140,13 +141,11 @@ public class Orc : BaseEnemy
                 ResetWalkAnimation();
             }
         }
-
-        base.Update(gameTime);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        Vector2 center = _collider.shape.Center.ToVector2();
+        Vector2 center = _precisePosition + new Vector2(FullSize / 2f);
 
         if (DebugDrawHitbox && _collider is not null)
             DrawHitbox(spriteBatch, _collider.shape, Color.Red);
@@ -231,19 +230,5 @@ public class Orc : BaseEnemy
     public override Vector2 GetPosition()
     {
         return _collider.shape.Center.ToVector2();
-    }
-
-    private bool WouldCollideAt(Vector2 testPosition)
-    {
-        Rectangle current = _collider.shape;
-
-        Rectangle testRect = new Rectangle(
-            (int)testPosition.X,
-            (int)testPosition.Y,
-            current.Width,
-            current.Height
-        );
-
-        return CollisionWorld.CollidesWithStaticForMovement(testRect);
     }
 }

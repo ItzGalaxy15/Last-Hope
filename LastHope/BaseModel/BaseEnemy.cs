@@ -16,7 +16,7 @@ public abstract class BaseEnemy : GameObject
 
     public virtual float CurrentHealth { get; protected set; }
 
-    public virtual int Speed { get; protected set; }
+    public virtual float Speed { get; protected set; }
     public virtual float ExperienceValue { get; protected set; }
 
     //public abstract BaseWeapon Weapon { get; protected set; }
@@ -24,17 +24,35 @@ public abstract class BaseEnemy : GameObject
     // Fraction of (frameSize * spriteScale) used as the hitbox side length.
     // Override per-enemy to tune without touching hitbox math.
     protected virtual float HitboxFraction => 0.5f;
+
+    // --- DEBUG TOGGLE ---
+    // Set to false to completely disable all stun logic and visuals on enemies
+    public bool EnableStuns = true;
+
     public float StunTimer { get; private set; }
+    public bool IsStunned => EnableStuns && StunTimer > 0f;
 
     public void ApplyStun(float duration)
     {
+        if (!EnableStuns) return;
+        
         if (duration > StunTimer)
         {
             StunTimer = duration;
         }
     }
 
-    public BaseEnemy(float maxHealth, float currentHealth, int speed, float experienceValue)
+    protected new Color DrawTint
+    {
+        get
+        {
+            Color baseTint = base.DrawTint;
+            if (baseTint != Color.White) return baseTint; // Hurt flash takes priority
+            return IsStunned ? Color.Gold : Color.White;  // Golden tint to indicate Stunned
+        }
+    }
+
+    public BaseEnemy(float maxHealth, float currentHealth, float speed, float experienceValue)
     {
         MaxHealth = maxHealth;
         CurrentHealth = currentHealth;
@@ -64,15 +82,30 @@ public abstract class BaseEnemy : GameObject
     {
         base.Draw(gameTime, spriteBatch);
     }
-    public virtual void Update(GameTime gameTime)
+
+    // Sealed to enforce that ALL enemies use the central stun check below.
+    public sealed override void Update(GameTime gameTime)
     {
-        if (StunTimer > 0f)
+        base.Update(gameTime); // Call GameObject base to ensure HurtFlash is updated
+
+        if (EnableStuns && StunTimer > 0f)
         {
             StunTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-            return;
+            if (StunTimer < 0f) StunTimer = 0f;
+            
+            // 1 Clean Place: Centralized Stun Freeze. Skips all enemy logic while stunned.
+            return; 
         }
-      
+        else if (!EnableStuns)
+        {
+            StunTimer = 0f;
+        }
+
+        UpdateBehavior(gameTime);
     }
+
+    // Derived classes MUST implement this instead of overriding Update()
+    protected abstract void UpdateBehavior(GameTime gameTime);
 
     public override void OnCollision(GameObject other)
     {
@@ -85,4 +118,15 @@ public abstract class BaseEnemy : GameObject
     }
 
     public abstract Vector2 GetPosition();
+
+    protected bool WouldCollideAt(Vector2 testPosition, float hitboxSize, float offset)
+    {
+        Rectangle testRect = new Rectangle(
+            (int)(testPosition.X + offset),
+            (int)(testPosition.Y + offset),
+            (int)hitboxSize,
+            (int)hitboxSize
+        );
+        return CollisionWorld.CollidesWithStaticForMovement(testRect);
+    }
 }

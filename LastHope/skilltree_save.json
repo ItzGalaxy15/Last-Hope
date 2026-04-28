@@ -3,13 +3,13 @@
   "TotalPointsSpent": 16,
   "UnspentSkillPoints": 9,
   "AllocatedNodes": {
-    "warrior_hp_l0": 3,
-    "shield_stance_l1": 1,
-    "block_chance_l1": 3,
-    "adrenaline_rush_l2": 1,
-    "on_block_heal_l2": 1,
     "warrior_dmg_l0": 3,
-    "warrior_hp_l3": 3,
-    "shield_slam_l4": 1
+    "armor_pen_l1": 3,
+    "axe_stance_l1": 1,
+    "on_hit_bleed_l2": 1,
+    "bloodlust_l2": 1,
+    "warrior_hp_l0": 3,
+    "warrior_dmg_l3": 3,
+    "axe_slam_l4": 1
   }
 }
