@@ -24,6 +24,15 @@ public abstract class BaseEnemy : GameObject
     // Fraction of (frameSize * spriteScale) used as the hitbox side length.
     // Override per-enemy to tune without touching hitbox math.
     protected virtual float HitboxFraction => 0.5f;
+    public float StunTimer { get; private set; }
+
+    public void ApplyStun(float duration)
+    {
+        if (duration > StunTimer)
+        {
+            StunTimer = duration;
+        }
+    }
 
     public BaseEnemy(float maxHealth, float currentHealth, int speed, float experienceValue)
     {
@@ -54,6 +63,15 @@ public abstract class BaseEnemy : GameObject
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         base.Draw(gameTime, spriteBatch);
+    }
+    public virtual void Update(GameTime gameTime)
+    {
+        if (StunTimer > 0f)
+        {
+            StunTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            return;
+        }
+      
     }
 
     public override void OnCollision(GameObject other)

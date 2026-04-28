@@ -171,7 +171,7 @@ public class SkillTreeUI : UIElement
                 player.HasteLevel++;
                 break;
             case "crit+":
-                player.CritLevel++;
+                // player.CritLevel++; // Obsolete: removed in the new 3-branch archetype update
                 break;
             case "dmg+":
                 player.DmgLevel++;

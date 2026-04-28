@@ -81,12 +81,31 @@ public class Menu
                 string projectRoot = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\"));
                 string jsonPath = Path.Combine(projectRoot, "SkillTree", "WarriorSkillTree.json");
                 
+                // Fallback check in case you run the built executable outside of Visual Studio
+                if (!File.Exists(jsonPath))
+                {
+                    jsonPath = Path.Combine(baseDir, "SkillTree", "WarriorSkillTree.json");
+                }
+
                 ClassSkillTreeData treeData = null;
 
                 if (File.Exists(jsonPath))
                 {
                     string rawJson = File.ReadAllText(jsonPath);
-                    treeData = JsonSerializer.Deserialize<ClassSkillTreeData>(rawJson);
+                    try
+                    {
+                        var options = new JsonSerializerOptions 
+                        { 
+                            ReadCommentHandling = JsonCommentHandling.Skip,
+                            AllowTrailingCommas = true 
+                        };
+                        treeData = JsonSerializer.Deserialize<ClassSkillTreeData>(rawJson, options);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine($"[SkillTree Error] JSON Parsing Failed: {ex.Message}");
+                        throw new Exception($"Failed to parse Skill Tree JSON: {ex.Message}", ex);
+                    }
                 }
 
                 if (treeData == null)

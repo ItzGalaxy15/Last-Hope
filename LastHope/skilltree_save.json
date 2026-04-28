@@ -1,21 +1,15 @@
 {
   "ClassId": "Warrior",
-  "TotalPointsSpent": 18,
-  "UnspentSkillPoints": 7,
+  "TotalPointsSpent": 16,
+  "UnspentSkillPoints": 9,
   "AllocatedNodes": {
-    "warrior_left_l0": 3,
-    "warrior_left_l1": 1,
-    "warrior_mid_l0": 3,
-    "warrior_mid_l1": 1,
-    "warrior_midleft_l2": 1,
-    "warrior_farleft_l2": 1,
-    "warrior_left_l3": 1,
-    "warrior_mid_l3": 1,
-    "warrior_midright_l2": 1,
-    "warrior_right_l1": 1,
-    "warrior_right_l3": 1,
-    "warrior_left_l4": 1,
-    "warrior_mid_l4": 1,
-    "warrior_right_l4": 1
+    "warrior_hp_l0": 3,
+    "shield_stance_l1": 1,
+    "block_chance_l1": 3,
+    "adrenaline_rush_l2": 1,
+    "on_block_heal_l2": 1,
+    "warrior_dmg_l0": 3,
+    "warrior_hp_l3": 3,
+    "shield_slam_l4": 1
   }
 }

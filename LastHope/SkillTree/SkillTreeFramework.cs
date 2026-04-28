@@ -44,8 +44,8 @@ namespace Last_Hope.SkillTree
         public List<NodeEffect> Effects { get; set; } = new List<NodeEffect>();
         
         // UI/Controller Grid Coordinates for spatial navigation (e.g. X:0 is left, X:1 is mid, X:2 is right)
-        public int GridX { get; set; }
-        public int GridY { get; set; }
+        public float GridX { get; set; }
+        public float GridY { get; set; }
     }
 
     public class SkillConnectionData
@@ -179,7 +179,24 @@ namespace Last_Hope.SkillTree
                 }
             }
 
+            // Check 4: Exclusivity rules (Only 1 Stance and 1 Active allowed across the whole tree)
+            if (node.Tags.Contains("Stance") && HasOtherAllocatedNodeWithTag("Stance", nodeId, includePending)) return false;
+            if (node.Tags.Contains("Active") && HasOtherAllocatedNodeWithTag("Active", nodeId, includePending)) return false;
+
             return true;
+        }
+
+        private bool HasOtherAllocatedNodeWithTag(string tag, string excludeNodeId, bool includePending)
+        {
+            foreach (var n in _data.Nodes)
+            {
+                if (n.Id == excludeNodeId) continue;
+                
+                if (n.Tags.Contains(tag) && GetAllocatedPoints(n.Id, includePending) > 0)
+                    return true;
+            }
+            
+            return false;
         }
 
         public bool AddPendingPoint(string nodeId)
