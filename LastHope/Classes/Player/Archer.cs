@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Audio;
 using Last_Hope.Classes.Items;
+using Last_Hope.Helpers;
 
 namespace Last_Hope;
 
@@ -26,7 +27,7 @@ public class Archer : BasePlayer
     private int _walkRow;
     private int _walkFrameIndex;
     private float _walkFrameTimer;
-    private float _bodyWidth => FrameSize * ArcherDrawScale;
+    protected override float _bodyWidth => FrameSize * ArcherDrawScale;
     private float _bowPixelSize => FrameSize * BowDrawScale;
     private float BowOffsetY => (_bodyWidth - _bowPixelSize) * 0.5f;
 
@@ -35,7 +36,6 @@ public class Archer : BasePlayer
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = true;
-    private const float HitboxFraction = 0.55f;
     private const float TeleportEnemyClearance = 160f;
 
     private double timeSinceLastAttack = 0;
@@ -63,39 +63,13 @@ public class Archer : BasePlayer
     private const float ArrowSpeed = 600f;
 
     public Archer(Vector2 startPosition)
-        : base(maxHp: 100f, weapon: new Bow("Bow", damage: 20, critChance: 1.0f, speed: 600f, owner: null), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(position: startPosition, maxHp: 100f, weapon: new Bow("Bow", damage: 20, critChance: 1.0f, speed: 600f, owner: null), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
-        Position = startPosition;
+        _position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
         _collider = new RectangleCollider(new Rectangle(origin, Point.Zero));
         SetCollider(_collider);
         Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
-    }
-
-    public override Vector2 GetPosition()
-    {
-        return Position;
-    }
-
-    public void Move(Vector2 direction, GameTime gameTime)
-    {
-        if (direction == Vector2.Zero)
-            return;
-
-        direction.Normalize();
-
-        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Vector2 velocity = direction * _Speed * dt;
-
-        Vector2 newPosX = new Vector2(Position.X + velocity.X, Position.Y);
-        if (!WouldCollideAt(newPosX))
-            Position = newPosX;
-
-        Vector2 newPosY = new Vector2(Position.X, Position.Y + velocity.Y);
-        if (!WouldCollideAt(newPosY))
-            Position = newPosY;
-
-        ClampToMapBounds();
     }
 
     public override void Load(ContentManager content)
@@ -109,7 +83,7 @@ public class Archer : BasePlayer
 
         SyncColliderToPosition();
         SetCollider(_collider);
-        ClampToMapBounds();
+        MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
     }
 
@@ -359,14 +333,14 @@ public class Archer : BasePlayer
     protected override void ApplyDashOffset(Vector2 delta)
     {
         Position += delta;
-        ClampToMapBounds();
+        MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
     }
 
     protected override void ApplyTeleportPosition(Vector2 newPosition)
     {
         Position = newPosition;
-        ClampToMapBounds();
+        MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
     }
 
@@ -383,36 +357,6 @@ public class Archer : BasePlayer
                 return false;
         }
         return true;
-    }
-
-    private void ClampToMapBounds()
-    {
-        var grid = GameManager.GetGameManager().NavigationGrid;
-        if (grid == null)
-            return;
-
-        float mapW = grid.WidthInTiles * grid.TileSize;
-        float mapH = grid.HeightInTiles * grid.TileSize;
-
-        Position = new Vector2(
-            MathHelper.Clamp(Position.X, 0f, mapW - _bodyWidth),
-            MathHelper.Clamp(Position.Y, 0f, mapH - _bodyWidth)
-        );
-    }
-
-    protected override bool WouldCollideAt(Vector2 testPosition)
-    {
-        float hitboxSize = _bodyWidth * HitboxFraction;
-        float offset = (_bodyWidth - hitboxSize) / 2f;
-
-        Rectangle testRect = new Rectangle(
-            (int)(testPosition.X + offset),
-            (int)(testPosition.Y + offset),
-            (int)hitboxSize,
-            (int)hitboxSize
-        );
-
-        return CollisionWorld.CollidesWithStaticForMovement(testRect);
     }
 
     private void PlaceSelectedItem()
