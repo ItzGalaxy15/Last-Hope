@@ -85,6 +85,12 @@
 /processorParam:TextureFormat=Color
 /build:demon.png
 
+#begin Effects/CooldownIcon.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/CooldownIcon.fx
+
 #begin Effects/DeathFade.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -188,6 +194,30 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Heart.png
+
+#begin icons/dash.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:icons/dash.png
+
+#begin icons/teleport.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:icons/teleport.png
 
 #begin ItemSpriteSheet.png
 /importer:TextureImporter

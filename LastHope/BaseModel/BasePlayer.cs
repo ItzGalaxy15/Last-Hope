@@ -138,7 +138,7 @@ public abstract class BasePlayer : GameObject
         ApplyDashOffset(current - start);
     }
 
-    private const float TeleportMinTileDistance = 60f;
+    private const float TeleportMinTileDistance = 20f;
 
     protected bool Teleport()
     {

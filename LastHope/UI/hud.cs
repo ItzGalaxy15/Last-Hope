@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Last_Hope.BaseModel;
+using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -9,7 +10,7 @@ public class Hud
 {
 	private readonly List<UIElement> _elements;
 
-	public Hud(BasePlayer player, Texture2D pixel, Texture2D? itemSpriteSheet = null)
+	public Hud(BasePlayer? player, Texture2D pixel, Texture2D? itemSpriteSheet = null, Texture2D? dashIcon = null, Texture2D? teleportIcon = null, Effect? cooldownShader = null)
 	{
 		_elements = new List<UIElement>
 		{
@@ -19,6 +20,19 @@ public class Hud
 			new WaveIndicator(),
 			new BossWarningIndicator()
 		};
+
+		if (cooldownShader != null)
+		{
+			if (dashIcon != null)
+				_elements.Add(new AbilityCooldownIcon(dashIcon, cooldownShader, pixel,
+					() => (GameManager.GetGameManager()._player as Warrior)?.DashCooldownProgress ?? 0f,
+					slotIndex: 0));
+
+			if (teleportIcon != null)
+				_elements.Add(new AbilityCooldownIcon(teleportIcon, cooldownShader, pixel,
+					() => (GameManager.GetGameManager()._player as Warrior)?.TeleportCooldownProgress ?? 0f,
+					slotIndex: 1));
+		}
 	}
 
 	public void Update(GameTime gameTime, Viewport viewport)

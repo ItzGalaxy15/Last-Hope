@@ -72,6 +72,7 @@ public class GameManager
     public NavigationGrid NavigationGrid { get; set; }
 
     public Effect DeathFade { get; private set; }
+    public Effect? CooldownIcon { get; private set; }
 
     public static GameManager GetGameManager()
     {
@@ -113,6 +114,7 @@ public class GameManager
 
         _font = content.Load<SpriteFont>("Fonts/font");
         DeathFade = content.Load<Effect>("Effects/DeathFade");
+        try { CooldownIcon = content.Load<Effect>("Effects/CooldownIcon"); } catch { CooldownIcon = null; }
 
         FontBitmap = null;
         try

@@ -33,6 +33,8 @@ public class Warrior : BasePlayer
     private float AxeOffsetY => (_bodyWidth - _axePixelSize) * 0.5f;
 
     private const float DashCooldown = 0.75f;
+    public float DashCooldownProgress => MathHelper.Clamp(_dashCooldown / DashCooldown, 0f, 1f);
+    public float TeleportCooldownProgress => MathHelper.Clamp(_teleportCooldown / TeleportCooldownDuration, 0f, 1f);
     private const float TeleportCooldownDuration = 60f;
     private const float TeleportEnemyClearance = 160f;
     private const float EnemyContactDamage = 10f;
@@ -260,7 +262,7 @@ public class Warrior : BasePlayer
             if (_teleportCooldown > 0f)
                 _teleportCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (_inputManager.IsKeyPress(Keys.R) && _teleportCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Teleport) && _teleportCooldown <= 0f)
             {
                 if (Teleport())
                     _teleportCooldown = TeleportCooldownDuration;
