@@ -399,6 +399,7 @@ public sealed class SettingsMenu : MenuBase
         BindingRow("Left", KeybindId.MoveLeft, ref yL, leftX, colW);
         BindingRow("Right", KeybindId.MoveRight, ref yL, leftX, colW);
         BindingRow("Dash", KeybindId.Dash, ref yL, leftX, colW);
+        BindingRow("Teleport", KeybindId.Teleport, ref yL, leftX, colW);
 
         SectionHeader("Combat", ref yR, rightX);
         BindingRow("Attack", KeybindId.Attack, ref yR, rightX, colW);
@@ -565,6 +566,7 @@ public sealed class SettingsMenu : MenuBase
         RegisterRow(KeybindId.MoveLeft, ref yL, leftX, colW);
         RegisterRow(KeybindId.MoveRight, ref yL, leftX, colW);
         RegisterRow(KeybindId.Dash, ref yL, leftX, colW);
+        RegisterRow(KeybindId.Teleport, ref yL, leftX, colW);
 
         AfterSectionHeader(ref yR);
         RegisterRow(KeybindId.Attack, ref yR, rightX, colW);

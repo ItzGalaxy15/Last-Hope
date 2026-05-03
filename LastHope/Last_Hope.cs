@@ -109,7 +109,13 @@ public class Last_Hope : Game
 
         _gameManager.Camera = _camera;
 
-        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet);
+        Texture2D? dashIcon = null;
+        try { dashIcon = Content.Load<Texture2D>("icons/dash"); } catch { }
+
+        Texture2D? teleportIcon = null;
+        try { teleportIcon = Content.Load<Texture2D>("icons/teleport"); } catch { }
+
+        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon);
 
         GumBootstrap.Initialize(this, Content);
     }

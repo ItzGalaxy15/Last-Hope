@@ -11,6 +11,7 @@ public enum KeybindId
     MoveLeft,
     MoveRight,
     Dash,
+    Teleport,
     /// <summary>Primary weapon input (default: left mouse button).</summary>
     Attack,
     Ability1,
@@ -102,6 +103,7 @@ public static class KeybindStore
         [KeybindId.MoveLeft] = GameInputBinding.Keyboard(Keys.A),
         [KeybindId.MoveRight] = GameInputBinding.Keyboard(Keys.D),
         [KeybindId.Dash] = GameInputBinding.Keyboard(Keys.LeftShift),
+        [KeybindId.Teleport] = GameInputBinding.Keyboard(Keys.R),
         [KeybindId.Attack] = GameInputBinding.FromMouse(MouseBindButton.Left),
         [KeybindId.Ability1] = GameInputBinding.Keyboard(Keys.H),
         [KeybindId.Ability2] = GameInputBinding.Keyboard(Keys.E),
@@ -176,6 +178,7 @@ public static class KeybindStore
         KeybindId.MoveLeft => "Move left",
         KeybindId.MoveRight => "Move right",
         KeybindId.Dash => "Dash",
+        KeybindId.Teleport => "Teleport",
         KeybindId.Attack => "Attack",
         KeybindId.Ability1 => "Ability 1",
         KeybindId.Ability2 => "Ability 2",
