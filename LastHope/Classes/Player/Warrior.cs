@@ -568,8 +568,6 @@ public class Warrior : BasePlayer
             drawColor = Color.Lerp(drawColor, Color.LimeGreen, 0.5f);
         }
         
-        spriteBatch.Draw(WarriorSprite, Position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
-
         Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         Vector2 weaponOrigin = new Vector2(FrameSize * 0.5f, FrameSize * 0.5f);
         
@@ -582,19 +580,30 @@ public class Warrior : BasePlayer
         Rectangle weaponSource = GetWeaponSourceRect();
         SpriteEffects weaponFlip = GetAxeSpriteEffects();
 
-        if (IsSwordActive && DualWieldUnlocked)
-        {
-            spriteBatch.Draw(activeTexture, rightHand, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, SpriteEffects.FlipHorizontally, 0f);
-            spriteBatch.Draw(activeTexture, leftHand, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, SpriteEffects.None, 0f);
-        }
-        else if (IsShieldActive)
-        {
-            Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
-            Vector2 shieldPos = _facingLeft ? rightHand : leftHand;
-            
-            Rectangle shieldSource = new Rectangle(0, 0, FrameSize, FrameSize); // Default Down (1st 32x32)
-            float shieldScale = AxeDrawScale * 0.85f; // A tiny bit smaller
+        Rectangle shieldSource = new Rectangle(0, 0, FrameSize, FrameSize); // Default Down (1st 32x32)
+        float shieldScale = AxeDrawScale * 0.85f; // A tiny bit smaller
+        
+        Vector2 shieldPos;
+        Vector2 weaponPos;
 
+        if (_walkRow == 3) // Left
+        {
+            shieldPos = leftHand;
+            weaponPos = leftHand;
+        }
+        else if (_walkRow == 2) // Right
+        {
+            shieldPos = rightHand;
+            weaponPos = rightHand;
+        }
+        else // Up or Down
+        {
+            shieldPos = rightHand;
+            weaponPos = leftHand;
+        }
+
+        if (IsShieldActive)
+        {
             if (_walkRow == 3) // Left
             {
                 shieldSource = new Rectangle(FrameSize * 1, 0, FrameSize, FrameSize); // 2nd 32x32
@@ -606,19 +615,50 @@ public class Warrior : BasePlayer
             else if (_walkRow == 1) // Up
             {
                 shieldSource = new Rectangle(0, FrameSize * 1, FrameSize, FrameSize); // 1st 32x32 out of row 2
-                
-                // Position the shield dynamically in front (North) of the player
-                shieldPos = center + new Vector2(0, -25f);
             }
 
-            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+            // Draw shield behind the player for Up, Left, and Right
+            if (_walkRow != 0)
+            {
+                spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
+            }
+        }
+
+        spriteBatch.Draw(WarriorSprite, Position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
+
+        if (IsShieldActive && _walkRow == 0)
+        {
+            // Draw shield in front of the player for Down
             spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
+        }
+
+        if (IsSwordActive && DualWieldUnlocked)
+        {
+            if (_walkRow == 3 || _walkRow == 2) // Left or Right
+            {
+                Vector2 sidePos = _walkRow == 3 ? leftHand : rightHand;
+                Vector2 offsetPos = sidePos + new Vector2(_walkRow == 3 ? 8f : -8f, -4f);
+                SpriteEffects swordFlip = weaponFlip ^ SpriteEffects.FlipHorizontally;
+
+                spriteBatch.Draw(activeTexture, offsetPos, weaponSource, Color.LightGray, 0f, weaponOrigin, AxeDrawScale, swordFlip, 0f);
+                spriteBatch.Draw(activeTexture, sidePos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, swordFlip, 0f);
+            }
+            else // Up or Down
+            {
+                Rectangle upDownSource = new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize);
+                spriteBatch.Draw(activeTexture, rightHand, upDownSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+                spriteBatch.Draw(activeTexture, leftHand, upDownSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+            }
+        }
+        else if (IsShieldActive)
+        {
+            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
         }
         else
         {
-            Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
+            Vector2 singleWeaponPos = _walkRow == 3 ? leftHand : rightHand;
             float drawScale = IsAxeActive ? AxeDrawScale * 1.3f : AxeDrawScale;
-            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, drawScale, weaponFlip, 0f);
+            spriteBatch.Draw(activeTexture, singleWeaponPos, weaponSource, Color.White, 0f, weaponOrigin, drawScale, weaponFlip, 0f);
         }
 
         if (DebugDrawHitbox && _collider is not null)
@@ -631,11 +671,6 @@ public class Warrior : BasePlayer
     {
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal)
-        if (_walkRow == 0) // Down
-            return new Rectangle(0, 0, FrameSize, FrameSize);
-        else if (_walkRow == 1) // Up (Pointing in front of the player)
-            return new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize);
-        else // Left / Right 
             return new Rectangle(FrameSize, 0, FrameSize, FrameSize);
 
         return new Rectangle(0, FrameSize, FrameSize, FrameSize);
@@ -643,10 +678,11 @@ public class Warrior : BasePlayer
 
     private SpriteEffects GetAxeSpriteEffects()
     {
+        if (_walkRow == 0) // Down
+            return SpriteEffects.FlipVertically;
+
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal && _facingLeft)
-        // Inverted so left and right face the correct way
-        if (horizontal && !_facingLeft)
             return SpriteEffects.FlipHorizontally;
 
         return SpriteEffects.None;
