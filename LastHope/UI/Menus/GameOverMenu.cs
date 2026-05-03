@@ -6,8 +6,15 @@ namespace Last_Hope.UI.Menus;
 
 public class GameOverMenu : MenuBase
 {
+    private float _fadeAmount = 0f;
+    private const float FadeSpeed = 0.5f;
+
     public void Update(GameTime gameTime)
     {
+        _fadeAmount += (float)gameTime.ElapsedGameTime.TotalSeconds * FadeSpeed;
+        if (_fadeAmount > 0.8f) // Clamp to 0.8 so it doesn't go fully black
+            _fadeAmount = 0.8f;
+
         string restartText = "Restart Game";
         Vector2 restartPos = GetFontPosition(restartText) + new Vector2(0, 100);
         Rectangle restartRect = GetTextRectangle(restartText, restartPos);
@@ -18,6 +25,7 @@ public class GameOverMenu : MenuBase
 
         if (restartRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
         {
+            _fadeAmount = 0f;
             gm.ResetGame();
             _state = GameState.Running;
         }
@@ -41,7 +49,12 @@ public class GameOverMenu : MenuBase
         Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 200);
         Rectangle quitRect = GetTextRectangle(quitText, quitPos);
 
-        DrawWorld(gameTime, spriteBatch, transformMatrix);
+        if (gm.DeathFade != null)
+        {
+            gm.DeathFade.Parameters["FadeAmount"]?.SetValue(_fadeAmount);
+        }
+
+        DrawWorld(gameTime, spriteBatch, transformMatrix, gm.DeathFade);
 
         spriteBatch.Begin();
         gm.DrawUiString(spriteBatch, _font, gameOverText, positrionGameOver, Color.Red);

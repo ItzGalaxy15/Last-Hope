@@ -85,6 +85,12 @@
 /processorParam:TextureFormat=Color
 /build:demon.png
 
+#begin Effects/DeathFade.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/DeathFade.fx
+
 #begin EnemyArrow.png
 /importer:TextureImporter
 /processor:TextureProcessor
