@@ -136,7 +136,7 @@ public class EnemySpawner
         {
             Vector2 pos = RandomOffScreenLocation(radius);
 
-            int size = 96; // goblin/orc approx size
+            int size = 160; // Increased to 160 to guarantee safe spawn for Bosses as well
 
             var rect = new Rectangle((int)pos.X, (int)pos.Y, size, size);
             var collider = new RectangleCollider(rect);

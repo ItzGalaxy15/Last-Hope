@@ -46,6 +46,7 @@ namespace Last_Hope.UI
     {
         public SkillNodeData Data { get; private set; }
         public NodeState CurrentState { get; private set; }
+        public bool HasPendingPoints { get; set; }
         
         // Transform & Layout
         public Vector2 Position { get; set; }
@@ -63,7 +64,6 @@ namespace Last_Hope.UI
 
         // References
         private UIThemeData _theme;
-        public float HoldProgress { get; set; } = 0f;
 
         public SkillNodeUI(SkillNodeData data, UIThemeData theme)
         {
@@ -72,7 +72,7 @@ namespace Last_Hope.UI
             _currentColor = theme.LockedDesaturation;
         }
 
-        public void UpdateState(NodeState newState, int allocatedPoints, int maxPoints)
+        public void UpdateState(NodeState newState, int allocatedPoints, int maxPoints, bool hasPending)
         {
             // [AUDIO HOOK]: Detect state changes
             if (CurrentState != newState && newState == NodeState.Maxed)
@@ -90,6 +90,7 @@ namespace Last_Hope.UI
             }
 
             CurrentState = newState;
+            HasPendingPoints = hasPending;
             _targetFill = maxPoints > 0 ? (float)allocatedPoints / maxPoints : 0f;
 
             // Set Target Visuals based on state
@@ -99,14 +100,19 @@ namespace Last_Hope.UI
                     _targetColor = _theme.LockedDesaturation;
                     break;
                 case NodeState.Available:
-                    _targetColor = Color.White; // Normal saturation
+                    _targetColor = new Color(120, 130, 140); // Metallic idle
                     break;
                 case NodeState.Partial:
-                    _targetColor = Color.Lerp(Color.White, _theme.AccentGlowColor, _targetFill);
+                    _targetColor = Color.Lerp(new Color(200, 50, 20), _theme.AccentGlowColor, _targetFill);
                     break;
                 case NodeState.Maxed:
                     _targetColor = _theme.AccentGlowColor;
                     break;
+            }
+            
+            if (HasPendingPoints)
+            {
+                _targetColor = new Color(255, 210, 50); // Radiant Gold for planned nodes
             }
         }
 
@@ -117,11 +123,11 @@ namespace Last_Hope.UI
             // 1. Hover Logic & Tooltip Activation
             if (isHovered)
             {
-                if (_targetScale < 1.1f) 
+                if (_targetScale < 1.15f) 
                 {
                     // [AUDIO HOOK]: AudioManager.PlaySound("UI_Hover_Soft");
                 }
-                _targetScale = 1.1f;
+                _targetScale = 1.15f;
                 
                 // Request Controller/Tree to draw tooltip panel safely away from cursor
             }
@@ -134,9 +140,9 @@ namespace Last_Hope.UI
             if (CurrentState == NodeState.Available)
             {
                 // Subtle pulsing border glow to attract attention
-                _pulseTimer += dt * 3f;
+                _pulseTimer += dt * 4f;
                 float pulseAlpha = (float)(Math.Sin(_pulseTimer) + 1f) * 0.5f;
-                _targetColor = Color.Lerp(Color.White, _theme.AccentGlowColor * 0.5f, pulseAlpha);
+                _targetColor = Color.Lerp(new Color(100, 110, 120), new Color(160, 80, 50), pulseAlpha);
             }
 
             // 3. Tweening Execution (Fades, Scales, Color Lerps)
@@ -252,11 +258,22 @@ namespace Last_Hope.UI
 
         // UI Panel & Controls
         private Rectangle _mainPanel;
-        private Rectangle _closeButtonRect;
-        public bool CloseRequested { get; private set; }
+        private Rectangle _topBarRect;
+        private Rectangle _bottomBarRect;
+        
+        // Buttons
+        private Rectangle _btnConfirm;
+        private Rectangle _btnReset;
+        private Rectangle _btnCancel;
+        public bool IsClosed { get; private set; }
+
+        // Animations
+        private float _entranceProgress = 0f;
+        private float _btnConfirmHover = 0f;
+        private float _btnCancelHover = 0f;
+        private float _btnResetHover = 0f;
 
         private SkillNodeUI _hoveredNode;
-        private const float RequiredHoldTime = 0.5f; // Hold click for half a second to buy
 
         public SkillTreeMenuCanvas(BaseSkillTree tree, UIThemeData theme, Texture2D pixel, Viewport viewport)
         {
@@ -287,12 +304,21 @@ namespace Last_Hope.UI
                 panelWidth,
                 panelHeight
             );
-            _layout.GenerateLayout(_uiNodes, _mainPanel);
-
-            // Define close button rect
-            int buttonSize = 30;
-            _closeButtonRect = new Rectangle(_mainPanel.Right - buttonSize - 15, _mainPanel.Top + 15, buttonSize, buttonSize);
             
+            _topBarRect = new Rectangle(_mainPanel.X, _mainPanel.Y, _mainPanel.Width, 75);
+            _bottomBarRect = new Rectangle(_mainPanel.X, _mainPanel.Bottom - 85, _mainPanel.Width, 85);
+
+            int btnWidth = 130;
+            int btnHeight = 44;
+            int btnY = _bottomBarRect.Center.Y - (btnHeight / 2);
+            
+            _btnCancel = new Rectangle(_bottomBarRect.Right - btnWidth - 30, btnY, btnWidth, btnHeight);
+            _btnConfirm = new Rectangle(_btnCancel.Left - btnWidth - 15, btnY, btnWidth, btnHeight);
+            _btnReset = new Rectangle(_bottomBarRect.Left + 30, btnY, btnWidth, btnHeight);
+
+            Rectangle treeArea = new Rectangle(_mainPanel.X, _topBarRect.Bottom, _mainPanel.Width, _bottomBarRect.Top - _topBarRect.Bottom);
+            _layout.GenerateLayout(_uiNodes, treeArea);
+
             // [DEBUG STEP 3]: Coordinate System Check
             if (_uiNodes.Count > 0)
             {
@@ -306,49 +332,66 @@ namespace Last_Hope.UI
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             var input = GameManager.GetGameManager().InputManager;
             Vector2 mousePos = input.CurrentMouseState.Position.ToVector2();
-            bool isLeftClickHeld = input.CurrentMouseState.LeftButton == ButtonState.Pressed;
             bool isLeftClickPressed = input.LeftMousePress();
+            bool isRightClickPressed = input.RightMousePress();
 
-            CloseRequested = false;
+            IsClosed = false;
 
-            if (_closeButtonRect.Contains(mousePos) && isLeftClickPressed)
+            // Transitions
+            _entranceProgress = MathHelper.Clamp(_entranceProgress + dt * 6f, 0f, 1f);
+            _btnConfirmHover = MathHelper.Lerp(_btnConfirmHover, _btnConfirm.Contains(mousePos) ? 1f : 0f, dt * 12f);
+            _btnCancelHover = MathHelper.Lerp(_btnCancelHover, _btnCancel.Contains(mousePos) ? 1f : 0f, dt * 12f);
+            _btnResetHover = MathHelper.Lerp(_btnResetHover, _btnReset.Contains(mousePos) ? 1f : 0f, dt * 12f);
+
+            // Keyboard Shortcuts
+            if (input.IsKeyPress(Keys.Escape))
             {
-                CloseRequested = true;
+                IsClosed = true;
+                _tree.CancelPendingPoints();
                 return;
             }
-
-            // Check 'R' for Respec
             if (input.IsKeyPress(Keys.R))
             {
                 _tree.Respec();
+            }
+            if (input.IsKeyPress(Keys.Enter))
+            {
+                _tree.ConfirmPendingPoints();
+            }
+
+            // Bottom Bar Button Clicks
+            if (isLeftClickPressed)
+            {
+                if (_btnCancel.Contains(mousePos)) { _tree.CancelPendingPoints(); IsClosed = true; return; }
+                if (_btnReset.Contains(mousePos)) { _tree.Respec(); }
+                if (_btnConfirm.Contains(mousePos)) { _tree.ConfirmPendingPoints(); }
             }
 
             _hoveredNode = null;
             foreach (var node in _uiNodes)
             {
                 // Sync backend state into UI presentation
-                NodeState state = _tree.GetNodeState(node.Data.Id);
-                int pts = _tree.GetAllocatedPoints(node.Data.Id);
-                node.UpdateState(state, pts, node.Data.MaxPoints);
+                NodeState state = _tree.GetNodeState(node.Data.Id, true);
+                int pts = _tree.GetAllocatedPoints(node.Data.Id, true);
+                bool hasPending = _tree.GetAllocatedPoints(node.Data.Id, true) > _tree.GetAllocatedPoints(node.Data.Id, false);
                 
-                bool isHovered = Vector2.Distance(mousePos, node.Position) <= 30f;
-                if (isHovered) _hoveredNode = node;
-
-                // Hold-to-Purchase logic
-                if (isHovered && state != NodeState.Locked && pts < node.Data.MaxPoints)
+                node.UpdateState(state, pts, node.Data.MaxPoints, hasPending);
+                
+                // Broad hover check (Radius 25)
+                bool isHovered = Vector2.Distance(mousePos, node.Position) <= 25f;
+                if (isHovered) 
                 {
-                    if (isLeftClickHeld)
+                    _hoveredNode = node;
+
+                    if (isLeftClickPressed && state != NodeState.Locked && pts < node.Data.MaxPoints)
                     {
-                        node.HoldProgress += dt / RequiredHoldTime;
-                        if (node.HoldProgress >= 1f)
-                        {
-                            _tree.AllocatePoint(node.Data.Id);
-                            node.HoldProgress = 0f; // Reset after purchase
-                        }
+                        _tree.AddPendingPoint(node.Data.Id);
                     }
-                    else node.HoldProgress = 0f;
+                    else if (isRightClickPressed && hasPending)
+                    {
+                        _tree.RemovePendingPoint(node.Data.Id);
+                    }
                 }
-                else node.HoldProgress = 0f;
 
                 node.UpdateVisuals(gameTime, isHovered);
             }
@@ -357,53 +400,95 @@ namespace Last_Hope.UI
                 conn.Update(gameTime);
         }
 
-        private void DrawPanel(SpriteBatch spriteBatch, Rectangle bounds, Color backgroundColor, Color borderColor, int borderThickness = 2)
+        private Color Fade(Color c, float a) => c * a;
+
+        private void DrawPremiumPanel(SpriteBatch spriteBatch, Rectangle bounds, Color bg, Color borderOuter, Color borderInner, float alpha, int outerThick = 2)
         {
-            spriteBatch.Draw(_pixel, bounds, backgroundColor);
-            spriteBatch.Draw(_pixel, new Rectangle(bounds.Left, bounds.Top, bounds.Width, borderThickness), borderColor);
-            spriteBatch.Draw(_pixel, new Rectangle(bounds.Left, bounds.Bottom - borderThickness, bounds.Width, borderThickness), borderColor);
-            spriteBatch.Draw(_pixel, new Rectangle(bounds.Left, bounds.Top, borderThickness, bounds.Height), borderColor);
-            spriteBatch.Draw(_pixel, new Rectangle(bounds.Right - borderThickness, bounds.Top, borderThickness, bounds.Height), borderColor);
+            // Drop shadow
+            spriteBatch.Draw(_pixel, new Rectangle(bounds.X + 8, bounds.Y + 8, bounds.Width, bounds.Height), Fade(Color.Black * 0.5f, alpha));
+            
+            // Main Fill
+            spriteBatch.Draw(_pixel, bounds, Fade(bg, alpha));
+            
+            // Outer Border
+            DrawRectangleOutline(spriteBatch, bounds, outerThick, Fade(borderOuter, alpha));
+            
+            // Inner Highlight
+            DrawRectangleOutline(spriteBatch, new Rectangle(bounds.X + outerThick, bounds.Y + outerThick, bounds.Width - (outerThick*2), bounds.Height - (outerThick*2)), 1, Fade(borderInner, alpha));
+        }
+
+        private void DrawRectangleOutline(SpriteBatch sb, Rectangle rect, int t, Color c)
+        {
+            sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, rect.Width, t), c);
+            sb.Draw(_pixel, new Rectangle(rect.Left, rect.Bottom - t, rect.Width, t), c);
+            sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, t, rect.Height), c);
+            sb.Draw(_pixel, new Rectangle(rect.Right - t, rect.Top, t, rect.Height), c);
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             SpriteFont font = GameManager.GetGameManager()._font;
             Vector2 mousePos = GameManager.GetGameManager().InputManager.CurrentMouseState.Position.ToVector2();
+            Viewport viewport = spriteBatch.GraphicsDevice.Viewport;
+            
+            float globalAlpha = _entranceProgress;
 
-            // 1. Draw Main Panel with Drop Shadow and Translucency
-            Rectangle shadowRect = new Rectangle(_mainPanel.X + 8, _mainPanel.Y + 8, _mainPanel.Width, _mainPanel.Height);
-            spriteBatch.Draw(_pixel, shadowRect, Color.Black * 0.6f);
+            // 1. Draw Main Panel
+            Color panelBg = new Color(20, 22, 26, 245);
+            Color borderOuter = new Color(25, 28, 32);
+            Color borderInner = new Color(70, 75, 85);
+            DrawPremiumPanel(spriteBatch, _mainPanel, panelBg, borderOuter, borderInner, globalAlpha, 3);
 
-            Color panelBg = new Color(25, 28, 33, 210); // Translucent frosted look
-            Color panelBorder = new Color(80, 85, 95);
-            DrawPanel(spriteBatch, _mainPanel, panelBg, panelBorder);
+            // Subtle background blueprint grid
+            for (int x = _mainPanel.X; x < _mainPanel.Right; x += 40)
+                spriteBatch.Draw(_pixel, new Rectangle(x, _mainPanel.Y, 1, _mainPanel.Height), Fade(Color.White * 0.02f, globalAlpha));
+            for (int y = _mainPanel.Y; y < _mainPanel.Bottom; y += 40)
+                spriteBatch.Draw(_pixel, new Rectangle(_mainPanel.X, y, _mainPanel.Width, 1), Fade(Color.White * 0.02f, globalAlpha));
 
-            // 2. Draw UI Text & Controls
+            // 2. Top & Bottom Headers
+            DrawPremiumPanel(spriteBatch, _topBarRect, new Color(15, 17, 20, 255), borderOuter, new Color(90, 95, 105), globalAlpha, 2);
+            DrawPremiumPanel(spriteBatch, _bottomBarRect, new Color(15, 17, 20, 255), borderOuter, new Color(90, 95, 105), globalAlpha, 2);
+
             if (font != null)
             {
-                // Close Button Redesign
-                bool isCloseHovered = _closeButtonRect.Contains(mousePos);
-                Color closeBg = isCloseHovered ? Color.DarkRed : Color.DarkSlateGray;
-                Color closeBorder = new Color(150, 150, 150);
-                DrawPanel(spriteBatch, _closeButtonRect, closeBg, closeBorder, 1);
+                // Title
+                string title = $"{_tree.GetData().ClassId.ToUpper()} TALENT TREE";
+                Vector2 titleSize = font.MeasureString(title) * 0.65f;
+                spriteBatch.DrawString(font, title, new Vector2(_topBarRect.Center.X - titleSize.X/2, _topBarRect.Center.Y - titleSize.Y/2), Fade(new Color(255, 215, 100), globalAlpha), 0f, Vector2.Zero, 0.65f, SpriteEffects.None, 0f);
 
-                string closeText = "X";
-                Vector2 closeTextSize = font.MeasureString(closeText);
-                float closeScale = 0.6f;
-                Vector2 closeTextPos = _closeButtonRect.Center.ToVector2() - (closeTextSize * closeScale) / 2f;
-                spriteBatch.DrawString(font, closeText, closeTextPos, Color.White, 0f, Vector2.Zero, closeScale, SpriteEffects.None, 0f);
+                // Re-designed Available / Pending Block
+                string pointsLabel = "AVAILABLE:";
+                string pointsVal = $" {_tree.UnspentPoints}";
+                float lblScale = 0.4f;
+                float valScale = 0.45f;
+                
+                Vector2 pointsTextPos = new Vector2(_topBarRect.Left + 30, _topBarRect.Center.Y - 15);
+                if (_tree.PendingPoints == 0) pointsTextPos.Y = _topBarRect.Center.Y - (font.MeasureString(pointsLabel).Y * lblScale) / 2;
+                
+                Vector2 lblSize = font.MeasureString(pointsLabel) * lblScale;
+                spriteBatch.DrawString(font, pointsLabel, pointsTextPos, Fade(new Color(180, 185, 190), globalAlpha), 0f, Vector2.Zero, lblScale, SpriteEffects.None, 0f);
+                spriteBatch.DrawString(font, pointsVal, pointsTextPos + new Vector2(lblSize.X, -2), Fade(Color.White, globalAlpha), 0f, Vector2.Zero, valScale, SpriteEffects.None, 0f);
 
-                // Points Available Text (Bottom-Left)
-                string pointsText = $"Talent Points Left: {_tree.UnspentPoints}";
-                Vector2 pointsTextPos = new Vector2(_mainPanel.Left + 20, _mainPanel.Bottom - 40);
-                spriteBatch.DrawString(font, pointsText, pointsTextPos, Color.Gold, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+                if (_tree.PendingPoints > 0)
+                {
+                    string pendLabel = "PENDING:";
+                    string pendVal = $" {_tree.PendingPoints}";
+                    float pScale = 0.35f;
+                    Vector2 pPos = pointsTextPos + new Vector2(0, 20);
+                    
+                    spriteBatch.DrawString(font, pendLabel, pPos, Fade(new Color(160, 150, 120), globalAlpha), 0f, Vector2.Zero, pScale, SpriteEffects.None, 0f);
+                    spriteBatch.DrawString(font, pendVal, pPos + new Vector2(font.MeasureString(pendLabel).X * pScale, 0), Fade(new Color(255, 215, 80), globalAlpha), 0f, Vector2.Zero, pScale, SpriteEffects.None, 0f);
+                }
 
-                // Respec Text (Bottom-Right)
-                string respecText = "Press [R] to Respec Points";
-                Vector2 respecTextSize = font.MeasureString(respecText) * 0.5f;
-                Vector2 respecTextPos = new Vector2(_mainPanel.Right - respecTextSize.X - 20, _mainPanel.Bottom - 40);
-                spriteBatch.DrawString(font, respecText, respecTextPos, Color.LightGray, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+                // Draw Bottom Buttons
+                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM", new Color(30, 80, 40), new Color(60, 150, 70), _btnConfirmHover, globalAlpha);
+                DrawPremiumButton(spriteBatch, font, _btnCancel, "CLOSE", new Color(40, 45, 50), new Color(80, 85, 95), _btnCancelHover, globalAlpha);
+                DrawPremiumButton(spriteBatch, font, _btnReset, "RESET", new Color(90, 30, 25), new Color(160, 50, 40), _btnResetHover, globalAlpha);
+                
+                // Instructions
+                string hint = "LMB: Assign   |   RMB: Remove   |   ENTER: Confirm   |   ESC: Close";
+                Vector2 hintSize = font.MeasureString(hint) * 0.3f;
+                spriteBatch.DrawString(font, hint, new Vector2(_bottomBarRect.Center.X - hintSize.X/2, _bottomBarRect.Center.Y - hintSize.Y/2), Fade(new Color(120, 125, 130), globalAlpha), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
 
             // 3. Draw Connections
@@ -427,18 +512,20 @@ namespace Last_Hope.UI
                 float angle = (float)Math.Atan2(diff.Y, diff.X);
                 float length = diff.Length();
                 
-                // Base background line (Thicker, Darker)
-                spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, (int)length, 4), null, new Color(40, 45, 50, 200), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
+                // Brighter engraved line casing
+                spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, (int)length, 6), null, Fade(new Color(55, 60, 65), globalAlpha), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
+                // Brighter inner groove
+                spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, (int)length, 2), null, Fade(new Color(85, 95, 105), globalAlpha), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                 
                 if (conn.GetFillProgress() > 0)
                 {
                     int fillLength = (int)(length * conn.GetFillProgress());
                     
-                    // Glow behind the active line
-                    spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 8), null, _theme.AccentGlowColor * 0.4f, angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
+                    // Energy Glow
+                    spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 8), null, Fade(_theme.AccentGlowColor * 0.35f, globalAlpha), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                     
-                    // Core active line
-                    spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 4), null, _theme.AccentGlowColor, angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
+                    // Energy Core
+                    spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 3), null, Fade(Color.Lerp(_theme.AccentGlowColor, Color.Yellow, 0.5f), globalAlpha), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                 }
             }
 
@@ -446,57 +533,156 @@ namespace Last_Hope.UI
             foreach (var node in _uiNodes)
             {
                 float currentScale = node.GetScale();
-                int size = (int)(40 * currentScale);
-                Rectangle rect = new Rectangle((int)node.Position.X - size / 2, (int)node.Position.Y - size / 2, size, size);
-                
-                // Node Drop Shadow
-                Rectangle nodeShadowRect = new Rectangle(rect.X + 3, rect.Y + 3, rect.Width, rect.Height);
-                spriteBatch.Draw(_pixel, nodeShadowRect, Color.Black * 0.5f);
 
-                Color nodeBg = new Color(50, 55, 65);
-                Color nodeBorder = node.CurrentState switch {
-                    NodeState.Available => Color.DeepSkyBlue,
-                    NodeState.Partial or NodeState.Maxed => Color.Gold,
-                    _ => Color.DarkGray,
-                };
-                DrawPanel(spriteBatch, rect, nodeBg, nodeBorder);
+                Color nodeBg = new Color(35, 40, 45); // Brighter dark iron background
+                Color nodeBorder = node.GetColor(); // Derived from tweened state
+                if (node.CurrentState == NodeState.Locked) nodeBorder = new Color(80, 85, 95); // Better contrast for locked nodes
+                if (node.HasPendingPoints) nodeBorder = new Color(255, 215, 0); // Gold
 
-                Rectangle innerRect = new Rectangle(rect.X + 4, rect.Y + 4, rect.Width - 8, rect.Height - 8);
-                spriteBatch.Draw(_pixel, innerRect, node.GetColor());
+                Point pos = node.Position.ToPoint();
 
-                if (node.HoldProgress > 0)
+                if (node.Data.Type == SkillNodeType.Major)
                 {
-                    int barHeight = 8;
-                    Rectangle ringBgRect = new Rectangle(rect.Left, rect.Bottom + 5, size, barHeight);
-                    spriteBatch.Draw(_pixel, ringBgRect, Color.DarkGray);
-                    int fillWidth = (int)(size * node.HoldProgress);
-                    Rectangle fillRect = new Rectangle(rect.Left, rect.Bottom + 5, fillWidth, barHeight);
-                    spriteBatch.Draw(_pixel, fillRect, Color.Gold);
+                    int s = (int)(44 * currentScale);
+                    Rectangle borderRect = new Rectangle(pos.X - s/2 - 2, pos.Y - s/2 - 2, s + 4, s + 4);
+                    Rectangle bgRect = new Rectangle(pos.X - s/2, pos.Y - s/2, s, s);
+                    Rectangle fillRect = new Rectangle(pos.X - s/2 + 2, pos.Y - s/2 + 2, s - 4, s - 4);
+                    
+                    spriteBatch.Draw(_pixel, borderRect, Fade(nodeBorder, globalAlpha));
+                    spriteBatch.Draw(_pixel, bgRect, Fade(nodeBg, globalAlpha));
+                    spriteBatch.Draw(_pixel, fillRect, Fade(node.GetColor(), globalAlpha));
+                }
+                else if (node.Data.Type == SkillNodeType.Minor)
+                {
+                    int r = (int)(26 * currentScale);
+                    DrawFilledDiamond(spriteBatch, _pixel, pos, r + 2, Fade(nodeBorder, globalAlpha));
+                    DrawFilledDiamond(spriteBatch, _pixel, pos, r, Fade(nodeBg, globalAlpha));
+                    DrawFilledDiamond(spriteBatch, _pixel, pos, r - 2, Fade(node.GetColor(), globalAlpha));
+                }
+                else // Standard
+                {
+                    int r = (int)(18 * currentScale);
+                    DrawFilledCircle(spriteBatch, _pixel, pos, r + 2, Fade(nodeBorder, globalAlpha));
+                    DrawFilledCircle(spriteBatch, _pixel, pos, r, Fade(nodeBg, globalAlpha));
+                    DrawFilledCircle(spriteBatch, _pixel, pos, r - 2, Fade(node.GetColor(), globalAlpha));
+                }
+                
+                // Rank Text inside Major Nodes
+                if (node.Data.Type == SkillNodeType.Major && font != null)
+                {
+                    string rankTxt = $"{_tree.GetAllocatedPoints(node.Data.Id, true)}/{node.Data.MaxPoints}";
+                    Vector2 rSize = font.MeasureString(rankTxt) * 0.35f;
+                    spriteBatch.DrawString(font, rankTxt, new Vector2(pos.X - rSize.X/2, pos.Y - rSize.Y/2 + 1), Fade(Color.White, globalAlpha), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
                 }
             }
 
             // 5. Draw Hover Tooltip on Top
             if (_hoveredNode != null && font != null)
             {
-                string title = $"{_hoveredNode.Data.Name} ({_tree.GetAllocatedPoints(_hoveredNode.Data.Id)}/{_hoveredNode.Data.MaxPoints})";
+                int pts = _tree.GetAllocatedPoints(_hoveredNode.Data.Id, true);
+                string typeLabel = _hoveredNode.Data.Type.ToString().ToUpper();
+                string title = $"{_hoveredNode.Data.Name} ({pts}/{_hoveredNode.Data.MaxPoints})";
                 
-                float tipScale = 0.4f;
-                Vector2 titleSize = font.MeasureString(title) * tipScale;
-                Vector2 descSize = font.MeasureString(_hoveredNode.Data.Description) * 0.35f;
+                List<string> tooltips = new List<string> { title, $"[{typeLabel}]", "---", _hoveredNode.Data.Description };
                 
-                int tipWidth = (int)Math.Max(titleSize.X, descSize.X) + 20;
-                int tipHeight = (int)(titleSize.Y + descSize.Y) + 25;
+                if (_hoveredNode.Data.Effects.Count > 0)
+                {
+                    tooltips.Add("---");
+                    tooltips.Add("Effects per Rank:");
+                    foreach (var eff in _hoveredNode.Data.Effects)
+                    {
+                        tooltips.Add($"+{eff.ValuePerPoint} {eff.EffectId.Replace("_", " ")}");
+                    }
+                }
                 
-                Rectangle bgTip = new Rectangle((int)mousePos.X + 20, (int)mousePos.Y + 20, tipWidth, tipHeight);
-                
-                // Tooltip drop shadow
-                Rectangle tipShadow = new Rectangle(bgTip.X + 5, bgTip.Y + 5, bgTip.Width, bgTip.Height);
-                spriteBatch.Draw(_pixel, tipShadow, Color.Black * 0.5f);
+                if (_hoveredNode.CurrentState == NodeState.Locked)
+                {
+                    tooltips.Add("---");
+                    tooltips.Add("[LOCKED] Requires active path or sufficient points.");
+                }
 
-                DrawPanel(spriteBatch, bgTip, new Color(20, 22, 25, 245), new Color(100, 100, 100), 1);
+                float tipScale = 0.4f;
+                float smallScale = 0.35f;
                 
-                spriteBatch.DrawString(font, title, new Vector2(bgTip.X + 10, bgTip.Y + 10), Color.Gold, 0f, Vector2.Zero, tipScale, SpriteEffects.None, 0f);
-                spriteBatch.DrawString(font, _hoveredNode.Data.Description, new Vector2(bgTip.X + 10, bgTip.Y + 10 + titleSize.Y + 5), Color.LightGray, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+                float tipWidth = 0;
+                float tipHeight = 10;
+                
+                for (int i = 0; i < tooltips.Count; i++)
+                {
+                    if (tooltips[i] == "---") 
+                    {
+                        tipHeight += 8;
+                        continue;
+                    }
+                    float s = i == 0 ? tipScale : smallScale;
+                    Vector2 sz = font.MeasureString(tooltips[i]) * s;
+                    tipWidth = Math.Max(tipWidth, sz.X);
+                    tipHeight += sz.Y + 2;
+                }
+                
+                tipWidth += 30;
+                tipHeight += 20;
+
+                Rectangle bgTip = new Rectangle((int)mousePos.X + 20, (int)mousePos.Y + 20, (int)tipWidth, (int)tipHeight);
+                
+                // Clamp to screen bounds
+                if (bgTip.Right > viewport.Width) bgTip.X -= (bgTip.Width + 40);
+                if (bgTip.Bottom > viewport.Height) bgTip.Y -= (bgTip.Height + 40);
+                
+                DrawPremiumPanel(spriteBatch, bgTip, new Color(18, 20, 24, 250), new Color(130, 120, 100), new Color(200, 180, 120), globalAlpha, 2);
+                
+                float currentY = bgTip.Y + 10;
+                for (int i = 0; i < tooltips.Count; i++)
+                {
+                    if (tooltips[i] == "---") 
+                    {
+                        spriteBatch.Draw(_pixel, new Rectangle(bgTip.X + 15, (int)currentY + 2, bgTip.Width - 30, 1), Fade(new Color(100, 100, 100) * 0.5f, globalAlpha));
+                        currentY += 8;
+                        continue;
+                    }
+                    float s = i == 0 ? tipScale : smallScale;
+                    Color c = Color.LightGray;
+                    if (i == 0) c = new Color(255, 220, 120);
+                    else if (i == 1) c = new Color(150, 160, 170);
+                    else if (tooltips[i].StartsWith("+")) c = Color.LimeGreen;
+                    else if (tooltips[i].StartsWith("[LOCKED]")) c = new Color(255, 80, 80);
+                    
+                    spriteBatch.DrawString(font, tooltips[i], new Vector2(bgTip.X + 15, currentY), Fade(c, globalAlpha), 0f, Vector2.Zero, s, SpriteEffects.None, 0f);
+                    currentY += font.MeasureString(tooltips[i]).Y * s + 2;
+                }
+            }
+        }
+        
+        private void DrawPremiumButton(SpriteBatch sb, SpriteFont font, Rectangle bounds, string text, Color baseColor, Color highlightColor, float hoverAlpha, float globalAlpha)
+        {
+            Color currentBg = Color.Lerp(baseColor, highlightColor, hoverAlpha);
+            Color currentBorderInner = Color.Lerp(new Color(60, 65, 70), new Color(200, 200, 200), hoverAlpha);
+            
+            DrawPremiumPanel(sb, bounds, currentBg, new Color(20, 22, 25), currentBorderInner, globalAlpha, 2);
+            
+            float txtScale = 0.45f;
+            Vector2 size = font.MeasureString(text) * txtScale;
+            Vector2 pos = new Vector2(bounds.Center.X - size.X/2, bounds.Center.Y - size.Y/2);
+            
+            sb.DrawString(font, text, pos + new Vector2(1, 1), Fade(Color.Black * 0.8f, globalAlpha), 0f, Vector2.Zero, txtScale, SpriteEffects.None, 0f);
+            sb.DrawString(font, text, pos, Fade(Color.White, globalAlpha), 0f, Vector2.Zero, txtScale, SpriteEffects.None, 0f);
+        }
+
+        private void DrawFilledCircle(SpriteBatch sb, Texture2D pixel, Point center, int radius, Color color)
+        {
+            for (int y = -radius; y <= radius; y++)
+            {
+                int x = (int)Math.Sqrt((radius * radius) - (y * y));
+                sb.Draw(pixel, new Rectangle(center.X - x, center.Y + y, (x * 2) + 1, 1), color);
+            }
+        }
+        
+        private void DrawFilledDiamond(SpriteBatch sb, Texture2D pixel, Point center, int radius, Color color)
+        {
+            for (int y = -radius; y <= radius; y++)
+            {
+                int width = radius - Math.Abs(y);
+                sb.Draw(pixel, new Rectangle(center.X - width, center.Y + y, (width * 2) + 1, 1), color);
             }
         }
     }
