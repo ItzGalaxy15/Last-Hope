@@ -103,7 +103,7 @@ public static class KeybindStore
         [KeybindId.MoveRight] = GameInputBinding.Keyboard(Keys.D),
         [KeybindId.Dash] = GameInputBinding.Keyboard(Keys.LeftShift),
         [KeybindId.Attack] = GameInputBinding.FromMouse(MouseBindButton.Left),
-        [KeybindId.Ability1] = GameInputBinding.Keyboard(Keys.Q),
+        [KeybindId.Ability1] = GameInputBinding.Keyboard(Keys.H),
         [KeybindId.Ability2] = GameInputBinding.Keyboard(Keys.E),
         [KeybindId.ItemSlot1] = GameInputBinding.Keyboard(Keys.D1),
         [KeybindId.ItemSlot2] = GameInputBinding.Keyboard(Keys.D2),

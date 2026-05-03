@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Items;
 using Last_Hope.SkillTree; // Import Skill Tree structures
 using LastHope.Audio; 
+using Last_Hope.Classes.Abilities;
 using System.Linq;
 
 namespace Last_Hope;
@@ -48,9 +49,6 @@ public class Warrior : BasePlayer
     private float _hurtCooldown;
     private float _bombActionCooldown;
     private float _greenGlowTimer = 0f;
-    private float _whirlwindDurationTimer = 0f;
-    private float _whirlwindTickTimer = 0f;
-    private float _abilityCooldownTimer = 0f; // Shared cooldown logic for major active abilities
     private float _speedBuffTimer = 0f;
     private float _dmgBuffTimer = 0f;
     private float _defBuffTimer = 0f;
@@ -64,13 +62,6 @@ public class Warrior : BasePlayer
     private const float SlashCastHeightOffset = 10f;
 
     // --- COMBAT & SKILL CONFIGURATION ---
-    private const float MajorAbilityCooldown = 8.0f;
-    private const float AxeSlamDamageMultiplier = 3.0f;
-    private const float AxeSlamRange = 140f;
-    private const float ShieldSlamDamageMultiplier = 1.5f;
-    private const float ShieldSlamStunDuration = 3.0f;
-    private const float ShieldSlamRange = 100f;
-    
     private const float BuffDurationSeconds = 10.0f;
     private const double ProcChance = 0.10;
     private const float AdrenalineRegenRate = 5.0f;
@@ -108,6 +99,8 @@ public class Warrior : BasePlayer
 
     public int HasteLevel { get; set; }
     public int DmgLevel { get; set; }
+
+    public BaseAbility ActiveAbility { get; set; }
 
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 0.1f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -233,9 +226,6 @@ public class Warrior : BasePlayer
 
         if (buffsChanged) UpdateStats();
 
-        if (_abilityCooldownTimer > 0f)
-            _abilityCooldownTimer -= dt;
-
         bool moving = _moveInput != Vector2.Zero;
         if (moving)
         {
@@ -254,42 +244,13 @@ public class Warrior : BasePlayer
         }
 
         // --- MAJOR ACTIVE ABILITIES LOGIC ---
-        if (WhirlwindUnlocked)
-        {
-            if (_whirlwindDurationTimer > 0f)
-            {
-                _whirlwindDurationTimer -= dt;
-                _whirlwindTickTimer -= dt;
-                
-                // Overwrite the walk animation to spin rapidly
-                _walkRow = (int)(gameTime.TotalGameTime.TotalMilliseconds / 50) % 4; 
-                
-                if (_whirlwindTickTimer <= 0f)
-                {
-                    _whirlwindTickTimer = 0.15f; // Emits radial burst every 0.15s
-                    FireRadialSlashes();
-                }
-            }
-        }
+        ActiveAbility?.Update(this, gameTime);
 
-        if (_inputManager is not null && _abilityCooldownTimer <= 0f)
+        if (_inputManager is not null && ActiveAbility != null && ActiveAbility.CanExecute())
         {
             if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
             {
-                if (WhirlwindUnlocked)
-                {
-                    _whirlwindDurationTimer = 2.0f;
-                    _abilityCooldownTimer = MajorAbilityCooldown;
-                    _whirlwindTickTimer = 0f;
-                }
-                else if (AxeSlamUnlocked)
-                {
-                    PerformAxeSlam();
-                }
-                else if (ShieldSlamUnlocked)
-                {
-                    PerformShieldSlam();
-                }
+                ActiveAbility.Execute(this);
             }
         }
 
@@ -356,35 +317,7 @@ public class Warrior : BasePlayer
         spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
-    private void PerformAxeSlam()
-    {
-        _abilityCooldownTimer = MajorAbilityCooldown;
-        Vector2 aimDir = GameManager.GetGameManager().GetWorldMousePosition() - Position;
-        if (aimDir != Vector2.Zero) aimDir.Normalize();
-
-        int damage = (int)(_Weapon.Damage * AxeSlamDamageMultiplier);
-        HitFrontalArea(aimDir, AxeSlamRange, damage, 0f);
-
-        AudioManager.PlaySfx(_attackSound);
-        _timeSinceLastAttack = 0;
-        _Weapon.Attack(aimDir, Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset));
-    }
-
-    private void PerformShieldSlam()
-    {
-        _abilityCooldownTimer = MajorAbilityCooldown;
-        Vector2 aimDir = GameManager.GetGameManager().GetWorldMousePosition() - Position;
-        if (aimDir != Vector2.Zero) aimDir.Normalize();
-
-        int damage = (int)(_Weapon.Damage * ShieldSlamDamageMultiplier);
-        HitFrontalArea(aimDir, ShieldSlamRange, damage, ShieldSlamStunDuration);
-
-        AudioManager.PlaySfx(_attackSound);
-        _timeSinceLastAttack = 0;
-        _Weapon.Attack(aimDir, Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset));
-    }
-
-    private void HitFrontalArea(Vector2 direction, float range, int damage, float stunDuration)
+    public void HitFrontalArea(Vector2 direction, float range, int damage, float stunDuration)
     {
         var gm = GameManager.GetGameManager();
         Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
@@ -452,7 +385,7 @@ public class Warrior : BasePlayer
         }
     }
 
-    private void FireRadialSlashes()
+    public void FireRadialSlashes()
     {
         Vector2 castAnchor = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
         for (int i = 0; i < 8; i++) // 8 directions
@@ -462,6 +395,49 @@ public class Warrior : BasePlayer
             Vector2 slashOrigin = castAnchor + dir * SlashDistance;
             _Weapon.Attack(dir, slashOrigin);
         }
+    }
+
+    public void HitRadialArea(float radius, int damage, float stunDuration)
+    {
+        var gm = GameManager.GetGameManager();
+        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+
+        foreach (var obj in gm._gameObjects.ToList())
+        {
+            if (obj is BaseEnemy enemy)
+            {
+                var collider = enemy.GetCollider();
+                if (collider != null)
+                {
+                    Vector2 toEnemy = collider.GetBoundingBox().Center.ToVector2() - center;
+                    if (toEnemy.Length() <= radius)
+                    {
+                        enemy.Damage(damage);
+                        if (stunDuration > 0f) enemy.ApplyStun(stunDuration);
+                    }
+                }
+            }
+        }
+    }
+
+    public void SetSpinningAnimation(GameTime gameTime)
+    {
+        _walkRow = (int)(gameTime.TotalGameTime.TotalMilliseconds / 50) % 4;
+    }
+
+    public Vector2 GetCastAnchor()
+    {
+        return Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
+    }
+
+    public void ResetAttackTimer()
+    {
+        _timeSinceLastAttack = 0;
+    }
+
+    public void PlayAttackSound()
+    {
+        AudioManager.PlaySfx(_attackSound);
     }
 
     // --- SKILL TREE INTEGRATION ---
@@ -498,12 +474,15 @@ public class Warrior : BasePlayer
                 break;
             case "unlock_whirlwind":
                 WhirlwindUnlocked = true;
+                ActiveAbility = new WhirlwindAbility();
                 break;
             case "unlock_axe_slam":
                 AxeSlamUnlocked = true;
+                ActiveAbility = new AxeSlamAbility();
                 break;
             case "unlock_shield_slam":
                 ShieldSlamUnlocked = true;
+                ActiveAbility = new ShieldSlamAbility();
                 break;
             case "dodge_chance":
                 DodgeLevel++;
@@ -544,6 +523,7 @@ public class Warrior : BasePlayer
         WhirlwindUnlocked = false;
         AxeSlamUnlocked = false;
         ShieldSlamUnlocked = false;
+        ActiveAbility = null;
         
         DodgeLevel = 0;
         ArmorPenLevel = 0;
