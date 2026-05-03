@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Items;
 using Last_Hope.SkillTree; // Import Skill Tree structures
 using LastHope.Audio; 
+using Last_Hope.Classes.Abilities;
+using System.Linq;
 
 namespace Last_Hope;
 
@@ -39,37 +41,66 @@ public class Warrior : BasePlayer
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = false;
 
-    private double timeSinceLastAttack = 0;
+    // --- TIMERS & COOLDOWNS ---
+    private double _timeSinceLastAttack = 0;
+    private float _currentAttackCooldown = 0.7f;
     private float _dashCooldown;
     private float _teleportCooldown;
+    private float _hurtCooldown;
+    private float _bombActionCooldown;
+    private float _greenGlowTimer = 0f;
+    private float _speedBuffTimer = 0f;
+    private float _dmgBuffTimer = 0f;
+    private float _defBuffTimer = 0f;
+
+    // --- STATE & PHYSICS ---
     private Vector2 _moveInput;
     private bool _facingLeft;
     private RectangleCollider _collider;
-    private float _hurtCooldown;
 
     private const float SlashDistance = 105f;
     private const float SlashCastHeightOffset = 10f;
 
+    // --- COMBAT & SKILL CONFIGURATION ---
+    private const float BuffDurationSeconds = 10.0f;
+    private const double ProcChance = 0.10;
+    private const float AdrenalineRegenRate = 5.0f;
+
     private const float BombThrowSpeed = 520f;
     private const float BombActionCooldown = 0.25f;
-    private float _bombActionCooldown;
 
     private const float DecoyThrowSpeed = 420f;
-
-    private float _greenGlowTimer = 0f;
     private SoundEffect _deathSound;
     private SoundEffect _attackSound;
 
     // --- Skill Tree States ---
+    public Texture2D SwordSprite { get; private set; }
+    public Texture2D ShieldSprite { get; private set; }
+
+    public bool IsSwordActive { get; set; }
+    public bool IsAxeActive { get; set; }
+    public bool IsShieldActive { get; set; }
+
     public bool DualWieldUnlocked { get; set; }
-    public int HasteLevel { get; set; }
-    public int CritLevel { get; set; }
-    public int DmgLevel { get; set; }
+    public bool HasFlowingStrikes { get; set; }
+    public bool HasBloodlust { get; set; }
+    public bool HasAdrenalineRush { get; set; }
+
     public bool WhirlwindUnlocked { get; set; }
-    private float _currentAttackCooldown = 0.7f;
-    private float _whirlwindCooldownTimer = 0f;
-    private float _whirlwindDurationTimer = 0f;
-    private float _whirlwindTickTimer = 0f;
+    public bool AxeSlamUnlocked { get; set; }
+    public bool ShieldSlamUnlocked { get; set; }
+    
+    public int DodgeLevel { get; set; }
+    public int ArmorPenLevel { get; set; }
+    public int BlockLevel { get; set; }
+    public bool HasElusiveRhythm { get; set; }
+    public bool HasDeepWounds { get; set; }
+    public bool HasBulwark { get; set; }
+
+    public int HasteLevel { get; set; }
+    public int DmgLevel { get; set; }
+
+    public BaseAbility ActiveAbility { get; set; }
 
     public Warrior(Vector2 startPosition)
         : base(maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 0.1f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -132,6 +163,9 @@ public class Warrior : BasePlayer
     {
         base.Load(content);
         AxeSprite = content.Load<Texture2D>("AxeSheet");
+        try { SwordSprite = content.Load<Texture2D>("SwordSheet"); } catch { SwordSprite = AxeSprite; } // Fallback to avoid crashes
+        try { ShieldSprite = content.Load<Texture2D>("ShieldSprite"); } catch { ShieldSprite = AxeSprite; } // Fallback to avoid crashes
+        
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
         _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
@@ -173,8 +207,26 @@ public class Warrior : BasePlayer
         if (_greenGlowTimer > 0f)
             _greenGlowTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        bool moving = _moveInput != Vector2.Zero;
+        bool buffsChanged = false;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (_speedBuffTimer > 0f) {
+            _speedBuffTimer -= dt;
+            if (_speedBuffTimer <= 0f) buffsChanged = true;
+        }
+        if (_dmgBuffTimer > 0f) {
+            _dmgBuffTimer -= dt;
+            if (_dmgBuffTimer <= 0f) buffsChanged = true;
+        }
+        if (_defBuffTimer > 0f) {
+            _defBuffTimer -= dt;
+            Heal(AdrenalineRegenRate * dt);
+            if (_defBuffTimer <= 0f) buffsChanged = true;
+        }
+
+        if (buffsChanged) UpdateStats();
+
+        bool moving = _moveInput != Vector2.Zero;
         if (moving)
         {
             SetWalkRowFromDirection(_moveInput);
@@ -191,41 +243,25 @@ public class Warrior : BasePlayer
             _walkFrameIndex = 0;
         }
 
-        // --- WHIRLWIND ACTIVE ABILITY LOGIC ---
-        if (WhirlwindUnlocked)
+        // --- MAJOR ACTIVE ABILITIES LOGIC ---
+        ActiveAbility?.Update(this, gameTime);
+
+        if (_inputManager is not null && ActiveAbility != null && ActiveAbility.CanExecute())
         {
-            if (_whirlwindCooldownTimer > 0f) _whirlwindCooldownTimer -= dt;
-            
-            if (_whirlwindDurationTimer > 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
             {
-                _whirlwindDurationTimer -= dt;
-                _whirlwindTickTimer -= dt;
-                
-                // Overwrite the walk animation to spin rapidly
-                _walkRow = (int)(gameTime.TotalGameTime.TotalMilliseconds / 50) % 4; 
-                
-                if (_whirlwindTickTimer <= 0f)
-                {
-                    _whirlwindTickTimer = 0.15f; // Emits radial burst every 0.15s
-                    FireRadialSlashes();
-                }
-            }
-            else if (_inputManager.IsKeyPress(Keys.H) && _whirlwindCooldownTimer <= 0f)
-            {
-                _whirlwindDurationTimer = 2.0f; // Spin for 2 seconds
-                _whirlwindCooldownTimer = 5.0f; // 5 second cooldown
-                _whirlwindTickTimer = 0f;
+                ActiveAbility.Execute(this);
             }
         }
 
         if (_inputManager is not null)
         {
-            timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && timeSinceLastAttack >= _currentAttackCooldown)
+            _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && _timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
                 AudioManager.PlaySfx(_attackSound);
-                timeSinceLastAttack = 0;
+                _timeSinceLastAttack = 0;
             }
 
             // G = place bomb at feet
@@ -281,6 +317,34 @@ public class Warrior : BasePlayer
         spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
+    public void HitFrontalArea(Vector2 direction, float range, int damage, float stunDuration)
+    {
+        var gm = GameManager.GetGameManager();
+        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+
+        foreach (var obj in gm._gameObjects.ToList())
+        {
+            if (obj is BaseEnemy enemy)
+            {
+                var collider = enemy.GetCollider();
+                if (collider != null)
+                {
+                    Vector2 toEnemy = collider.GetBoundingBox().Center.ToVector2() - center;
+                    if (toEnemy.Length() <= range)
+                    {
+                        toEnemy.Normalize();
+                        // 90-degree cone check
+                        if (Vector2.Dot(direction, toEnemy) > 0.5f)
+                        {
+                            enemy.Damage(damage);
+                            if (stunDuration > 0f) enemy.ApplyStun(stunDuration);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public void UseWeapon()
     {
         if (_inputManager is null)
@@ -298,9 +362,30 @@ public class Warrior : BasePlayer
 
         Vector2 slashOrigin = castAnchor + direction * SlashDistance;
         _Weapon.Attack(direction, slashOrigin);
+
+        // --- ON ATTACK PROCS ---
+        GameManager gm = GameManager.GetGameManager();
+        if (HasFlowingStrikes && gm.RNG.NextDouble() < ProcChance)
+        {
+            _speedBuffTimer = BuffDurationSeconds;
+            UpdateStats();
+        }
+        
+        if (HasBloodlust && gm.RNG.NextDouble() < ProcChance)
+        {
+            _dmgBuffTimer = BuffDurationSeconds;
+            UpdateStats();
+        }
+        
+        if (HasDeepWounds && gm.RNG.NextDouble() < ProcChance)
+        {
+            // Instantly simulate a true-damage bleed burst in a wider frontal area
+            // (Will interact with ArmorPen passively if/when full armor systems are finalized)
+            HitFrontalArea(direction, SlashDistance * 1.5f, 15 + (ArmorPenLevel * 5), 0f); 
+        }
     }
 
-    private void FireRadialSlashes()
+    public void FireRadialSlashes()
     {
         Vector2 castAnchor = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
         for (int i = 0; i < 8; i++) // 8 directions
@@ -310,6 +395,49 @@ public class Warrior : BasePlayer
             Vector2 slashOrigin = castAnchor + dir * SlashDistance;
             _Weapon.Attack(dir, slashOrigin);
         }
+    }
+
+    public void HitRadialArea(float radius, int damage, float stunDuration)
+    {
+        var gm = GameManager.GetGameManager();
+        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+
+        foreach (var obj in gm._gameObjects.ToList())
+        {
+            if (obj is BaseEnemy enemy)
+            {
+                var collider = enemy.GetCollider();
+                if (collider != null)
+                {
+                    Vector2 toEnemy = collider.GetBoundingBox().Center.ToVector2() - center;
+                    if (toEnemy.Length() <= radius)
+                    {
+                        enemy.Damage(damage);
+                        if (stunDuration > 0f) enemy.ApplyStun(stunDuration);
+                    }
+                }
+            }
+        }
+    }
+
+    public void SetSpinningAnimation(GameTime gameTime)
+    {
+        _walkRow = (int)(gameTime.TotalGameTime.TotalMilliseconds / 50) % 4;
+    }
+
+    public Vector2 GetCastAnchor()
+    {
+        return Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
+    }
+
+    public void ResetAttackTimer()
+    {
+        _timeSinceLastAttack = 0;
+    }
+
+    public void PlayAttackSound()
+    {
+        AudioManager.PlaySfx(_attackSound);
     }
 
     // --- SKILL TREE INTEGRATION ---
@@ -326,14 +454,53 @@ public class Warrior : BasePlayer
             case "max_hp":
                 Heal(effect.ValuePerPoint); // Keep it simple for now, can modify MaxHp property later if created
                 break;
-            case "move_speed_modifier":
-                _Speed += effect.ValuePerPoint;
+            case "unlock_sword_stance":
+                IsSwordActive = true; DualWieldUnlocked = true; IsAxeActive = false; IsShieldActive = false;
                 break;
-            case "unlock_bleed_modifier":
-                // Set future bleed flag
+            case "unlock_axe_stance":
+                IsAxeActive = true; IsSwordActive = false; IsShieldActive = false; DualWieldUnlocked = false;
+                break;
+            case "unlock_shield_stance":
+                IsShieldActive = true; IsSwordActive = false; IsAxeActive = false; DualWieldUnlocked = false;
+                break;
+            case "proc_flowing_strikes":
+                HasFlowingStrikes = true;
+                break;
+            case "proc_bloodlust":
+                HasBloodlust = true;
+                break;
+            case "proc_adrenaline_rush":
+                HasAdrenalineRush = true;
+                break;
+            case "unlock_whirlwind":
+                WhirlwindUnlocked = true;
+                ActiveAbility = new WhirlwindAbility();
+                break;
+            case "unlock_axe_slam":
+                AxeSlamUnlocked = true;
+                ActiveAbility = new AxeSlamAbility();
+                break;
+            case "unlock_shield_slam":
+                ShieldSlamUnlocked = true;
+                ActiveAbility = new ShieldSlamAbility();
+                break;
+            case "dodge_chance":
+                DodgeLevel++;
+                break;
+            case "armor_pen":
+                ArmorPenLevel++;
                 break;
             case "block_chance":
-                // Set future block flag
+                BlockLevel++;
+                break;
+            case "proc_elusive_rhythm":
+                HasElusiveRhythm = true;
+                break;
+            case "proc_deep_wounds":
+                HasDeepWounds = true;
+                break;
+            case "proc_bulwark":
+                HasBulwark = true;
                 break;
         }
         UpdateStats();
@@ -343,24 +510,52 @@ public class Warrior : BasePlayer
     {
         HasteLevel = 0;
         DmgLevel = 0;
-        CritLevel = 0;
+        
+        IsSwordActive = false;
+        IsAxeActive = false;
+        IsShieldActive = false;
+        DualWieldUnlocked = false;
+        
+        HasFlowingStrikes = false;
+        HasBloodlust = false;
+        HasAdrenalineRush = false;
+        
+        WhirlwindUnlocked = false;
+        AxeSlamUnlocked = false;
+        ShieldSlamUnlocked = false;
+        ActiveAbility = null;
+        
+        DodgeLevel = 0;
+        ArmorPenLevel = 0;
+        BlockLevel = 0;
+        HasElusiveRhythm = false;
+        HasDeepWounds = false;
+        HasBulwark = false;
+
         _Speed = 220f; // Revert to base speed
         UpdateStats();
     }
 
     public void UpdateStats()
     {
-        // Calculate new modifiers incrementally
-        float newCrit = 0.1f + (CritLevel * 0.1f); // Up to 40%
+        float newCrit = 0.1f;
         int newDmg = 20 + (DmgLevel * 5); // Up to 35
-        if (DualWieldUnlocked) newDmg = (int)(newDmg * 1.05f); // +5% base damage buff
         
-        _Weapon = new Weapon("Sword", damage: newDmg, critChance: newCrit);
+        if (IsSwordActive) newDmg = (int)(newDmg * 0.8f);
+        else if (IsAxeActive) newDmg = (int)(newDmg * 1.5f);
 
-        _currentAttackCooldown = 0.7f;
-        if (DualWieldUnlocked) _currentAttackCooldown *= 0.9f; // Global 10% faster attack
-        _currentAttackCooldown -= (HasteLevel * 0.1f); // Linear increase per point
-        if (_currentAttackCooldown < 0.1f) _currentAttackCooldown = 0.1f;
+        if (_dmgBuffTimer > 0f) newDmg = (int)(newDmg * 1.5f); // 50% damage boost from bloodlust buff
+        
+        _Weapon = new Weapon("Primary", damage: newDmg, critChance: newCrit);
+
+        float baseCooldown = 0.7f;
+        if (IsAxeActive) baseCooldown = 1.2f;
+        else if (IsSwordActive) baseCooldown = 0.5f;
+
+        baseCooldown -= (HasteLevel * 0.1f);
+        if (_speedBuffTimer > 0f) baseCooldown *= 0.5f; // Double attack speed from flowing strikes buff
+
+        _currentAttackCooldown = Math.Max(0.1f, baseCooldown);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -375,25 +570,55 @@ public class Warrior : BasePlayer
         
         spriteBatch.Draw(WarriorSprite, Position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
-        Rectangle axeSource = GetAxeSourceRect();
-        var axeFlip = GetAxeSpriteEffects();
-        float axeW = _axePixelSize;
-        float y = AxeOffsetY;
+        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 weaponOrigin = new Vector2(FrameSize * 0.5f, FrameSize * 0.5f);
         
-        Vector2 leftAxeOffset = new Vector2(40f, y);
-        Vector2 rightAxeOffset = new Vector2(_bodyWidth - axeW - 40f, y);
+        // Dynamic horizontal offset from the center of the Warrior
+        float handOffsetX = 28f;
+        Vector2 rightHand = center + new Vector2(handOffsetX, 0);
+        Vector2 leftHand = center + new Vector2(-handOffsetX, 0);
 
-        if (DualWieldUnlocked)
+        Texture2D activeTexture = IsSwordActive ? SwordSprite : AxeSprite;
+        Rectangle weaponSource = GetWeaponSourceRect();
+        SpriteEffects weaponFlip = GetAxeSpriteEffects();
+
+        if (IsSwordActive && DualWieldUnlocked)
         {
-            // Draw Two Axes
-            spriteBatch.Draw(AxeSprite, Position + leftAxeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, SpriteEffects.None, 0f);
-            spriteBatch.Draw(AxeSprite, Position + rightAxeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, SpriteEffects.FlipHorizontally, 0f);
+            spriteBatch.Draw(activeTexture, rightHand, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, SpriteEffects.FlipHorizontally, 0f);
+            spriteBatch.Draw(activeTexture, leftHand, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, SpriteEffects.None, 0f);
+        }
+        else if (IsShieldActive)
+        {
+            Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
+            Vector2 shieldPos = _facingLeft ? rightHand : leftHand;
+            
+            Rectangle shieldSource = new Rectangle(0, 0, FrameSize, FrameSize); // Default Down (1st 32x32)
+            float shieldScale = AxeDrawScale * 0.85f; // A tiny bit smaller
+
+            if (_walkRow == 3) // Left
+            {
+                shieldSource = new Rectangle(FrameSize * 1, 0, FrameSize, FrameSize); // 2nd 32x32
+            }
+            else if (_walkRow == 2) // Right
+            {
+                shieldSource = new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize); // 3rd 32x32
+            }
+            else if (_walkRow == 1) // Up
+            {
+                shieldSource = new Rectangle(0, FrameSize * 1, FrameSize, FrameSize); // 1st 32x32 out of row 2
+                
+                // Position the shield dynamically in front (North) of the player
+                shieldPos = center + new Vector2(0, -25f);
+            }
+
+            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+            spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
         }
         else
         {
-            // Draw Original single Axe
-            Vector2 axeOffset = _facingLeft ? rightAxeOffset : leftAxeOffset;
-            spriteBatch.Draw(AxeSprite, Position + axeOffset, axeSource, Color.White, 0f, Vector2.Zero, AxeDrawScale, axeFlip, 0f);
+            Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
+            float drawScale = IsAxeActive ? AxeDrawScale * 1.3f : AxeDrawScale;
+            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, drawScale, weaponFlip, 0f);
         }
 
         if (DebugDrawHitbox && _collider is not null)
@@ -402,10 +627,15 @@ public class Warrior : BasePlayer
         base.Draw(gameTime, spriteBatch);
     }
 
-    private Rectangle GetAxeSourceRect()
+    private Rectangle GetWeaponSourceRect()
     {
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal)
+        if (_walkRow == 0) // Down
+            return new Rectangle(0, 0, FrameSize, FrameSize);
+        else if (_walkRow == 1) // Up (Pointing in front of the player)
+            return new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize);
+        else // Left / Right 
             return new Rectangle(FrameSize, 0, FrameSize, FrameSize);
 
         return new Rectangle(0, FrameSize, FrameSize, FrameSize);
@@ -415,6 +645,8 @@ public class Warrior : BasePlayer
     {
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal && _facingLeft)
+        // Inverted so left and right face the correct way
+        if (horizontal && !_facingLeft)
             return SpriteEffects.FlipHorizontally;
 
         return SpriteEffects.None;
@@ -477,6 +709,33 @@ public class Warrior : BasePlayer
 
     public override void Damage(float amount)
     {
+        GameManager gm = GameManager.GetGameManager();
+        
+        // --- DODGE LOGIC ---
+        if (DodgeLevel > 0 && gm.RNG.NextDouble() < (DodgeLevel * 0.05)) // 5% per point
+        {
+            if (HasElusiveRhythm)
+            {
+                _speedBuffTimer = BuffDurationSeconds;
+                UpdateStats();
+            }
+            return; // Completely evade the attack
+        }
+
+        // --- BLOCK LOGIC ---
+        if (BlockLevel > 0 && gm.RNG.NextDouble() < (BlockLevel * 0.10)) // 10% per point
+        {
+            amount *= 0.5f; // Mitigate half damage
+            if (HasBulwark) Heal(5f);
+        }
+
+        // --- ON HIT TAKEN PROCS ---
+        if (HasAdrenalineRush)
+        {
+            _defBuffTimer = BuffDurationSeconds;
+            // Auto-heal logic handles in update loop when timer > 0
+        }
+
         _currentHp -= amount;
         TriggerHurtFlash();
 

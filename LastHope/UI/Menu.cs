@@ -51,28 +51,61 @@ public class Menu
     public void DrawSettingsMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
         => _settingsMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
+    public void UpdatePausedMenu(GameTime gameTime) => _pausedMenu.Update(gameTime);
+    public void DrawPausedMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
+        => _pausedMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    public void UpdateWinnerMenu(GameTime gameTime) => _winnerMenu.Update(gameTime);
+    public void DrawWinnerMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
+        => _winnerMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    public void UpdateGameOverMenu(GameTime gameTime) => _gameOverMenu.Update(gameTime);
+    public void DrawGameOverMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
+        => _gameOverMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
     public void UpdateRunningMenu(GameTime gameTime)
     {
-        _runningMenu.Update(gameTime);
-
         var gm = GameManager.GetGameManager();
         var input = gm.InputManager;
 
         if (input.IsKeyPress(Keys.N))
         {
             _showSkillTree = !_showSkillTree;
+            
+            // Optionally intercept states here to pause background mechanics!
+            // e.g. gm._state = _showSkillTree ? GameState.Paused : GameState.Running;
+
             if (_showSkillTree && _skillTreeCanvas == null)
             {
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string projectRoot = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\"));
                 string jsonPath = Path.Combine(projectRoot, "SkillTree", "WarriorSkillTree.json");
                 
+                // Fallback check in case you run the built executable outside of Visual Studio
+                if (!File.Exists(jsonPath))
+                {
+                    jsonPath = Path.Combine(baseDir, "SkillTree", "WarriorSkillTree.json");
+                }
+
                 ClassSkillTreeData treeData = null;
 
                 if (File.Exists(jsonPath))
                 {
                     string rawJson = File.ReadAllText(jsonPath);
-                    treeData = JsonSerializer.Deserialize<ClassSkillTreeData>(rawJson);
+                    try
+                    {
+                        var options = new JsonSerializerOptions 
+                        { 
+                            ReadCommentHandling = JsonCommentHandling.Skip,
+                            AllowTrailingCommas = true 
+                        };
+                        treeData = JsonSerializer.Deserialize<ClassSkillTreeData>(rawJson, options);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine($"[SkillTree Error] JSON Parsing Failed: {ex.Message}");
+                        throw new Exception($"Failed to parse Skill Tree JSON: {ex.Message}", ex);
+                    }
                 }
 
                 if (treeData == null)
@@ -98,8 +131,9 @@ public class Menu
 
                 UIThemeData theme = new UIThemeData
                 {
-                    LockedDesaturation = new Color(50, 50, 50),
-                    AccentGlowColor = new Color(230, 60, 70)
+                    LockedDesaturation = new Color(80, 85, 95), // Muted steel grey / visible locked
+                    AccentGlowColor = new Color(255, 70, 20), // Crimson / Burnt Orange
+                    BorderColor = new Color(160, 170, 180) // Bright Steel
                 };
 
                 Viewport vp = default;
@@ -121,10 +155,15 @@ public class Menu
                 vp = new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
 
             _skillTreeCanvas?.Update(gameTime, vp);
-            if (_skillTreeCanvas?.CloseRequested == true)
+            if (_skillTreeCanvas?.IsClosed == true)
             {
                 _showSkillTree = false;
+                // Return state back to running if you modified it
             }
+        }
+        else
+        {
+            _runningMenu.Update(gameTime);
         }
     }
 
@@ -138,22 +177,10 @@ public class Menu
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
 
             Viewport vp = spriteBatch.GraphicsDevice.Viewport;
-            spriteBatch.Draw(gm.Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(22, 24, 28, 240));
+            spriteBatch.Draw(gm.Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(10, 12, 15, 235)); // Smoky cinematic dark layer
             _skillTreeCanvas.Draw(gameTime, spriteBatch);
 
             spriteBatch.End();
         }
     }
-
-    public void UpdatePausedMenu(GameTime gameTime) => _pausedMenu.Update(gameTime);
-    public void DrawPausedMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _pausedMenu.Draw(gameTime, spriteBatch, transformMatrix);
-
-    public void UpdateWinnerMenu(GameTime gameTime) => _winnerMenu.Update(gameTime);
-    public void DrawWinnerMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _winnerMenu.Draw(gameTime, spriteBatch, transformMatrix);
-
-    public void UpdateGameOverMenu(GameTime gameTime) => _gameOverMenu.Update(gameTime);
-    public void DrawGameOverMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _gameOverMenu.Draw(gameTime, spriteBatch, transformMatrix);
 }

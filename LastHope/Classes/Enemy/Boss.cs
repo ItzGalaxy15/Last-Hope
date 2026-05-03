@@ -49,9 +49,13 @@ public class Boss : BaseEnemy
     private const int WalkFrameCount = 2;
     private const int ChargeFrameCount = 4;
     private const int LaunchFrameCount = 1;
+    
+    private float FullSize => FrameSize * SpriteScale;
+    private float HitboxSize => FullSize * 0.55f;
+    private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
     public Boss(Point position)
-        : base(maxHealth: 400, currentHealth: 400, speed: 60, experienceValue: 100)
+        : base(maxHealth: 400, currentHealth: 400, speed: 60f, experienceValue: 100f)
     {
         int size = (int)(FrameSize * SpriteScale);
         _collider = new RectangleCollider(new Rectangle(position, new Point(size, size)));
@@ -73,18 +77,18 @@ public class Boss : BaseEnemy
         _precisePosition = _collider.shape.Location.ToVector2();
     }
 
-    public override void Update(GameTime gameTime)
+    protected override void UpdateBehavior(GameTime gameTime)
     {
         var gm = GameManager.GetGameManager();
         var player = gm._player;
         var decoy = gm.ActiveDecoy;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (player == null && decoy == null)
-            return;
-
         if (_attackCooldownTimer > 0f)
             _attackCooldownTimer = Math.Max(0f, _attackCooldownTimer - dt);
+
+        if (player == null && decoy == null)
+            return;
 
         Vector2 targetPos = decoy != null
             ? decoy.GetPosition()
@@ -140,7 +144,7 @@ public class Boss : BaseEnemy
             {
                 Vector2 direction;
                 if (gm.NavigationGrid != null &&
-                    gm.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
+                    gm.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir) && pathDir != Vector2.Zero)
                 {
                     direction = pathDir;
                 }
@@ -153,24 +157,22 @@ public class Boss : BaseEnemy
                 Vector2 movement = direction * Speed * dt;
 
                 Vector2 newPosX = new Vector2(_precisePosition.X + movement.X, _precisePosition.Y);
-                if (!WouldCollideAt(newPosX))
+                if (!WouldCollideAt(newPosX, HitboxSize, HitboxOffset))
                     _precisePosition = newPosX;
 
                 Vector2 newPosY = new Vector2(_precisePosition.X, _precisePosition.Y + movement.Y);
-                if (!WouldCollideAt(newPosY))
+                if (!WouldCollideAt(newPosY, HitboxSize, HitboxOffset))
                     _precisePosition = newPosY;
 
-                _collider.shape.Location = _precisePosition.ToPoint();
+                _collider.shape = new Rectangle((int)(_precisePosition.X + HitboxOffset), (int)(_precisePosition.Y + HitboxOffset), (int)HitboxSize, (int)HitboxSize);
                 _walkAnimation.Update();
             }
         }
-
-        base.Update(gameTime);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        Vector2 center = _collider.shape.Center.ToVector2();
+        Vector2 center = _precisePosition + new Vector2(FullSize / 2f);
 
         if (DebugDrawHitbox)
             DrawHitbox(spriteBatch, _collider.shape, Color.Red);
@@ -184,8 +186,9 @@ public class Boss : BaseEnemy
         else
             sourceRect = _walkAnimation.GetSourceRect();
 
-        // Cyan contrasts strongly with the demon's red — the default pinkish-red flash is invisible on it
-        Color tint = DrawTint != Color.White ? Color.Cyan : Color.White;
+        Color tint = DrawTint;
+        if (tint == HurtFlashColor) 
+            tint = Color.Cyan; // Cyan contrasts strongly with the demon's red
 
         spriteBatch.Draw(
             _texture,
@@ -229,15 +232,6 @@ public class Boss : BaseEnemy
         (facingLeft ? LeftLaunch : RightLaunch) * FrameSize,
         (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
     );
-
-    private bool WouldCollideAt(Vector2 testPosition)
-    {
-        Rectangle current = _collider.shape;
-        Rectangle testRect = new Rectangle(
-            (int)testPosition.X, (int)testPosition.Y,
-            current.Width, current.Height);
-        return CollisionWorld.CollidesWithStaticForMovement(testRect);
-    }
 
     private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
     {

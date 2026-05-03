@@ -46,8 +46,12 @@ public class Goblin : BaseEnemy
     private const int BowSheetColumns = 3;
     private const int BowRightRow = 0;
     private const int BowLeftRow = 1;
+    
+    private float FullSize => FrameSize * SpriteScale;
+    private float HitboxSize => FullSize * 0.55f;
+    private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-    public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100, experienceValue: 2)
+    public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100f, experienceValue: 2f)
     {
         _weapon = weapon;
         _weapon.SetOwner(this);
@@ -100,22 +104,18 @@ public class Goblin : BaseEnemy
         InitHitbox(_precisePosition, FrameSize, SpriteScale);
     }
 
-    public override void Update(GameTime gameTime)
+    protected override void UpdateBehavior(GameTime gameTime)
     {
         var gameManager = GameManager.GetGameManager();
         var player = gameManager._player;
         var decoy = gameManager.ActiveDecoy;
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+        if (_attackTimer > 0f)
+            _attackTimer = Math.Max(0f, _attackTimer - dt);
+
         if (player == null && decoy == null)
             return;
-
-        if (_attackTimer > 0f)
-        {
-            _attackTimer -= dt;
-            if (_attackTimer < 0f)
-                _attackTimer = 0f;
-        }
 
         Vector2 targetPos = decoy != null
             ? decoy.GetPosition()
@@ -138,7 +138,7 @@ public class Goblin : BaseEnemy
         if (distanceToTarget > _attackRange)
         {
             if (gameManager.NavigationGrid != null &&
-                gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
+                gameManager.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir) && pathDir != Vector2.Zero)
             {
                 moveDirection = pathDir;
             }
@@ -147,14 +147,14 @@ public class Goblin : BaseEnemy
             Vector2 velocity = moveDirection * moveAmount;
 
             Vector2 newPosX = new Vector2(_precisePosition.X + velocity.X, _precisePosition.Y);
-            if (!WouldCollideAt(newPosX))
+            if (!WouldCollideAt(newPosX, HitboxSize, HitboxOffset))
                 _precisePosition = newPosX;
 
             Vector2 newPosY = new Vector2(_precisePosition.X, _precisePosition.Y + velocity.Y);
-            if (!WouldCollideAt(newPosY))
+            if (!WouldCollideAt(newPosY, HitboxSize, HitboxOffset))
                 _precisePosition = newPosY;
 
-            _collider.shape.Location = _precisePosition.ToPoint();
+            _collider.shape = new Rectangle((int)(_precisePosition.X + HitboxOffset), (int)(_precisePosition.Y + HitboxOffset), (int)HitboxSize, (int)HitboxSize);
             _isMoving = true;
         }
         else
@@ -213,17 +213,15 @@ public class Goblin : BaseEnemy
                 ResetWalkAnimation();
             }
         }
-        else if (_isMoving)
+        else
         {
             _walkingAnimation.Update();
         }
-
-        base.Update(gameTime);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        Vector2 center = _collider.shape.Center.ToVector2();
+        Vector2 center = _precisePosition + new Vector2(FullSize / 2f);
 
         if (DebugDrawHitbox && _collider is not null)
             DrawHitbox(spriteBatch, _collider.shape, Color.Yellow);
@@ -306,19 +304,5 @@ public class Goblin : BaseEnemy
     public override Vector2 GetPosition()
     {
         return _collider.shape.Center.ToVector2();
-    }
-
-    private bool WouldCollideAt(Vector2 testPosition)
-    {
-        Rectangle current = _collider.shape;
-
-        Rectangle testRect = new Rectangle(
-            (int)testPosition.X,
-            (int)testPosition.Y,
-            current.Width,
-            current.Height
-        );
-
-        return CollisionWorld.CollidesWithStaticForMovement(testRect);
     }
 }
