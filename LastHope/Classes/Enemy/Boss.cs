@@ -139,8 +139,9 @@ public class Boss : BaseEnemy
             else
             {
                 Vector2 direction;
+                float radius = _collider.shape.Width / 2f;
                 if (gm.NavigationGrid != null &&
-                    gm.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir))
+                    gm.NavigationGrid.TryGetMoveDirection(GetPosition(), targetPos, out Vector2 pathDir, radius))
                 {
                     direction = pathDir;
                 }

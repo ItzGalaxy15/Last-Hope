@@ -56,11 +56,29 @@ public sealed class NavigationGrid
     public Vector2 TileCenterToWorld(Point tile) =>
         new Vector2(tile.X * TileSize + TileSize * 0.5f, tile.Y * TileSize + TileSize * 0.5f);
 
-    // BFS outward from `seed` for the closest walkable tile. Returns (-1,-1) if none found within the ring budget.
-    private Point FindNearestWalkable(Point seed)
+    // Returns true only if every tile within `radiusTiles` of (tileX, tileY) is walkable.
+    private bool IsWalkableWithClearance(int tileX, int tileY, int radiusTiles)
+    {
+        for (int dy = -radiusTiles; dy <= radiusTiles; dy++)
+        {
+            for (int dx = -radiusTiles; dx <= radiusTiles; dx++)
+            {
+                int nx = tileX + dx;
+                int ny = tileY + dy;
+                if (nx < 0 || nx >= WidthInTiles || ny < 0 || ny >= HeightInTiles)
+                    return false;
+                if (!_walkable[nx, ny])
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    // BFS outward from `seed` for the closest tile accepted by `walkable`. Returns (-1,-1) if none found within the ring budget.
+    private Point FindNearestWalkable(Point seed, Func<int, int, bool> walkable)
     {
         const int MaxRings = 12;
-        if (IsWalkable(seed.X, seed.Y))
+        if (walkable(seed.X, seed.Y))
             return seed;
 
         var visited = new HashSet<Point> { seed };
@@ -91,7 +109,7 @@ public sealed class NavigationGrid
                     continue;
                 if (!visited.Add(n))
                     continue;
-                if (_walkable[n.X, n.Y])
+                if (walkable(n.X, n.Y))
                     return n;
                 frontier.Enqueue(n);
                 countNextRing++;
@@ -110,20 +128,26 @@ public sealed class NavigationGrid
 
     /// <summary>
     /// Computes a direction toward the next step on an A* path from <paramref name="fromWorld"/> to <paramref name="toWorld"/>.
-    /// If the start or goal falls inside a non-walkable tile (e.g. agent clipped into the inflated footprint around a building,
-    /// or the player is standing next to one), snaps to the nearest walkable tile instead of giving up — otherwise the caller
-    /// would get a straight-line direction and grind against the collider.
+    /// Pass <paramref name="entityRadius"/> (half the entity's hitbox width in world pixels) so the path keeps enough
+    /// clearance from walls for the entity's body — without it, large entities get stuck on building corners because
+    /// the path is planned for a point, not a volume.
     /// </summary>
-    public bool TryGetMoveDirection(Vector2 fromWorld, Vector2 toWorld, out Vector2 direction)
+    public bool TryGetMoveDirection(Vector2 fromWorld, Vector2 toWorld, out Vector2 direction, float entityRadius = 0f)
     {
         direction = Vector2.Zero;
+
+        int radiusTiles = entityRadius > 0f ? (int)Math.Ceiling(entityRadius / TileSize) : 0;
+        Func<int, int, bool> walkable = radiusTiles > 0
+            ? (x, y) => IsWalkableWithClearance(x, y, radiusTiles)
+            : (x, y) => _walkable[x, y];
+
         Point startTile = WorldToTile(fromWorld);
         Point goalTile = WorldToTile(toWorld);
 
-        if (!IsWalkable(startTile.X, startTile.Y))
-            startTile = FindNearestWalkable(startTile);
-        if (!IsWalkable(goalTile.X, goalTile.Y))
-            goalTile = FindNearestWalkable(goalTile);
+        if (!walkable(startTile.X, startTile.Y))
+            startTile = FindNearestWalkable(startTile, walkable);
+        if (!walkable(goalTile.X, goalTile.Y))
+            goalTile = FindNearestWalkable(goalTile, walkable);
 
         if (startTile.X < 0 || goalTile.X < 0)
         {
@@ -139,7 +163,7 @@ public sealed class NavigationGrid
         List<Point>? tilePath = AStarPathfinder.FindPath(
             WidthInTiles,
             HeightInTiles,
-            (x, y) => _walkable[x, y],
+            walkable,
             startTile,
             goalTile);
 
