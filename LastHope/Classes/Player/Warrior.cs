@@ -582,7 +582,25 @@ public class Warrior : BasePlayer
 
         Rectangle shieldSource = new Rectangle(0, 0, FrameSize, FrameSize); // Default Down (1st 32x32)
         float shieldScale = AxeDrawScale * 0.85f; // A tiny bit smaller
-        Vector2 shieldPos = _walkRow == 2 ? rightHand : leftHand; // Right side when walking right
+        
+        Vector2 shieldPos;
+        Vector2 weaponPos;
+
+        if (_walkRow == 3) // Left
+        {
+            shieldPos = leftHand;
+            weaponPos = leftHand;
+        }
+        else if (_walkRow == 2) // Right
+        {
+            shieldPos = rightHand;
+            weaponPos = rightHand;
+        }
+        else // Up or Down
+        {
+            shieldPos = rightHand;
+            weaponPos = leftHand;
+        }
 
         if (IsShieldActive)
         {
@@ -621,14 +639,13 @@ public class Warrior : BasePlayer
         }
         else if (IsShieldActive)
         {
-            Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
             spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
         }
         else
         {
-            Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
+            Vector2 singleWeaponPos = _walkRow == 3 ? leftHand : rightHand;
             float drawScale = IsAxeActive ? AxeDrawScale * 1.3f : AxeDrawScale;
-            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, drawScale, weaponFlip, 0f);
+            spriteBatch.Draw(activeTexture, singleWeaponPos, weaponSource, Color.White, 0f, weaponOrigin, drawScale, weaponFlip, 0f);
         }
 
         if (DebugDrawHitbox && _collider is not null)
