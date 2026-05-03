@@ -631,11 +631,6 @@ public class Warrior : BasePlayer
     {
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal)
-        if (_walkRow == 0) // Down
-            return new Rectangle(0, 0, FrameSize, FrameSize);
-        else if (_walkRow == 1) // Up (Pointing in front of the player)
-            return new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize);
-        else // Left / Right 
             return new Rectangle(FrameSize, 0, FrameSize, FrameSize);
 
         return new Rectangle(0, FrameSize, FrameSize, FrameSize);
@@ -643,10 +638,11 @@ public class Warrior : BasePlayer
 
     private SpriteEffects GetAxeSpriteEffects()
     {
+        if (_walkRow == 0) // Down
+            return SpriteEffects.FlipVertically;
+
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal && _facingLeft)
-        // Inverted so left and right face the correct way
-        if (horizontal && !_facingLeft)
             return SpriteEffects.FlipHorizontally;
 
         return SpriteEffects.None;
