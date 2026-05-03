@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Last_Hope.Engine;
+using Last_Hope.Classes.Abilities;
 
 namespace Last_Hope.UI;
 
@@ -166,6 +167,23 @@ public class SkillTreeUI : UIElement
         {
             case "dual wield":
                 player.DualWieldUnlocked = true;
+                player.IsSwordActive = true;
+                player.IsAxeActive = false;
+                player.IsShieldActive = false;
+                break;
+            case "shield":
+                player.IsShieldActive = true;
+                player.IsSwordActive = false;
+                player.IsAxeActive = false;
+                player.DualWieldUnlocked = false;
+                break;
+            case "burst slash":
+                player.IsAxeActive = true;
+                player.IsSwordActive = false;
+                player.IsShieldActive = false;
+                player.DualWieldUnlocked = false;
+                player.AxeSlamUnlocked = true;
+                player.ActiveAbility = new AxeSlamAbility();
                 break;
             case "haste+":
                 player.HasteLevel++;
@@ -178,6 +196,11 @@ public class SkillTreeUI : UIElement
                 break;
             case "whirlwind":
                 player.WhirlwindUnlocked = true;
+                player.ActiveAbility = new WhirlwindAbility();
+                break;
+            case "shield slam":
+                player.ShieldSlamUnlocked = true;
+                player.ActiveAbility = new ShieldSlamAbility();
                 break;
         }
         player.UpdateStats();

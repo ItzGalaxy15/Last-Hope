@@ -164,7 +164,7 @@ public class Warrior : BasePlayer
         base.Load(content);
         AxeSprite = content.Load<Texture2D>("AxeSheet");
         try { SwordSprite = content.Load<Texture2D>("SwordSheet"); } catch { SwordSprite = AxeSprite; } // Fallback to avoid crashes
-        try { ShieldSprite = content.Load<Texture2D>("ShieldSheet"); } catch { ShieldSprite = AxeSprite; } // Fallback to avoid crashes
+        try { ShieldSprite = content.Load<Texture2D>("ShieldSprite"); } catch { ShieldSprite = AxeSprite; } // Fallback to avoid crashes
         
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
@@ -579,7 +579,7 @@ public class Warrior : BasePlayer
         Vector2 leftHand = center + new Vector2(-handOffsetX, 0);
 
         Texture2D activeTexture = IsSwordActive ? SwordSprite : AxeSprite;
-        Rectangle weaponSource = GetAxeSourceRect();
+        Rectangle weaponSource = GetWeaponSourceRect();
         SpriteEffects weaponFlip = GetAxeSpriteEffects();
 
         if (IsSwordActive && DualWieldUnlocked)
@@ -592,12 +592,27 @@ public class Warrior : BasePlayer
             Vector2 weaponPos = _facingLeft ? leftHand : rightHand;
             Vector2 shieldPos = _facingLeft ? rightHand : leftHand;
             
+            Rectangle shieldSource = new Rectangle(0, 0, FrameSize, FrameSize); // Default Down (1st 32x32)
+            float shieldScale = AxeDrawScale * 0.85f; // A tiny bit smaller
+
+            if (_walkRow == 3) // Left
+            {
+                shieldSource = new Rectangle(FrameSize * 1, 0, FrameSize, FrameSize); // 2nd 32x32
+            }
+            else if (_walkRow == 2) // Right
+            {
+                shieldSource = new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize); // 3rd 32x32
+            }
+            else if (_walkRow == 1) // Up
+            {
+                shieldSource = new Rectangle(0, FrameSize * 1, FrameSize, FrameSize); // 1st 32x32 out of row 2
+                
+                // Position the shield dynamically in front (North) of the player
+                shieldPos = center + new Vector2(0, -25f);
+            }
+
             spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
-            
-            Rectangle shieldSource = new Rectangle(0, 0, ShieldSprite.Width, ShieldSprite.Height);
-            Vector2 shieldOrigin = new Vector2(ShieldSprite.Width * 0.5f, ShieldSprite.Height * 0.5f);
-            SpriteEffects shieldFlip = _facingLeft ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
-            spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, shieldOrigin, AxeDrawScale, shieldFlip, 0f);
+            spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
         }
         else
         {
@@ -612,10 +627,15 @@ public class Warrior : BasePlayer
         base.Draw(gameTime, spriteBatch);
     }
 
-    private Rectangle GetAxeSourceRect()
+    private Rectangle GetWeaponSourceRect()
     {
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal)
+        if (_walkRow == 0) // Down
+            return new Rectangle(0, 0, FrameSize, FrameSize);
+        else if (_walkRow == 1) // Up (Pointing in front of the player)
+            return new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize);
+        else // Left / Right 
             return new Rectangle(FrameSize, 0, FrameSize, FrameSize);
 
         return new Rectangle(0, FrameSize, FrameSize, FrameSize);
@@ -625,6 +645,8 @@ public class Warrior : BasePlayer
     {
         bool horizontal = _walkRow == 2 || _walkRow == 3;
         if (horizontal && _facingLeft)
+        // Inverted so left and right face the correct way
+        if (horizontal && !_facingLeft)
             return SpriteEffects.FlipHorizontally;
 
         return SpriteEffects.None;
