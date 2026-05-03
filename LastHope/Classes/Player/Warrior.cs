@@ -634,8 +634,21 @@ public class Warrior : BasePlayer
 
         if (IsSwordActive && DualWieldUnlocked)
         {
-            spriteBatch.Draw(activeTexture, rightHand, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, SpriteEffects.FlipHorizontally, 0f);
-            spriteBatch.Draw(activeTexture, leftHand, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, SpriteEffects.None, 0f);
+            if (_walkRow == 3 || _walkRow == 2) // Left or Right
+            {
+                Vector2 sidePos = _walkRow == 3 ? leftHand : rightHand;
+                Vector2 offsetPos = sidePos + new Vector2(_walkRow == 3 ? 8f : -8f, -4f);
+                SpriteEffects swordFlip = weaponFlip ^ SpriteEffects.FlipHorizontally;
+
+                spriteBatch.Draw(activeTexture, offsetPos, weaponSource, Color.LightGray, 0f, weaponOrigin, AxeDrawScale, swordFlip, 0f);
+                spriteBatch.Draw(activeTexture, sidePos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, swordFlip, 0f);
+            }
+            else // Up or Down
+            {
+                Rectangle upDownSource = new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize);
+                spriteBatch.Draw(activeTexture, rightHand, upDownSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+                spriteBatch.Draw(activeTexture, leftHand, upDownSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+            }
         }
         else if (IsShieldActive)
         {
