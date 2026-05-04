@@ -2,6 +2,13 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope.Engine;
 
+/// <summary>
+/// Centralized manager for handling and polling keyboard and mouse input.
+/// </summary>
+/// <remarks>
+/// Based on a standard game loop input polling pattern. By tracking both the current and previous frames' 
+/// input states, it provides the ability to detect discrete edge events (presses and releases) in addition to continuous holds.
+/// </remarks>
 public class InputManager
 {
     public KeyboardState LastKeyboardState { get; private set; }
@@ -62,6 +69,11 @@ public class InputManager
         return CurrentKeyboardState.IsKeyDown(key) && LastKeyboardState.IsKeyUp(key);
     }
 
+    /// <summary>
+    /// Determines whether the input mapped to a specific gameplay action is currently being held down.
+    /// </summary>
+    /// <param name="id">The logical action to check (e.g., Attack, MoveUp).</param>
+    /// <returns><c>true</c> if the mapped key or mouse button is currently down; otherwise, <c>false</c>.</returns>
     public bool IsGameplayKeyDown(KeybindId id)
     {
         GameInputBinding b = KeybindStore.GetBinding(id);
@@ -75,6 +87,11 @@ public class InputManager
         };
     }
 
+    /// <summary>
+    /// Determines whether the input mapped to a specific gameplay action was pressed exactly in this frame.
+    /// </summary>
+    /// <param name="id">The logical action to check (e.g., Dash, Teleport).</param>
+    /// <returns><c>true</c> if the mapped key or mouse button transitioned from up to down this frame; otherwise, <c>false</c>.</returns>
     public bool IsGameplayKeyPress(KeybindId id)
     {
         GameInputBinding b = KeybindStore.GetBinding(id);
@@ -106,8 +123,14 @@ public class InputManager
         _ => false,
     };
 
-    /// <summary>First keyboard key or mouse button that transitioned to down this frame (for rebinding).</summary>
-    /// <remarks>Mouse is checked before keyboard so LMB/RMB/MMB are not lost to incidental key edges on the same frame.</remarks>
+    /// <summary>
+    /// Detects the first new key or mouse button pressed during the current frame. 
+    /// Primarily used in settings menus to capture a new user-defined input binding.
+    /// </summary>
+    /// <remarks>
+    /// Evaluates mouse buttons before keyboard keys to ensure mouse clicks are not lost to incidental key edges on the same frame.
+    /// </remarks>
+    /// <returns>A <see cref="GameInputBinding"/> representing the detected input, or <c>null</c> if no new input was pressed.</returns>
     public GameInputBinding? ConsumeFirstNewBindingPress()
     {
         if (LeftMousePress())

@@ -16,6 +16,14 @@ using Last_Hope.Engine.Pathfinding;
 
 namespace Last_Hope.Engine;
 
+/// <summary>
+/// The central hub of the game engine, responsible for managing the game loop, 
+/// state machine, object lifecycle, and global resources.
+/// </summary>
+/// <remarks>
+/// Implements the Singleton design pattern to provide global access to game systems.
+/// Follows standard MonoGame architectural patterns for Update/Draw delegation and deferred object addition/removal to prevent collection modification during iteration.
+/// </remarks>
 public class GameManager
 {
     private static GameManager? gameManager;
@@ -73,11 +81,16 @@ public class GameManager
     public Effect DeathFade { get; private set; }
     public Effect? CooldownIcon { get; private set; }
 
+    /// <summary>
+    /// Gets the singleton instance of the GameManager.
+    /// </summary>
+    /// <returns>The global <see cref="GameManager"/> instance.</returns>
     public static GameManager GetGameManager()
     {
         gameManager ??= new GameManager();
         return gameManager;
     }
+
     public GameManager()
     {
         _gameObjects = new List<GameObject>();
@@ -93,6 +106,12 @@ public class GameManager
         SelectedItemSlot = 0;
     }
 
+    /// <summary>
+    /// Initializes core engine references and graphics resources.
+    /// </summary>
+    /// <param name="content">The MonoGame content manager.</param>
+    /// <param name="game">The main Game instance.</param>
+    /// <param name="player">The initial player character, if any.</param>
     public void Initialize(ContentManager content, Game game, BasePlayer? player)
     {
         Game = game;
@@ -102,6 +121,10 @@ public class GameManager
         Pixel.SetData(new[] { Color.White });
     }
 
+    /// <summary>
+    /// Loads global assets and triggers loading for all currently registered GameObjects.
+    /// </summary>
+    /// <param name="content">The MonoGame content manager.</param>
     public void Load(ContentManager content)
     {
         foreach (GameObject gameObject in _gameObjects)
@@ -126,6 +149,13 @@ public class GameManager
         }
     }
 
+    /// <summary>
+    /// Measures the dimensions of a given string using the appropriate active font.
+    /// </summary>
+    /// <param name="fallback">The SpriteFont to use if a Bitmap font is not loaded.</param>
+    /// <param name="text">The string to measure.</param>
+    /// <param name="scale">The scaling factor applied to the text.</param>
+    /// <returns>A Vector2 representing the width and height of the text block.</returns>
     public Vector2 MeasureUiString(SpriteFont? fallback, string text, float scale)
     {
         if (string.IsNullOrEmpty(text))
@@ -137,6 +167,9 @@ public class GameManager
         return fallback.MeasureString(text) * scale;
     }
 
+    /// <summary>
+    /// Draws a string to the screen, automatically handling the choice between Bitmap and Sprite fonts.
+    /// </summary>
     public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effects, float layerDepth)
     {
         if (string.IsNullOrEmpty(text))
@@ -151,12 +184,21 @@ public class GameManager
             spriteBatch.DrawString(fallback, text, position, color, rotation, origin, scale, effects, layerDepth);
     }
 
+    /// <summary>
+    /// Draws a string to the screen, automatically handling the choice between Bitmap and Sprite fonts.
+    /// </summary>
     public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color, float scale) =>
         DrawUiString(spriteBatch, fallback, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
 
+    /// <summary>
+    /// Draws a string to the screen, automatically handling the choice between Bitmap and Sprite fonts.
+    /// </summary>
     public void DrawUiString(SpriteBatch spriteBatch, SpriteFont? fallback, string text, Vector2 position, Color color) =>
         DrawUiString(spriteBatch, fallback, text, position, color, 1f);
 
+    /// <summary>
+    /// Dispatches input handling to all active GameObjects.
+    /// </summary>
     public void HandleInput(InputManager inputManager)
     {
         foreach (GameObject gameObject in _gameObjects)
@@ -165,9 +207,15 @@ public class GameManager
         }
     }
 
+    /// <summary>
+    /// Performs a naive O(N^2) broad-phase collision check across all active GameObjects.
+    /// </summary>
+    /// <remarks>
+    /// Based on a standard brute-force collision checking approach. 
+    /// Iterates through all unique pairs of objects and delegates intersection testing to their colliders.
+    /// </remarks>
     public void CheckCollision()
     {
-        // Checks once for every pair of 2 GameObjects if the collide.
         for (int i = 0; i < _gameObjects.Count; i++)
         {
             for (int j = i + 1; j < _gameObjects.Count; j++)
@@ -182,6 +230,15 @@ public class GameManager
 
     }
 
+    /// <summary>
+    /// Finds all GameObjects within a specified radius from a given center point.
+    /// </summary>
+    /// <param name="center">The origin point of the search.</param>
+    /// <param name="radius">The maximum distance from the center.</param>
+    /// <returns>A list of objects that fall within the radius.</returns>
+    /// <remarks>
+    /// Uses squared distance comparisons to avoid expensive square root operations, a common optimization in game loops.
+    /// </remarks>
     public List<GameObject> GetObjectsInRadius(Vector2 center, float radius)
     {
         List<GameObject> objectsInRadius = new List<GameObject>();
@@ -200,7 +257,13 @@ public class GameManager
         return objectsInRadius;
     }
 
-
+    /// <summary>
+    /// The main update loop for the game engine. Routes logic based on the current <see cref="GameState"/>.
+    /// </summary>
+    /// <param name="gameTime">Snapshot of the game's timing state.</param>
+    /// <remarks>
+    /// Operates conceptually as a Finite State Machine (FSM), delegating specific update logic to the <see cref="Menu"/> or active game systems.
+    /// </remarks>
     public void Update(GameTime gameTime)
     {
         InputManager.Update();
@@ -246,6 +309,12 @@ public class GameManager
             Menu.ReleasePausedMenuGum();
     }
 
+    /// <summary>
+    /// The main draw loop for the game engine. Routes rendering based on the current <see cref="GameState"/>.
+    /// </summary>
+    /// <param name="gameTime">Snapshot of the game's timing state.</param>
+    /// <param name="spriteBatch">The SpriteBatch used for drawing 2D textures.</param>
+    /// <param name="transformMatrix">Optional camera transform matrix applied to rendering.</param>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         switch (_state)
@@ -292,6 +361,10 @@ public class GameManager
         _toBeAdded.Add(gameObject);
     }
 
+    /// <summary>
+    /// Evaluates if a One-Up item is already present in the world, in the player's inventory, or active.
+    /// </summary>
+    /// <returns><c>true</c> if a One-Up is active or available; otherwise, <c>false</c>.</returns>
     private bool IsOneUpAlreadyActive()
     {
         if (HasUsedOneUp) return true;
@@ -322,9 +395,12 @@ public class GameManager
     }
 
     /// <summary>
-    /// Remove GameObject from the GameManager.
-    /// The GameObject will be removed at the start of the next Update step and its Destroy() mehtod will be called.
+    /// Removes a GameObject from the active simulation.
+    /// </summary>
+    /// <remarks>
+    /// The GameObject will be removed at the start of the next Update step and its Destroy() method will be called.
     /// After that the object will no longer receive any updates.
+    /// Handles dropping random items when an enemy object is destroyed.
     /// </summary>
     /// <param name="gameObject"> The GameObject to Remove. </param>
     public void RemoveGameObject(GameObject gameObject)
@@ -377,6 +453,10 @@ public class GameManager
         SelectedItemSlot = Math.Clamp(slotIndex, 0, 1);
     }
 
+    /// <summary>
+    /// Resets the engine state for a new game run. 
+    /// Clears all game objects, resets score and inventory, and spawns a fresh player character.
+    /// </summary>
     public void ResetGame()
     {
         _gameObjects.Clear();
@@ -417,6 +497,9 @@ public class GameManager
     /// <summary>
     /// First walkable nav tile (from map center outward) whose footprint does not overlap static geometry.
     /// </summary>
+    /// <remarks>
+    /// Uses a concentric/spiral search algorithm to find the nearest valid grid cell starting from the center.
+    /// </remarks>
     private bool TryFindSpawnTopLeft(out Vector2 spawnTopLeft)
     {
         spawnTopLeft = Vector2.Zero;
@@ -478,6 +561,10 @@ public class GameManager
         return new Vector2(WorldWidth / 2f - 48f, WorldHeight / 2f - 48f);
     }
 
+    /// <summary>
+    /// Instantiates a new player character based on the user's selection from the title screen.
+    /// </summary>
+    /// <param name="spawnPosition">The world-space coordinates where the player should start.</param>
     public BasePlayer CreatePlayerFromSelection(Vector2 spawnPosition)
     {
         if (!PlayableCharacterRegistry.TryGet(SelectedCharacter, out _))
@@ -485,6 +572,10 @@ public class GameManager
         return PlayableCharacterRegistry.Create(SelectedCharacter, spawnPosition);
     }
 
+    /// <summary>
+    /// Transforms the screen-space mouse coordinates into world-space coordinates using the active Camera.
+    /// </summary>
+    /// <returns>A Vector2 representing the mouse position in the game world.</returns>
     public Vector2 GetWorldMousePosition()
     {
         Vector2 screenMousePos = InputManager.CurrentMouseState.Position.ToVector2();
