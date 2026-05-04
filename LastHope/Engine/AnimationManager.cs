@@ -3,24 +3,24 @@ using Microsoft.Xna.Framework;
 namespace Last_Hope.Engine;
 internal class AnimationManager
 {
-    int numFrames;
-    int numColumns;
-    Vector2 size;
+    private readonly int numFrames;
+    private readonly int numColumns;
+    private readonly Vector2 size;
 
-    int counter;
-    int activeFrame;
-    int interval; // speed
+    private int counter;
+    private int activeFrame;
+    private readonly int interval; // speed
 
-    int rowPos;
-    int colPos;
+    private int rowPos;
+    private int colPos;
 
-    bool loop;
+    private readonly bool loop;
     public bool isFinished;
     public int ActiveFrame => activeFrame;
     public float FrameProgress => (float)counter / interval;
 
-    int offsetX;
-    int offsetY;
+    private readonly int offsetX;
+    private readonly int offsetY;
 
 
     public AnimationManager(int numFrames, int numColumns, Vector2 size, int interval = 30, bool loop = false, int offsetX = 0, int offsetY = 0)
