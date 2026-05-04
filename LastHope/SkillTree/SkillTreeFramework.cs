@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Text.Json;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.SkillTree
 {
@@ -164,16 +162,7 @@ namespace Last_Hope.SkillTree
             var parentConnections = _data.Connections.Where(c => c.ToNodeId == nodeId).ToList();
             if (parentConnections.Count > 0)
             {
-                bool hasActiveParent = false;
-                foreach (var conn in parentConnections)
-                {
-                    if (GetAllocatedPoints(conn.FromNodeId, includePending) > 0)
-                    {
-                        hasActiveParent = true;
-                        break;
-                    }
-                }
-                if (!hasActiveParent)
+                if (!parentConnections.Any(conn => GetAllocatedPoints(conn.FromNodeId, includePending) > 0))
                 {
                     return false;
                 }
@@ -188,15 +177,7 @@ namespace Last_Hope.SkillTree
 
         private bool HasOtherAllocatedNodeWithTag(string tag, string excludeNodeId, bool includePending)
         {
-            foreach (var n in _data.Nodes)
-            {
-                if (n.Id == excludeNodeId) continue;
-                
-                if (n.Tags.Contains(tag) && GetAllocatedPoints(n.Id, includePending) > 0)
-                    return true;
-            }
-            
-            return false;
+            return _data.Nodes.Any(n => n.Id != excludeNodeId && n.Tags.Contains(tag) && GetAllocatedPoints(n.Id, includePending) > 0);
         }
 
         public bool AddPendingPoint(string nodeId)
@@ -297,112 +278,6 @@ namespace Last_Hope.SkillTree
         }
         
         public ClassSkillTreeData GetData() => _data;
-    }
-
-    // ==========================================
-    // 5. PRESENTATION LAYER (UI Renderer Stub)
-    // ==========================================
-    
-    public class SkillTreeUIRenderer
-    {
-        private BaseSkillTree _activeTree;
-        private NodeShape _currentShapeOverride;
-
-        public void Initialize(BaseSkillTree tree)
-        {
-            _activeTree = tree;
-            _currentShapeOverride = tree.GetData().Theme.DefaultShape;
-        }
-
-        public void ToggleNodeShape()
-        {
-            _currentShapeOverride = _currentShapeOverride == NodeShape.Circle ? NodeShape.Square : NodeShape.Circle;
-        }
-
-        public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
-        {
-            if (_activeTree == null) return;
-            
-            var data = _activeTree.GetData();
-
-            // 1. Draw Connections (Lines)
-            foreach (var conn in data.Connections)
-            {
-                var fromState = _activeTree.GetNodeState(conn.FromNodeId);
-                var toState = _activeTree.GetNodeState(conn.ToNodeId);
-                
-                bool isPathActive = fromState == NodeState.Maxed && toState != NodeState.Locked;
-                Color lineColor = isPathActive ? ParseHex(data.Theme.SecondaryColorHex) : Color.DarkGray * 0.5f;
-                
-                // TODO: Draw line between node UI coordinates with `lineColor`
-            }
-
-            // 2. Draw Nodes
-            foreach (var node in data.Nodes)
-            {
-                NodeState state = _activeTree.GetNodeState(node.Id);
-                int pts = _activeTree.GetAllocatedPoints(node.Id);
-                float fillPercentage = (float)pts / node.MaxPoints;
-                
-                // Theming
-                Color baseColor = ParseHex(data.Theme.PrimaryColorHex);
-                Color renderColor = state switch
-                {
-                    NodeState.Locked => Color.DarkSlateGray,
-                    NodeState.Available => Color.LightGray,
-                    NodeState.Partial => Color.Lerp(Color.LightGray, baseColor, fillPercentage),
-                    NodeState.Maxed => baseColor,
-                    _ => Color.White
-                };
-
-                // TODO: Draw _currentShapeOverride at (node.GridX, node.GridY) * Spacing 
-                // Draw progress slice using `fillPercentage` (e.g., pie fill for circle, bottom-to-top fill for square)
-            }
-        }
-
-        // Helper for theme hex strings
-        private Color ParseHex(string hex)
-        {
-            hex = hex.Replace("#", "");
-            byte r = Convert.ToByte(hex.Substring(0, 2), 16);
-            byte g = Convert.ToByte(hex.Substring(2, 2), 16);
-            byte b = Convert.ToByte(hex.Substring(4, 2), 16);
-            return new Color(r, g, b);
-        }
-    }
-    
-    // ==========================================
-    // 6. CONTROLLER NAVIGATION SYSTEM
-    // ==========================================
-    /// <summary>
-    /// Helper class to resolve Gamepad D-PAD / Left Stick inputs.
-    /// By relying on GridX and GridY, we construct a virtual 2D grid of nodes.
-    /// </summary>
-    public class ControllerGridNavigator
-    {
-        public string FindNearestNode(ClassSkillTreeData data, string currentNodeId, Vector2 inputDirection)
-        {
-            var current = data.Nodes.FirstOrDefault(n => n.Id == currentNodeId);
-            if (current == null) return null;
-
-            SkillNodeData bestMatch = null;
-            float closestDist = float.MaxValue;
-
-            foreach (var node in data.Nodes)
-            {
-                if (node.Id == currentNodeId) continue;
-                
-                Vector2 dirToNode = new Vector2(node.GridX - current.GridX, node.GridY - current.GridY);
-                if (dirToNode.LengthSquared() == 0) continue;
-
-                // Check if the node is broadly in the direction of the analog stick
-                if (Vector2.Dot(Vector2.Normalize(dirToNode), inputDirection) > 0.7f)
-                {
-                    if (dirToNode.Length() < closestDist) { closestDist = dirToNode.Length(); bestMatch = node; }
-                }
-            }
-            return bestMatch?.Id;
-        }
     }
 
     // ==========================================
