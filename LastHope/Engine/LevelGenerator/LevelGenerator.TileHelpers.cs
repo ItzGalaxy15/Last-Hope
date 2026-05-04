@@ -5,11 +5,6 @@ namespace Last_Hope.Engine.LevelGenerator
     internal partial class LevelGenerator
     {
         // ── Terrain sheet helpers ────────────────────────────────────
-        private int GetTerrainTileIndexOneBased(int row, int column)
-        {
-            return GetTileIndexOneBased(row, column, _terrainColumns, _terrainRows);
-        }
-
         private List<int> GetTerrainTileIndicesForRowsOneBased(params int[] rowNumbers)
         {
             return GetTileIndicesForRowsOneBased(_terrainColumns, _terrainRows, rowNumbers);
@@ -19,11 +14,6 @@ namespace Last_Hope.Engine.LevelGenerator
         private int GetDecorationTileIndexOneBased(int row, int column)
         {
             return GetTileIndexOneBased(row, column, _decorationColumns, _decorationRows);
-        }
-
-        private List<int> GetDecorationTileIndicesForRowsOneBased(params int[] rowNumbers)
-        {
-            return GetTileIndicesForRowsOneBased(_decorationColumns, _decorationRows, rowNumbers);
         }
 
         // ── Shared implementations ───────────────────────────────────

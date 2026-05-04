@@ -18,6 +18,10 @@ namespace Last_Hope.Engine.LevelGenerator
         private bool[,,]? _compatibility;
 
         // ── Build compatibility table ────────────────────────────────
+        // WFC algorithm — original C# implementation by Maxim Gumin:
+        //   https://github.com/mxgmn/WaveFunctionCollapse
+        // Plain-English walkthrough (Robert Heaton):
+        //   https://robertheaton.com/2018/12/17/wavefunction-collapse-algorithm/
         // For every pair of tiles and every direction, compare the
         // pixels along the shared edge. If the average colour
         // difference is within EdgeTolerance the pair is marked
@@ -157,6 +161,8 @@ namespace Last_Hope.Engine.LevelGenerator
         }
 
         // ── Entropy selection ────────────────────────────────────────
+        // Tie-breaking uses reservoir sampling (Algorithm R):
+        //   https://en.wikipedia.org/wiki/Reservoir_sampling
         // Scans for the cell with the smallest number of remaining
         // options (> 1).  Ties are broken via reservoir sampling so
         // the result is uniformly random among equals.

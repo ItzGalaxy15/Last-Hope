@@ -41,12 +41,6 @@ namespace Last_Hope.Engine.LevelGenerator
         public float PebbleChance { get; set; } = 0.18f;
         public float BunnyChance { get; set; } = 0.015f;
         public float SnailChance { get; set; } = 0.015f;
-        public float DecorationChance
-        {
-            get => WeedChance;
-            set => WeedChance = value;
-        }
-
         // ── Constructor ──────────────────────────────────────────────
         public LevelGenerator(int tileSize = 32, int? seed = null)
         {
@@ -92,24 +86,6 @@ namespace Last_Hope.Engine.LevelGenerator
 
             _weights = null;
             BuildCompatibility();
-        }
-
-        // ── Tile weights ─────────────────────────────────────────────
-        // Optional per-terrain-tile weights so some tiles show up more
-        // often during WFC selection and the random fallback.
-        public void SetTileWeights(IReadOnlyList<float> weights)
-        {
-            if (_terrainTiles.Count == 0)
-                throw new InvalidOperationException("Call LoadSpriteSheets before setting weights.");
-
-            if (weights.Count != _terrainTiles.Count)
-                throw new ArgumentException($"Expected {_terrainTiles.Count} weights, got {weights.Count}.", nameof(weights));
-
-            _weights = new float[weights.Count];
-            for (int i = 0; i < weights.Count; i++)
-            {
-                _weights[i] = Math.Max(0f, weights[i]);
-            }
         }
 
         // ── Map generation ───────────────────────────────────────────

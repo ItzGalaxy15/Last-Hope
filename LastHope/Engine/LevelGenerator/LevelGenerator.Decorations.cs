@@ -7,6 +7,8 @@ namespace Last_Hope.Engine.LevelGenerator
 {
     internal partial class LevelGenerator
     {
+        // Procedural decoration scatter — random placement with proximity spacing:
+        //   https://github.com/antfarmar/Unity-2D-Roguelike-Tutorial/blob/master/Assets/Scripts/BoardManager.cs
         private void ApplyDecorations(int[,] baseMap, int[,] overlayMap)
         {
             // Grass is rows 1 and 3 of the terrain sheet; stone walkways
@@ -133,37 +135,16 @@ namespace Last_Hope.Engine.LevelGenerator
 
         // ── Animated decoration helpers ──────────────────────────────
 
-        // Creates an AnimationManager for a randomly chosen animation
-        // range and registers it so the Draw loop can render it.
         private bool TryAddAnimatedDecoration(List<(int firstFrame, int lastFrame)> ranges, int x, int y)
         {
             if (ranges.Count == 0 || _decorationColumns <= 0)
                 return false;
 
-            (int firstFrame, int lastFrame) range = ranges[_random.Next(ranges.Count)];
-            int frameCount = (range.lastFrame - range.firstFrame) + 1;
-            if (frameCount <= 0)
-                return false;
-
-            int startRow = range.firstFrame / _decorationColumns;
-            int startColumn = range.firstFrame % _decorationColumns;
-
-            int interval = _random.Next(10, 20);
-            AnimationManager animation = new AnimationManager(
-                frameCount,
-                _decorationColumns,
-                new Vector2(TileSize, TileSize),
-                interval,
-                true,
-                startColumn * TileSize,
-                startRow * TileSize);
-
-            _animatedDecorations.Add(new AnimatedDecoration(x, y, animation));
-            return true;
+            return CreateAndRegisterAnimation(ranges[_random.Next(ranges.Count)], x, y);
         }
 
-        // Same as above but ensures each animation range is only used
-        // once — prevents duplicate snail sprites on the map.
+        // Ensures each animation range is only used once — prevents
+        // duplicate snail sprites on the map.
         private bool TryAddUniqueAnimatedDecoration(List<(int firstFrame, int lastFrame)> ranges, HashSet<int> usedStartFrames, int x, int y)
         {
             List<(int firstFrame, int lastFrame)> availableRanges = new List<(int firstFrame, int lastFrame)>();
@@ -177,6 +158,15 @@ namespace Last_Hope.Engine.LevelGenerator
                 return false;
 
             (int firstFrame, int lastFrame) range = availableRanges[_random.Next(availableRanges.Count)];
+            if (!CreateAndRegisterAnimation(range, x, y))
+                return false;
+
+            usedStartFrames.Add(range.firstFrame);
+            return true;
+        }
+
+        private bool CreateAndRegisterAnimation((int firstFrame, int lastFrame) range, int x, int y)
+        {
             int frameCount = (range.lastFrame - range.firstFrame) + 1;
             if (frameCount <= 0)
                 return false;
@@ -195,7 +185,6 @@ namespace Last_Hope.Engine.LevelGenerator
                 startRow * TileSize);
 
             _animatedDecorations.Add(new AnimatedDecoration(x, y, animation));
-            usedStartFrames.Add(range.firstFrame);
             return true;
         }
 
