@@ -18,7 +18,7 @@ namespace Last_Hope.Engine;
 
 public class GameManager
 {
-    private static GameManager gameManager;
+    private static GameManager? gameManager;
 
     public List<GameObject> _gameObjects;
     public List<GameObject> _toBeRemoved;
@@ -42,7 +42,6 @@ public class GameManager
 
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
-    //public Camera Camera { get; private set; }
 
     // --- Configurable Item Drop Chances ---
     public readonly Dictionary<ItemType, double> ItemDropChances = new Dictionary<ItemType, double>
@@ -76,8 +75,7 @@ public class GameManager
 
     public static GameManager GetGameManager()
     {
-        if (gameManager == null)
-            gameManager = new GameManager();
+        gameManager ??= new GameManager();
         return gameManager;
     }
     public GameManager()
@@ -87,7 +85,6 @@ public class GameManager
         _toBeAdded = new List<GameObject>();
         InputManager = new InputManager();
         RNG = new Random();
-        // Camera = new Camera();
 
         Menu = new Menu();
         EnemySpawner = new EnemySpawner();
@@ -187,19 +184,20 @@ public class GameManager
 
     public List<GameObject> GetObjectsInRadius(Vector2 center, float radius)
     {
-        List<GameObject> enemies = new List<GameObject>();
+        List<GameObject> objectsInRadius = new List<GameObject>();
+        float radiusSquared = radius * radius;
         foreach (GameObject e in _gameObjects)
         {
             if (e.GetCollider() == null) continue;
 
             Vector2 objCenter = e.GetCollider().GetBoundingBox().Center.ToVector2();
 
-            if (Vector2.Distance(center, objCenter) <= radius)
+            if (Vector2.DistanceSquared(center, objCenter) <= radiusSquared)
             {
-                enemies.Add(e);
+                objectsInRadius.Add(e);
             }
         }
-        return enemies;
+        return objectsInRadius;
     }
 
 
