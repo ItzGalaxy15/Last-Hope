@@ -68,10 +68,11 @@ public readonly struct GameInputBinding : IEquatable<GameInputBinding>
 
     public override int GetHashCode() => HashCode.Combine(Kind, Key, Mouse);
 
+    public override string ToString() => Format(this);
+
     /// <summary>Short label for settings UI (e.g. <c>LMB</c>, <c>RMB</c>, key names).</summary>
     public static string Format(GameInputBinding b) => b.Kind switch
     {
-        BindingKind.None => "(none)",
         BindingKind.Keyboard => FormatKey(b.Key),
         BindingKind.Mouse => b.Mouse switch
         {
@@ -156,13 +157,7 @@ public static class KeybindStore
 
     public static void SetBinding(KeybindId id, GameInputBinding binding)
     {
-        if (binding.IsUnbound)
-        {
-            Current[id] = default;
-            return;
-        }
-
-        Current[id] = binding;
+        Current[id] = binding.IsUnbound ? default : binding;
     }
 
     public static void ResetToDefaults()
