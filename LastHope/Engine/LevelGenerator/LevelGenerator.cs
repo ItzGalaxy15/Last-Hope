@@ -5,9 +5,14 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Engine.LevelGenerator
 {
+    /// <summary>
+    ///  implemented the Wave Function Collapse algorithm as originally published by Maxim Gumin
+    /// (github.com/mxgmn/WaveFunctionCollapse, MIT License). The algorithm structure
+    ///  observe, collapse, propagate, retry — follows his design. The implementation is my own,
+    /// adapted for MonoGame with pixel-based edge compatibility instead of XML adjacency rules
+    /// </summary>
     internal partial class LevelGenerator
     {
-        // Direction constants – shared by WFC propagation and edge comparison.
         private const int Up = 0;
         private const int Right = 1;
         private const int Down = 2;
@@ -51,11 +56,6 @@ namespace Last_Hope.Engine.LevelGenerator
             _animatedDecorations = new List<AnimatedDecoration>();
         }
 
-        // ── Sprite-sheet loading ─────────────────────────────────────
-        // Slices both sheets into TileSize × TileSize source rectangles.
-        // The terrain sheet feeds the WFC solver (and drives the
-        // compatibility table), the decorations sheet feeds the overlay
-        // layer — weed, rocks, pebbles, snails, bunnies.
         public void LoadSpriteSheets(Texture2D terrainSheet, Texture2D decorationsSheet, Texture2D villageSheet, int terrainUsableRows = 5)
         {
             _terrainSheet = terrainSheet;
@@ -119,7 +119,7 @@ namespace Last_Hope.Engine.LevelGenerator
             }
 
             // WFC only places grass tiles — stone is reserved for walkways.
-            List<int> grassTiles = GetTerrainTileIndicesForRowsOneBased(1, 3);
+            List<int> grassTiles = GetTerrainTileIndicesForRows(0, 2);
             HashSet<int> grassSet = new HashSet<int>(grassTiles);
 
             if (!TryGenerateWfc(_map, grassSet))
@@ -136,11 +136,6 @@ namespace Last_Hope.Engine.LevelGenerator
             ApplyFlowerField(_map);
             ApplyDecorations(_map, _overlayMap);
         }
-
-        // ── Drawing ──────────────────────────────────────────────────
-        // Renders the base tile layer (terrain sheet), then the overlay
-        // layer (decorations sheet), and finally any animated decorations
-        // on top (also decorations sheet).
         public void Draw(SpriteBatch spriteBatch, Vector2 origin)
         {
             if (_terrainSheet == null || _decorationsSheet == null || _map == null)

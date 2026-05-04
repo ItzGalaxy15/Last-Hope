@@ -7,26 +7,8 @@ namespace Last_Hope.Engine.LevelGenerator
 {
     internal partial class LevelGenerator
     {
-        //1. All tiles available → TryGenerateWfc (the setup at the top where it fills everything with true)
-        //2. Find lowest entropy → TryFindLowestEntropyCell
-        //3. Check weights + pick a tile → SelectTileFromCell
-        //4. Lock it in → CollapseCellToTile
-        //5. Ripple outward + remove incompatible → Propagate which uses GetNeighbor to find the 4 neighbours
-        //6. Repeat → the while(true) loop back in TryGenerateWfc
-        //7. If contradiction, restart → the retry loop in TryGenerateWfc
-        //8. If all retries fail → FillRandomFallback
         private bool[,,]? _compatibility;
 
-        // ── Build compatibility table ────────────────────────────────
-        // WFC algorithm — original C# implementation by Maxim Gumin:
-        //   https://github.com/mxgmn/WaveFunctionCollapse
-        // Plain-English walkthrough (Robert Heaton):
-        //   https://robertheaton.com/2018/12/17/wavefunction-collapse-algorithm/
-        // For every pair of tiles and every direction, compare the
-        // pixels along the shared edge. If the average colour
-        // difference is within EdgeTolerance the pair is marked
-        // compatible.  Each tile is guaranteed at least 4 neighbours
-        // per direction so the solver never gets stuck immediately.
         private void BuildCompatibility()
         {
             if (_terrainSheet == null)
@@ -88,9 +70,7 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
-        // ── WFC solver ───────────────────────────────────────────────
-        // allowedTiles restricts which tiles WFC can place.
-        // Passing only grass tiles here ensures stone never appears as a base tile.
+        // Source: https://github.com/mxgmn/WaveFunctionCollapse
         private bool TryGenerateWfc(int[,] outputMap, HashSet<int> allowedTiles)
         {
             if (_compatibility == null)
@@ -159,13 +139,7 @@ namespace Last_Hope.Engine.LevelGenerator
 
             return false;
         }
-
-        // ── Entropy selection ────────────────────────────────────────
-        // Tie-breaking uses reservoir sampling (Algorithm R):
-        //   https://en.wikipedia.org/wiki/Reservoir_sampling
-        // Scans for the cell with the smallest number of remaining
-        // options (> 1).  Ties are broken via reservoir sampling so
-        // the result is uniformly random among equals.
+        // Source: https://github.com/mxgmn/WaveFunctionCollapse but dont use noise additon.
         private bool TryFindLowestEntropyCell(int[,] optionCount, out int resultX, out int resultY)
         {
             int width = optionCount.GetLength(0);
@@ -262,14 +236,8 @@ namespace Last_Hope.Engine.LevelGenerator
 
             optionCount[x, y] = 1;
         }
-
-        // ── Constraint propagation ───────────────────────────────────
-        // BFS outward from the collapsed cell.  For each neighbour,
-        // remove any tile that is no longer supported by the current
-        // cell's remaining options.  If a neighbour changes, enqueue
-        // it so its own neighbours get checked too.
-        // Returns false if any cell ends up with zero options
-        // (contradiction).
+        
+        // Source: https://github.com/BorisTheBrave/DeBroglie/blob/master/DeBroglie/Wfc/Ac3PatternModelConstraint.cs
         private bool Propagate(bool[,,] possible, int[,] optionCount, int startX, int startY, int width, int height, int tileCount)
         {
             if (_compatibility == null)

@@ -7,33 +7,34 @@ namespace Last_Hope.Engine.LevelGenerator
 {
     internal partial class LevelGenerator
     {
-        // Procedural decoration scatter — random placement with proximity spacing:
-        //   https://github.com/antfarmar/Unity-2D-Roguelike-Tutorial/blob/master/Assets/Scripts/BoardManager.cs
+        // Logic: Weighted Random Distribution with 8-Neighbor Proximity Guard.
+        // Implementation: Scans base map for valid terrain and enforces minimum spacing to prevent clumping.
+        // Note: Unique variant tracking (usedSnailStartFrames) ensures rare decorations don't duplicate.
         private void ApplyDecorations(int[,] baseMap, int[,] overlayMap)
         {
             // Grass is rows 1 and 3 of the terrain sheet; stone walkways
             // live on rows 2 and 4. Decorations only land on grass.
-            HashSet<int> grassSet = new HashSet<int>(GetTerrainTileIndicesForRowsOneBased(1, 3));
+            HashSet<int> grassSet = new HashSet<int>(GetTerrainTileIndicesForRows(0, 2));
 
             // All decoration indices below are into the decorations sheet.
-            int weedTile = GetDecorationTileIndexOneBased(1, 1);
-            int rockTile = GetDecorationTileIndexOneBased(1, 2);
-            int pebble1 = GetDecorationTileIndexOneBased(1, 3);
-            int pebble2 = GetDecorationTileIndexOneBased(1, 4);
+            int weedTile = GetDecorationTileIndex(0, 0);
+            int rockTile = GetDecorationTileIndex(0, 1);
+            int pebble1 = GetDecorationTileIndex(0, 2);
+            int pebble2 = GetDecorationTileIndex(0, 3);
 
             // Bunny animations live on rows 2-3 cols 5-8 of decorations.png
             // (two 4-frame animations, duplicates allowed on the map).
             List<(int firstFrame, int lastFrame)> bunnyRanges = new List<(int firstFrame, int lastFrame)>();
-            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndexOneBased(2, 5), GetDecorationTileIndexOneBased(2, 8));
-            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndexOneBased(3, 5), GetDecorationTileIndexOneBased(3, 8));
+            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndex(1, 4), GetDecorationTileIndex(1, 7));
+            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndex(2, 4), GetDecorationTileIndex(2, 7));
 
             // Snail animations live on rows 2-5 cols 1-4 of decorations.png
             // (four 4-frame animations, each variant only appears once).
             List<(int firstFrame, int lastFrame)> snailRanges = new List<(int firstFrame, int lastFrame)>();
-            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(2, 1), GetDecorationTileIndexOneBased(2, 4));
-            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(3, 1), GetDecorationTileIndexOneBased(3, 4));
-            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(4, 1), GetDecorationTileIndexOneBased(4, 4));
-            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(5, 1), GetDecorationTileIndexOneBased(5, 4));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndex(1, 0), GetDecorationTileIndex(1, 3));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndex(2, 0), GetDecorationTileIndex(2, 3));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndex(3, 0), GetDecorationTileIndex(3, 3));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndex(4, 0), GetDecorationTileIndex(4, 3));
 
             List<int> pebbleTiles = new List<int>();
             if (pebble1 >= 0)
@@ -165,6 +166,8 @@ namespace Last_Hope.Engine.LevelGenerator
             return true;
         }
 
+        // Logic: Linear Index to Grid Coordinate Translation.
+        // Math: Calculates row/column by dividing index by sheet width; passes offsets to AnimationManager.
         private bool CreateAndRegisterAnimation((int firstFrame, int lastFrame) range, int x, int y)
         {
             int frameCount = (range.lastFrame - range.firstFrame) + 1;

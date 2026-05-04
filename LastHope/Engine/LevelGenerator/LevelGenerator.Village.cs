@@ -39,6 +39,9 @@ namespace Last_Hope.Engine.LevelGenerator
 
         // ── Generation ───────────────────────────────────────────
 
+        // Logic: Player-Centric Grid Template.
+        // Implementation: Centers a fixed 2x3 building cluster on the player's spawn coordinates.
+        // Layout: Enforces a horizontal "Main Street" (StreetWidthTiles) and vertical alleys (BuildingGapTiles).
         private void GenerateVillage()
         {
             Vector2 playerPosition = new Vector2(
@@ -137,7 +140,7 @@ namespace Last_Hope.Engine.LevelGenerator
             if (_map == null)
                 return;
 
-            List<int> stoneTiles = GetTerrainTileIndicesForRowsOneBased(2, 4);
+            List<int> stoneTiles = GetTerrainTileIndicesForRows(1, 3);
             if (stoneTiles.Count == 0)
                 return;
 
@@ -209,16 +212,20 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
+        // Logic: Manual Hitbox Adjustments.
+        // Note: Houses use a Y-offset to allow the player to walk "behind" the roof/top of the building
+        // (pseudo-depth/Z-order) while colliding with the walls.
+        private static readonly Dictionary<int, (int OffsetY, int HeightPx)> _houseCollisionData
+            = new Dictionary<int, (int, int)>
+            {
+                { 2, (20 * HouseRenderScale, 44 * HouseRenderScale) },
+            };
+
         private (int offsetY, int heightPx) GetHouseCollisionData(int houseType)
         {
-            return houseType switch
-            {
-                // Type 2: roof starts at 20px, height is 44px visible body
-                2 => (20 * HouseRenderScale, 44 * HouseRenderScale),
-
-                // default houses
-                _ => (0, HouseRenderPx)
-            };
+            if (_houseCollisionData.TryGetValue(houseType, out var data))
+                return data;
+            return (0, HouseRenderPx);
         }
 
         // ── Colliders ────────────────────────────────────────────
