@@ -276,7 +276,7 @@ public class Warrior : BasePlayer
     public void HitFrontalArea(Vector2 direction, float range, int damage, float stunDuration)
     {
         var gm = GameManager.GetGameManager();
-        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
 
         foreach (var obj in gm._gameObjects.ToList())
         {
@@ -356,7 +356,7 @@ public class Warrior : BasePlayer
     public void HitRadialArea(float radius, int damage, float stunDuration)
     {
         var gm = GameManager.GetGameManager();
-        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
 
         foreach (var obj in gm._gameObjects.ToList())
         {
@@ -383,7 +383,7 @@ public class Warrior : BasePlayer
 
     public Vector2 GetCastAnchor()
     {
-        return Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
+        return _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
     }
 
     public void ResetAttackTimer()
@@ -524,7 +524,7 @@ public class Warrior : BasePlayer
             drawColor = Color.Lerp(drawColor, Color.LimeGreen, 0.5f);
         }
         
-        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         Vector2 weaponOrigin = new Vector2(FrameSize * 0.5f, FrameSize * 0.5f);
         
         // Dynamic horizontal offset from the center of the Warrior

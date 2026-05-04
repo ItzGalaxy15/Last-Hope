@@ -30,7 +30,7 @@ public abstract class BasePlayer : GameObject
     public int ExtraLives { get; protected set; } = 0;
 
     // Teleportation parameters
-    private const float TeleportMinTileDistance = 60f;
+    private const float TeleportMinTileDistance = 20f;
 
     // Level EXP
     public int _Level { get; protected set; }
@@ -151,8 +151,6 @@ public abstract class BasePlayer : GameObject
 
         ApplyDashOffset(current - start);
     }
-
-    private const float TeleportMinTileDistance = 20f;
 
     protected bool Teleport()
     {
