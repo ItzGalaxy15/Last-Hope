@@ -6,23 +6,35 @@ using System.Text.Json;
 
 namespace Last_Hope.SkillTree
 {
-    // ==========================================
-    // 1. ENUMS & CONSTANTS
-    // ==========================================
+
+    /// <summary>
+    /// Represents the tier or importance of a skill node.
+    /// </summary>
     public enum SkillNodeType { Standard = 0, Minor = 1, Major = 2 }
+    
+    /// <summary>
+    /// Defines the visual shape of the skill node in the UI.
+    /// </summary>
     public enum NodeShape { Circle, Square }
+    
+    /// <summary>
+    /// Represents the current unlock and allocation state of a skill node for a specific player.
+    /// </summary>
     public enum NodeState { Locked, Available, Partial, Maxed }
 
-    // ==========================================
-    // 2. DATA LAYER (Loaded from JSON)
-    // ==========================================
-    
+    /// <summary>
+    /// Defines a specific gameplay effect granted by allocating points to a skill node.
+    /// </summary>
     public class NodeEffect
     {
         public string EffectId { get; set; } // e.g., "base_damage", "unlock_whirlwind"
         public float ValuePerPoint { get; set; } // e.g., 5.0f for +5 Damage per point
     }
 
+    /// <summary>
+    /// Contains the static configuration data for a single skill node within the skill tree.
+    /// Defines what the node does, its requirements, and its position.
+    /// </summary>
     public class SkillNodeData
     {
         public string Id { get; set; }
@@ -46,12 +58,18 @@ namespace Last_Hope.SkillTree
         public float GridY { get; set; }
     }
 
+    /// <summary>
+    /// Defines a directed visual and logical dependency connection between two skill nodes.
+    /// </summary>
     public class SkillConnectionData
     {
         public string FromNodeId { get; set; }
         public string ToNodeId { get; set; }
     }
 
+    /// <summary>
+    /// Holds visual styling information for a class's skill tree.
+    /// </summary>
     public class SkillTreeTheme
     {
         // Hex colors representing the thematic vibe (e.g., Warrior = Red/Steel)
@@ -60,6 +78,10 @@ namespace Last_Hope.SkillTree
         public NodeShape DefaultShape { get; set; }
     }
 
+    /// <summary>
+    /// The root data structure defining an entire skill tree for a specific character class.
+    /// Contains all nodes, connections, styling, and progression requirements.
+    /// </summary>
     public class ClassSkillTreeData
     {
         public string ClassId { get; set; }
@@ -69,10 +91,6 @@ namespace Last_Hope.SkillTree
         public List<SkillNodeData> Nodes { get; set; } = new List<SkillNodeData>();
         public List<SkillConnectionData> Connections { get; set; } = new List<SkillConnectionData>();
     }
-
-    // ==========================================
-    // 3. STATE LAYER (Player's current progress)
-    // ==========================================
 
     /// <summary>
     /// Represents the player's mutable state for a skill tree. 
@@ -88,10 +106,13 @@ namespace Last_Hope.SkillTree
         public Dictionary<string, int> AllocatedNodes { get; set; } = new Dictionary<string, int>();
     }
 
-    // ==========================================
-    // 4. LOGIC LAYER (Validation & Allocation)
-    // ==========================================
-
+    /// <summary>
+    /// Manages the logic, validation, and point allocation for a player's interaction with a skill tree.
+    /// Combines static tree data (<see cref="ClassSkillTreeData"/>) with the player's mutable state (<see cref="SkillTreeState"/>).
+    /// </summary>
+    /// <remarks>
+    /// Follows a common data-driven design approach where static definition data is cleanly separated from mutable player progression state.
+    /// </remarks>
     public class BaseSkillTree
     {
         private readonly ClassSkillTreeData _data;
@@ -104,11 +125,28 @@ namespace Last_Hope.SkillTree
         private readonly Dictionary<string, SkillNodeData> _nodeMap;
 
         // --- The Stats Bus ---
+        
+        /// <summary>
+        /// Event fired when a point is confirmed, applying its associated effect to the player.
+        /// </summary>
+        /// <remarks>
+        /// Implements the Observer pattern to notify external systems (e.g., player stat modifiers) of applied node effects.
+        /// </remarks>
         public event Action<NodeEffect> OnEffectApplied;
+        
+        /// <summary>
+        /// Event fired when the entire skill tree is reset, signaling that all node effects should be removed.
+        /// </summary>
         public event Action OnTreeRespec;
+        
         public int UnspentPoints => _state.UnspentSkillPoints - _pendingAllocations.Values.Sum();
         public int PendingPoints => _pendingAllocations.Values.Sum();
 
+        /// <summary>
+        /// Initializes a new instance of the skill tree manager.
+        /// </summary>
+        /// <param name="data">The static configuration data for the skill tree.</param>
+        /// <param name="state">The player's current progression state.</param>
         public BaseSkillTree(ClassSkillTreeData data, SkillTreeState state)
         {
             _data = data;
@@ -116,6 +154,12 @@ namespace Last_Hope.SkillTree
             _nodeMap = _data.Nodes.ToDictionary(n => n.Id);
         }
 
+        /// <summary>
+        /// Gets the current state of a node (Locked, Available, Partial, Maxed).
+        /// </summary>
+        /// <param name="nodeId">The ID of the node to check.</param>
+        /// <param name="includePending">Whether to consider pending (unconfirmed) point allocations.</param>
+        /// <returns>The calculated <see cref="NodeState"/>.</returns>
         public NodeState GetNodeState(string nodeId, bool includePending = true)
         {
             var nodeData = _nodeMap[nodeId];
@@ -126,6 +170,12 @@ namespace Last_Hope.SkillTree
             return CanUnlockNode(nodeId, includePending) ? NodeState.Available : NodeState.Locked;
         }
 
+        /// <summary>
+        /// Gets the number of points currently allocated to a specific node.
+        /// </summary>
+        /// <param name="nodeId">The ID of the node to check.</param>
+        /// <param name="includePending">Whether to include points that are allocated but not yet confirmed.</param>
+        /// <returns>The total number of allocated points.</returns>
         public int GetAllocatedPoints(string nodeId, bool includePending = true)
         {
             int pts = _state.AllocatedNodes.TryGetValue(nodeId, out int p) ? p : 0;
@@ -136,6 +186,17 @@ namespace Last_Hope.SkillTree
             return pts;
         }
 
+        /// <summary>
+        /// Evaluates all validation rules to determine if a node can receive points.
+        /// Checks layer unlock requirements, dependencies, connection paths, and exclusivity tags.
+        /// </summary>
+        /// <param name="nodeId">The ID of the node to validate.</param>
+        /// <param name="includePending">Whether to include pending points in the validation checks.</param>
+        /// <returns><c>true</c> if the node can be unlocked; otherwise, <c>false</c>.</returns>
+        /// <remarks>
+        /// The skill tree dependencies operate conceptually as a Directed Acyclic Graph (DAG). 
+        /// This method enforces standard topological constraints (parent node prerequisites) before unlocking.
+        /// </remarks>
         public bool CanUnlockNode(string nodeId, bool includePending = true)
         {
             var node = _nodeMap[nodeId];
@@ -175,11 +236,19 @@ namespace Last_Hope.SkillTree
             return true;
         }
 
+        /// <summary>
+        /// Checks if another node with a mutually exclusive tag has already been allocated.
+        /// </summary>
         private bool HasOtherAllocatedNodeWithTag(string tag, string excludeNodeId, bool includePending)
         {
             return _data.Nodes.Any(n => n.Id != excludeNodeId && n.Tags.Contains(tag) && GetAllocatedPoints(n.Id, includePending) > 0);
         }
 
+        /// <summary>
+        /// Attempts to add a pending skill point to the specified node.
+        /// </summary>
+        /// <param name="nodeId">The ID of the node.</param>
+        /// <returns><c>true</c> if the point was successfully added; otherwise, <c>false</c> (e.g., maxed out or insufficient points).</returns>
         public bool AddPendingPoint(string nodeId)
         {
             if (UnspentPoints <= 0) return false;
@@ -197,6 +266,12 @@ namespace Last_Hope.SkillTree
             return true;
         }
 
+        /// <summary>
+        /// Attempts to remove a pending skill point from the specified node.
+        /// Triggers a cascade validation to ensure dependent pending nodes are also removed if their prerequisites are broken.
+        /// </summary>
+        /// <param name="nodeId">The ID of the node.</param>
+        /// <returns><c>true</c> if a pending point was removed; otherwise, <c>false</c>.</returns>
         public bool RemovePendingPoint(string nodeId)
         {
             if (!_pendingAllocations.ContainsKey(nodeId) || _pendingAllocations[nodeId] <= 0)
@@ -212,6 +287,12 @@ namespace Last_Hope.SkillTree
             return true;
         }
 
+        /// <summary>
+        /// Iteratively validates all pending allocations, removing any that no longer meet unlock requirements.
+        /// </summary>
+        /// <remarks>
+        /// Appears to use a standard fixed-point iteration approach to resolve and clean up cascading validation failures within the dependency graph.
+        /// </remarks>
         private void ValidatePendingDownstream()
         {
             bool changed = true;
@@ -229,6 +310,13 @@ namespace Last_Hope.SkillTree
             }
         }
 
+        /// <summary>
+        /// Confirms all pending point allocations, permanently applying them to the state and triggering effect events.
+        /// Automatically saves the new state.
+        /// </summary>
+        /// <remarks>
+        /// Acts as a transactional commit, finalizing all tentative point allocations simultaneously to prevent partial progression states.
+        /// </remarks>
         public void ConfirmPendingPoints()
         {
             if (_pendingAllocations.Count == 0) return;
@@ -257,11 +345,18 @@ namespace Last_Hope.SkillTree
             SkillTreeSaveManager.Save(_state);
         }
 
+        /// <summary>
+        /// Reverts all currently pending point allocations without saving.
+        /// </summary>
         public void CancelPendingPoints()
         {
             _pendingAllocations.Clear();
         }
 
+        /// <summary>
+        /// Resets the entire skill tree, refunding all spent points and clearing allocations.
+        /// Fires <see cref="OnTreeRespec"/> to allow external systems to clear applied stats, then saves.
+        /// </summary>
         public void Respec()
         {
             CancelPendingPoints();
@@ -280,19 +375,31 @@ namespace Last_Hope.SkillTree
         public ClassSkillTreeData GetData() => _data;
     }
 
-    // ==========================================
-    // 7. SERIALIZATION (Save & Load)
-    // ==========================================
+    /// <summary>
+    /// Handles loading and saving the player's skill tree progression state to disk using JSON serialization.
+    /// </summary>
+    /// <remarks>
+    /// Based on standard JSON file serialization patterns for game state persistence.
+    /// </remarks>
     public static class SkillTreeSaveManager
     {
         private const string SaveFile = "skilltree_save.json";
 
+        /// <summary>
+        /// Saves the given skill tree state to a JSON file.
+        /// </summary>
+        /// <param name="state">The state to save.</param>
         public static void Save(SkillTreeState state)
         {
             string json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(SaveFile, json);
         }
 
+        /// <summary>
+        /// Loads the skill tree state from disk. If the file does not exist, returns a fresh state.
+        /// </summary>
+        /// <param name="classId">The character class ID to assign if creating a new state.</param>
+        /// <returns>The loaded or newly created <see cref="SkillTreeState"/>.</returns>
         public static SkillTreeState Load(string classId)
         {
             if (File.Exists(SaveFile))
