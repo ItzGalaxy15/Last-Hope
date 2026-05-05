@@ -6,12 +6,16 @@ public static class CollisionWorld
 {
     private static readonly List<Collider> _staticColliders = new List<Collider>();
 
-    public static IReadOnlyList<Collider> StaticColliders => _staticColliders;
-
+    /// <summary>Adds a collider to the static list so walls and buildings block movement checks.</summary>
     public static void RegisterStatic(Collider collider) => _staticColliders.Add(collider);
 
+    /// <summary>Empties the static collider list. Called when loading a new level so old colliders don't carry over.</summary>
     public static void ClearStatic() => _staticColliders.Clear();
 
+    /// <summary>
+    /// Loops through every registered static collider and returns true if the given collider
+    /// overlaps any of them. Used for wall and building collision detection.
+    /// </summary>
     public static bool CollidesWithStatic(Collider mover)
     {
         foreach (var collider in _staticColliders)
@@ -23,19 +27,9 @@ public static class CollisionWorld
     }
 
     /// <summary>
-    /// Static overlap for axis-separated movement. Shrinks <paramref name="bounds"/> slightly so the mover's
-    /// outer corners do not snag on single-pixel corners of adjacent static tiles (more noticeable on large AABBs).
+    /// Convenience overload that takes a Rectangle directly so the player and enemies don't have
+    /// to construct a RectangleCollider themselves when testing a proposed move position.
     /// </summary>
     public static bool CollidesWithStaticForMovement(Rectangle bounds)
-    {
-        int minSide = System.Math.Min(bounds.Width, bounds.Height);
-        int skin = System.Math.Max(2, minSide / 28);
-        int innerW = bounds.Width - 2 * skin;
-        int innerH = bounds.Height - 2 * skin;
-        if (innerW < 1 || innerH < 1)
-            return CollidesWithStatic(new RectangleCollider(bounds));
-
-        Rectangle shrunk = new Rectangle(bounds.X + skin, bounds.Y + skin, innerW, innerH);
-        return CollidesWithStatic(new RectangleCollider(shrunk));
-    }
+        => CollidesWithStatic(new RectangleCollider(bounds));
 }
