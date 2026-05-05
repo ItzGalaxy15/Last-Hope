@@ -2,159 +2,166 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope.Engine;
 
-    public class InputManager
+/// <summary>
+/// Centralized manager for handling and polling keyboard and mouse input.
+/// </summary>
+/// <remarks>
+/// Based on a standard game loop input polling pattern. By tracking both the current and previous frames' 
+/// input states, it provides the ability to detect discrete edge events (presses and releases) in addition to continuous holds.
+/// </remarks>
+public class InputManager
+{
+    public KeyboardState LastKeyboardState { get; private set; }
+    public KeyboardState CurrentKeyboardState { get; private set; }
+    public MouseState LastMouseState { get; private set; }
+    public MouseState CurrentMouseState { get; private set; }
+
+
+    /// <summary>
+    /// Keeps track of input states and contains methods to work with them.
+    /// </summary>
+    public InputManager()
     {
-        public KeyboardState LastKeyboardState { get; private set; }
-        public KeyboardState CurrentKeyboardState { get; private set; }
-        public MouseState LastMouseState { get; private set; }
-        public MouseState CurrentMouseState { get; private set; }
-
-
-
-        /// <summary>
-        /// Keeps track of input states and contains methods to work with them.
-        /// </summary>
-        public InputManager()
-        {
-            LastKeyboardState = Keyboard.GetState();
-            CurrentKeyboardState = Keyboard.GetState();
-            CurrentMouseState = Mouse.GetState();
-            LastMouseState = Mouse.GetState();
-
-        }
-        
-        /// <summary>
-        /// Updates the current and previous keyboard and mouse states
-        /// </summary>
-        public void Update()
-        {
-            LastKeyboardState = CurrentKeyboardState;
-            CurrentKeyboardState = Keyboard.GetState();
-            LastMouseState = CurrentMouseState;
-            CurrentMouseState = Mouse.GetState();
-        }
-
-        /// <summary>
-        /// Gets whether the <paramref name="key"/> is currently down.
-        /// </summary>
-        /// <param name="key">The key for which you wish to know the state</param>
-        /// <returns>true if the key is currently down, otherwise false</returns>
-        public bool IsKeyDown(Keys key)
-        {
-            return CurrentKeyboardState.IsKeyDown(key);
-        }
-
-
-        /// <summary>
-        /// Gets whether the <paramref name="key"/> is currently up.
-        /// </summary>
-        /// <param name="key">The key for which you wish to know the state</param>
-        /// <returns>true if the key is currently up, otherwise false</returns>
-        public bool IsKeyUp(Keys key)
-        {
-            return CurrentKeyboardState.IsKeyUp(key);
-        }
-
-
-
-        /// <summary>
-        /// Gets whether the <paramref name="key"/> was pressed in this frame.
-        /// </summary>
-        /// <param name="key">The key for which you wish to know the state</param>
-        /// <returns>true if the key is currently down and was up in the previous step, otherwise false</returns>
-        public bool IsKeyPress(Keys key) 
-        {
-            return CurrentKeyboardState.IsKeyDown(key) && LastKeyboardState.IsKeyUp(key);
-        }
-
-        public bool IsGameplayKeyDown(KeybindId id)
-        {
-            GameInputBinding b = KeybindStore.GetBinding(id);
-            if (b.IsUnbound)
-                return false;
-            return b.Kind switch
-            {
-                BindingKind.Keyboard => CurrentKeyboardState.IsKeyDown(b.Key),
-                BindingKind.Mouse => IsMouseButtonDown(b.Mouse),
-                _ => false,
-            };
-        }
-
-        public bool IsGameplayKeyPress(KeybindId id)
-        {
-            GameInputBinding b = KeybindStore.GetBinding(id);
-            if (b.IsUnbound)
-                return false;
-            return b.Kind switch
-            {
-                BindingKind.Keyboard =>
-                    CurrentKeyboardState.IsKeyDown(b.Key) && LastKeyboardState.IsKeyUp(b.Key),
-                BindingKind.Mouse =>
-                    IsMouseButtonDown(b.Mouse) && WasMouseButtonUp(b.Mouse),
-                _ => false,
-            };
-        }
-
-        private bool IsMouseButtonDown(MouseBindButton mb) => mb switch
-        {
-            MouseBindButton.Left => CurrentMouseState.LeftButton == ButtonState.Pressed,
-            MouseBindButton.Right => CurrentMouseState.RightButton == ButtonState.Pressed,
-            MouseBindButton.Middle => CurrentMouseState.MiddleButton == ButtonState.Pressed,
-            _ => false,
-        };
-
-        private bool WasMouseButtonUp(MouseBindButton mb) => mb switch
-        {
-            MouseBindButton.Left => LastMouseState.LeftButton == ButtonState.Released,
-            MouseBindButton.Right => LastMouseState.RightButton == ButtonState.Released,
-            MouseBindButton.Middle => LastMouseState.MiddleButton == ButtonState.Released,
-            _ => false,
-        };
-
-        /// <summary>First keyboard key or mouse button that transitioned to down this frame (for rebinding).</summary>
-        /// <remarks>Mouse is checked before keyboard so LMB/RMB/MMB are not lost to incidental key edges on the same frame.</remarks>
-        public GameInputBinding? ConsumeFirstNewBindingPress()
-        {
-            if (LeftMousePress())
-                return GameInputBinding.FromMouse(MouseBindButton.Left);
-            if (RightMousePress())
-                return GameInputBinding.FromMouse(MouseBindButton.Right);
-            if (MiddleMousePress())
-                return GameInputBinding.FromMouse(MouseBindButton.Middle);
-
-            foreach (Keys k in CurrentKeyboardState.GetPressedKeys())
-            {
-                if (k == Keys.None || k == Keys.Escape)
-                    continue;
-                if (LastKeyboardState.IsKeyUp(k) && CurrentKeyboardState.IsKeyDown(k))
-                    return GameInputBinding.Keyboard(k);
-            }
-
-            return null;
-        }
-
-
-        /// <summary>
-        /// Gets whether the left mouse button was pressed in this frame.
-        /// </summary>
-        /// <returns>true if the button is currently down and was up in the previous step, otherwise false</returns>
-        public bool LeftMousePress()
-        {
-            return CurrentMouseState.LeftButton == ButtonState.Pressed && LastMouseState.LeftButton == ButtonState.Released;
-        }
-
-
-        /// <summary>
-        /// Gets whether the right mouse button was pressed in this frame.
-        /// </summary>
-        /// <returns>true if the button is currently down and was up in the previous step, otherwise false</returns>
-        public bool RightMousePress()
-        {
-            return CurrentMouseState.RightButton == ButtonState.Pressed && LastMouseState.RightButton == ButtonState.Released;
-        }
-
-        public bool MiddleMousePress()
-        {
-            return CurrentMouseState.MiddleButton == ButtonState.Pressed && LastMouseState.MiddleButton == ButtonState.Released;
-        }
+        LastKeyboardState = Keyboard.GetState();
+        CurrentKeyboardState = Keyboard.GetState();
+        CurrentMouseState = Mouse.GetState();
+        LastMouseState = Mouse.GetState();
     }
+    
+    /// <summary>
+    /// Updates the current and previous keyboard and mouse states
+    /// </summary>
+    public void Update()
+    {
+        LastKeyboardState = CurrentKeyboardState;
+        CurrentKeyboardState = Keyboard.GetState();
+        LastMouseState = CurrentMouseState;
+        CurrentMouseState = Mouse.GetState();
+    }
+
+    /// <summary>
+    /// Gets whether the <paramref name="key"/> is currently down.
+    /// </summary>
+    /// <param name="key">The key for which you wish to know the state</param>
+    /// <returns>true if the key is currently down, otherwise false</returns>
+    public bool IsKeyDown(Keys key)
+    {
+        return CurrentKeyboardState.IsKeyDown(key);
+    }
+
+    /// <summary>
+    /// Gets whether the <paramref name="key"/> is currently up.
+    /// </summary>
+    /// <param name="key">The key for which you wish to know the state</param>
+    /// <returns>true if the key is currently up, otherwise false</returns>
+    public bool IsKeyUp(Keys key)
+    {
+        return CurrentKeyboardState.IsKeyUp(key);
+    }
+
+    /// <summary>
+    /// Gets whether the <paramref name="key"/> was pressed in this frame.
+    /// </summary>
+    /// <param name="key">The key for which you wish to know the state</param>
+    /// <returns>true if the key is currently down and was up in the previous step, otherwise false</returns>
+    public bool IsKeyPress(Keys key) 
+    {
+        return CurrentKeyboardState.IsKeyDown(key) && LastKeyboardState.IsKeyUp(key);
+    }
+
+    /// <summary>
+    /// Determines whether the input mapped to a specific gameplay action is currently being held down.
+    /// </summary>
+    /// <param name="id">The logical action to check (e.g., Attack, MoveUp).</param>
+    /// <returns><c>true</c> if the mapped key or mouse button is currently down; otherwise, <c>false</c>.</returns>
+    public bool IsGameplayKeyDown(KeybindId id)
+    {
+        GameInputBinding b = KeybindStore.GetBinding(id);
+        if (b.IsUnbound)
+            return false;
+        return b.Kind switch
+        {
+            BindingKind.Keyboard => CurrentKeyboardState.IsKeyDown(b.Key),
+            BindingKind.Mouse => IsMouseButtonDown(b.Mouse),
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines whether the input mapped to a specific gameplay action was pressed exactly in this frame.
+    /// </summary>
+    /// <param name="id">The logical action to check (e.g., Dash, Teleport).</param>
+    /// <returns><c>true</c> if the mapped key or mouse button transitioned from up to down this frame; otherwise, <c>false</c>.</returns>
+    public bool IsGameplayKeyPress(KeybindId id)
+    {
+        GameInputBinding b = KeybindStore.GetBinding(id);
+        if (b.IsUnbound)
+            return false;
+        return b.Kind switch
+        {
+            BindingKind.Keyboard =>
+                CurrentKeyboardState.IsKeyDown(b.Key) && LastKeyboardState.IsKeyUp(b.Key),
+            BindingKind.Mouse =>
+                IsMouseButtonDown(b.Mouse) && WasMouseButtonUp(b.Mouse),
+            _ => false,
+        };
+    }
+
+    private bool IsMouseButtonDown(MouseBindButton mb) => mb switch
+    {
+        MouseBindButton.Left => CurrentMouseState.LeftButton == ButtonState.Pressed,
+        MouseBindButton.Right => CurrentMouseState.RightButton == ButtonState.Pressed,
+        MouseBindButton.Middle => CurrentMouseState.MiddleButton == ButtonState.Pressed,
+        _ => false,
+    };
+
+    private bool WasMouseButtonUp(MouseBindButton mb) => mb switch
+    {
+        MouseBindButton.Left => LastMouseState.LeftButton == ButtonState.Released,
+        MouseBindButton.Right => LastMouseState.RightButton == ButtonState.Released,
+        MouseBindButton.Middle => LastMouseState.MiddleButton == ButtonState.Released,
+        _ => false,
+    };
+
+    /// <summary>
+    /// Detects the first new key or mouse button pressed during the current frame. 
+    /// Primarily used in settings menus to capture a new user-defined input binding.
+    /// </summary>
+    /// <remarks>
+    /// Evaluates mouse buttons before keyboard keys to ensure mouse clicks are not lost to incidental key edges on the same frame.
+    /// </remarks>
+    /// <returns>A <see cref="GameInputBinding"/> representing the detected input, or <c>null</c> if no new input was pressed.</returns>
+    public GameInputBinding? ConsumeFirstNewBindingPress()
+    {
+        if (LeftMousePress())
+            return GameInputBinding.FromMouse(MouseBindButton.Left);
+        if (RightMousePress())
+            return GameInputBinding.FromMouse(MouseBindButton.Right);
+        if (MiddleMousePress())
+            return GameInputBinding.FromMouse(MouseBindButton.Middle);
+
+        foreach (Keys k in CurrentKeyboardState.GetPressedKeys())
+        {
+            if (k == Keys.None || k == Keys.Escape)
+                continue;
+            if (LastKeyboardState.IsKeyUp(k))
+                return GameInputBinding.Keyboard(k);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets whether the left mouse button was pressed in this frame.
+    /// </summary>
+    /// <returns>true if the button is currently down and was up in the previous step, otherwise false</returns>
+    public bool LeftMousePress() => IsMouseButtonDown(MouseBindButton.Left) && WasMouseButtonUp(MouseBindButton.Left);
+
+    /// <summary>
+    /// Gets whether the right mouse button was pressed in this frame.
+    /// </summary>
+    /// <returns>true if the button is currently down and was up in the previous step, otherwise false</returns>
+    public bool RightMousePress() => IsMouseButtonDown(MouseBindButton.Right) && WasMouseButtonUp(MouseBindButton.Right);
+
+    public bool MiddleMousePress() => IsMouseButtonDown(MouseBindButton.Middle) && WasMouseButtonUp(MouseBindButton.Middle);
+}

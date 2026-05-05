@@ -6,13 +6,31 @@ using Microsoft.Xna.Framework;
 
 namespace Last_Hope.Engine;
 
+/// <summary>
+/// Manages the procedural generation of enemy waves, spawning logic, and wave progression.
+/// </summary>
+/// <remarks>
+/// Based on standard wave-based survival game mechanics. Utilizes an exponential scaling curve for enemy counts 
+/// and incorporates safe spawn placement by checking against the game's static collision geometry.
+/// </remarks>
 public class EnemySpawner
 {
+    /// <summary>The total number of waves required to complete a run.</summary>
     public int TotalWaves { get; set; } = 1;
+    
+    /// <summary>The exponential multiplier applied to the base enemy count per wave.</summary>
     public float EnemyMultiplierPerWave { get; set; } = 1.5f;
+    
+    /// <summary>The base number of enemies that will spawn on the first wave.</summary>
     public int StartingEnemies { get; set; } = 20;
+    
+    /// <summary>Whether a Boss enemy should be spawned at the end of the final wave.</summary>
     public bool BossAppearsOnLastWave { get; set; } = true;
+    
+    /// <summary>Whether to cap the maximum number of enemies spawned per wave.</summary>
     public bool UseMaxEnemyLimit { get; set; } = true;
+    
+    /// <summary>The absolute maximum number of enemies allowed per wave, if <see cref="UseMaxEnemyLimit"/> is true.</summary>
     public int MaxEnemiesPerWave { get; set; } = 35;
 
     private const float MinSpawnInterval = 0.2f;
@@ -21,14 +39,23 @@ public class EnemySpawner
     private float spawnInterval = 0.2f; // spawn an enemy every 0.2s
 
     private int currentWave = 1;
+    
+    /// <summary>The current wave the player is on. Starts at 1.</summary>
     public int CurrentWave => currentWave;
+    
     private int spawnedThisWave = 0;
     private float waveWaitTimer = 0f;
     private bool waitingForNextWave = false;
     private float wavePause = 3f; // pause between the waves
     private bool bossSpawned = false;
+    
+    /// <summary>Indicates whether the final wave's boss has been spawned yet.</summary>
     public bool BossSpawned => bossSpawned;
 
+    /// <summary>
+    /// Calculates the total number of enemies remaining in the current wave, including both alive and yet-to-spawn enemies.
+    /// </summary>
+    /// <returns>The number of remaining enemies.</returns>
     public int GetEnemiesLeftCount()
     {
         var gm = GameManager.GetGameManager();
@@ -55,6 +82,14 @@ public class EnemySpawner
         return total;
     }
 
+    /// <summary>
+    /// Evaluates the wave progression state and handles the instantiation of new enemies.
+    /// Should be called during the main game loop.
+    /// </summary>
+    /// <param name="gameTime">The current game time, used for timer progression.</param>
+    /// <remarks>
+    /// Operates conceptually as a finite state machine (FSM), transitioning between active spawning, waiting for wave clearance, and inter-wave pauses.
+    /// </remarks>
     public void Update(GameTime gameTime)
     {
         var gm = GameManager.GetGameManager();
@@ -126,6 +161,11 @@ public class EnemySpawner
         }
     }
 
+    /// <summary>
+    /// Attempts to find a safe, off-screen location to spawn an enemy that does not overlap with static map geometry.
+    /// </summary>
+    /// <param name="radius">The distance from the player to search for a spawn point.</param>
+    /// <returns>A valid world coordinate for spawning, or a fallback location if no valid spot is found within the allowed attempts.</returns>
     private Point GetValidSpawnPoint(float radius = 1500f)
     {
         var gm = GameManager.GetGameManager();
@@ -149,6 +189,11 @@ public class EnemySpawner
         return RandomOffScreenLocation(radius).ToPoint();
     }
 
+    /// <summary>
+    /// Calculates a random point at a fixed distance around the player.
+    /// </summary>
+    /// <param name="distance">The radius of the circle around the player.</param>
+    /// <returns>A vector coordinate at the specified distance.</returns>
     public Vector2 RandomOffScreenLocation(float distance = 1400f)
     {
         var gm = GameManager.GetGameManager();
@@ -165,6 +210,11 @@ public class EnemySpawner
         ) * distance;
     }
 
+    /// <summary>
+    /// Calculates the number of enemies that should spawn in a specific wave using an exponential growth curve.
+    /// </summary>
+    /// <param name="wave">The wave number to calculate for.</param>
+    /// <returns>The calculated number of enemies, capped by the configured maximum limits.</returns>
     private int GetTargetEnemiesForWave(int wave)
     {
         // Calculate the target enemies based on the starting amount and the multiplier.
@@ -205,6 +255,9 @@ public class EnemySpawner
         return spawnPos;
     }
 
+    /// <summary>
+    /// Resets the spawner state back to the beginning of wave 1. Used when starting a new run.
+    /// </summary>
     public void Reset()
     {
         spawnTimer = 0f;

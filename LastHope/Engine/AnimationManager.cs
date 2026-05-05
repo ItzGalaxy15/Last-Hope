@@ -1,28 +1,57 @@
 using Microsoft.Xna.Framework;
 
 namespace Last_Hope.Engine;
+
+/// <summary>
+/// Manages 2D sprite sheet animations by tracking frame progression and calculating source rectangles.
+/// </summary>
+/// <remarks>
+/// Based on a standard 2D sprite sheet animation approach where frames are arranged in a grid.
+/// The manager increments a counter each update tick and advances the frame when the defined interval is reached.
+/// </remarks>
 internal class AnimationManager
 {
-    int numFrames;
-    int numColumns;
-    Vector2 size;
+    private readonly int numFrames;
+    private readonly int numColumns;
+    private readonly Vector2 size;
 
-    int counter;
-    int activeFrame;
-    int interval; // speed
+    private int counter;
+    private int activeFrame;
+    private readonly int interval; // speed
 
-    int rowPos;
-    int colPos;
+    private int rowPos;
+    private int colPos;
 
-    bool loop;
+    private readonly bool loop;
+    
+    /// <summary>
+    /// Indicates whether the animation has finished playing. Always false if the animation is set to loop.
+    /// </summary>
     public bool isFinished;
+    
+    /// <summary>
+    /// Gets the zero-based index of the currently active frame.
+    /// </summary>
     public int ActiveFrame => activeFrame;
+    
+    /// <summary>
+    /// Gets the progress toward the next frame as a normalized value between 0.0 and 1.0.
+    /// </summary>
     public float FrameProgress => (float)counter / interval;
 
-    int offsetX;
-    int offsetY;
+    private readonly int offsetX;
+    private readonly int offsetY;
 
-
+    /// <summary>
+    /// Initializes a new instance of the AnimationManager.
+    /// </summary>
+    /// <param name="numFrames">The total number of frames in the animation.</param>
+    /// <param name="numColumns">The number of columns in the sprite sheet grid for this animation.</param>
+    /// <param name="size">The width and height of a single frame in pixels.</param>
+    /// <param name="interval">The number of update ticks to wait before advancing to the next frame (controls animation speed).</param>
+    /// <param name="loop">Whether the animation should automatically restart from the beginning when it finishes.</param>
+    /// <param name="offsetX">The starting X coordinate offset on the sprite sheet.</param>
+    /// <param name="offsetY">The starting Y coordinate offset on the sprite sheet.</param>
     public AnimationManager(int numFrames, int numColumns, Vector2 size, int interval = 30, bool loop = false, int offsetX = 0, int offsetY = 0)
     {
         this.numFrames = numFrames;
@@ -43,7 +72,9 @@ internal class AnimationManager
         this.offsetY = offsetY;
     }
 
-
+    /// <summary>
+    /// Advances the animation progress. Should be called once per game update tick.
+    /// </summary>
     public void Update()
     {
         if (isFinished) return;
@@ -55,12 +86,14 @@ internal class AnimationManager
         }
     }
 
+    /// <summary>
+    /// Advances to the next frame in the sequence, handling grid wrapping and looping logic.
+    /// </summary>
     private void NextFrame()
     {
         activeFrame++;
         colPos++;
 
-        // Check if the animation has reached the end of the frames
         if (activeFrame >= numFrames)
         {
             if (loop)
@@ -84,12 +117,19 @@ internal class AnimationManager
         }
     }
 
+    /// <summary>
+    /// Calculates the source rectangle for the current frame to be used in rendering.
+    /// </summary>
+    /// <returns>A rectangle representing the region of the sprite sheet to draw for the active frame.</returns>
     public Rectangle GetSourceRect()
     {
         return new Rectangle(
             (colPos * (int)size.X) + offsetX, (rowPos * (int)size.Y) + offsetY, (int)size.X, (int)size.Y);
     }
 
+    /// <summary>
+    /// Resets the animation back to the first frame.
+    /// </summary>
     private void ResetAnimation()
     {
         activeFrame = 0;
