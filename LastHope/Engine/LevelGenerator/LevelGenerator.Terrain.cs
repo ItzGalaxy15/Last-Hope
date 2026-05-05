@@ -4,9 +4,13 @@ namespace Last_Hope.Engine.LevelGenerator
 {
     internal partial class LevelGenerator
     {
-        // Logic: Random Search and Replace (Stamp Placement).
-        // Implementation: Attempts up to 100 times to find a contiguous block of grass tiles to place a flower field.
-        // Modifications: Custom "All-or-nothing" validation ensures the field is only placed on plain grass.
+
+        /// <summary>
+        /// Picks a random rectangle of grass tiles and replaces them all with flower tiles to give
+        /// the map a bit of variety. It tries up to 100 times to find a spot that's entirely plain
+        /// grass — if it can't find one it just skips the flower field for this map rather than
+        /// forcing it somewhere it doesn't fit.
+        /// </summary>
         private void ApplyFlowerField(int[,] map)
         {
             List<int> flowerTiles = GetTerrainTileIndicesForRows(4);

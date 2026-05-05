@@ -9,6 +9,13 @@ namespace Last_Hope.Engine.LevelGenerator
     {
         private bool[,,]? _compatibility;
 
+        /// <summary>
+        /// Compares every tile against every other tile along each of their four edges, pixel by pixel.
+        /// If the average colour difference is low enough I mark those two tiles as compatible in that
+        /// direction, meaning WFC is allowed to place them next to each other. If a tile ends up with
+        /// too few compatible neighbours I force-add the closest ones so the solver doesn't get stuck
+        /// right away.
+        /// </summary>
         private void BuildCompatibility()
         {
             if (_terrainSheet == null)
@@ -70,7 +77,16 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
-        // Source: https://github.com/mxgmn/WaveFunctionCollapse
+        // Algorithm: Wave Function Collapse (Maxim Gumin, github.com/mxgmn/WaveFunctionCollapse)
+        // Reimplemented — observe-collapse-propagate-retry structure follows his design;
+        // retry loop, data structures, and helper split are my own.
+        /// <summary>
+        /// The main WFC loop. It repeatedly picks the undecided cell with the fewest remaining tile
+        /// options, collapses it to one choice, then propagates the constraints outward to rule out
+        /// now-impossible options in neighbouring cells. If it hits a contradiction a cell ends up
+        /// with zero valid tiles it wipes the grid and retries from scratch, up to
+        /// <see cref="MaxGenerationAttempts"/> times. Returns true if a valid map was produced.
+        /// </summary>
         private bool TryGenerateWfc(int[,] outputMap, HashSet<int> allowedTiles)
         {
             if (_compatibility == null)
@@ -139,7 +155,15 @@ namespace Last_Hope.Engine.LevelGenerator
 
             return false;
         }
-        // Source: https://github.com/mxgmn/WaveFunctionCollapse but dont use noise additon.
+        // Algorithm: minimum-entropy cell selection (github.com/mxgmn/WaveFunctionCollapse)
+        // Reimplemented using plain option count + reservoir sampling for ties;
+        // mxgmn uses Shannon entropy with per-cell Gaussian noise instead.
+        /// <summary>
+        /// Scans the whole grid and returns the coordinates of the undecided cell that has the fewest
+        /// tiles still possible. Cells already collapsed to one option are skipped. When multiple cells
+        /// share the same minimum count, ties are broken randomly using reservoir sampling so it's not
+        /// always biased towards the top-left corner.
+        /// </summary>
         private bool TryFindLowestEntropyCell(int[,] optionCount, out int resultX, out int resultY)
         {
             int width = optionCount.GetLength(0);
@@ -180,9 +204,12 @@ namespace Last_Hope.Engine.LevelGenerator
             return resultX >= 0;
         }
 
-        // ── Tile selection ───────────────────────────────────────────
-        // Picks one tile from the remaining options in a cell, using
-        // the optional weight table to bias the choice.
+        // Tile selection
+        /// <summary>
+        /// Picks one tile from however many options are still valid for this cell. Uses a weighted
+        /// random roll so tiles with a higher entry in the weight table appear more often. Falls back
+        /// to the first available tile if the total weight works out to zero.
+        /// </summary>
         private int SelectTileFromCell(bool[,,] possible, int[,] optionCount, int x, int y, int tileCount)
         {
             float totalWeight = 0f;
@@ -227,8 +254,11 @@ namespace Last_Hope.Engine.LevelGenerator
             return 0;
         }
 
-        // ── Cell collapse ────────────────────────────────────────────
-        // Sets a cell to exactly one tile, removing all other options.
+        // Cell collapse
+        /// <summary>
+        /// Locks a cell to a single tile by setting every other option to false and recording that
+        /// exactly one choice remains. Always called right after SelectTileFromCell.
+        /// </summary>
         private void CollapseCellToTile(bool[,,] possible, int[,] optionCount, int x, int y, int tile, int tileCount)
         {
             for (int t = 0; t < tileCount; t++)
@@ -237,7 +267,16 @@ namespace Last_Hope.Engine.LevelGenerator
             optionCount[x, y] = 1;
         }
         
-        // Source: https://github.com/BorisTheBrave/DeBroglie/blob/master/DeBroglie/Wfc/Ac3PatternModelConstraint.cs
+        // Algorithm: AC-3 arc consistency propagation (BorisTheBrave/DeBroglie, Ac3PatternModelConstraint.cs)
+        // Reimplemented with bool[,,] and Queue<Point>; DeBroglie uses BitArray propagators and (index, Direction) tuples.
+        /// <summary>
+        /// After a cell is collapsed, this ripples the change outward across the grid using a queue.
+        /// Starting from the collapsed cell it visits each neighbour and removes any tile option that
+        /// has no compatible partner left in the current cell. If a neighbour's options change, that
+        /// neighbour gets queued so its own neighbours are checked too. Returns false the moment any
+        /// cell ends up with zero options left, which means the current attempt has a contradiction
+        /// and needs to restart.
+        /// </summary>
         private bool Propagate(bool[,,] possible, int[,] optionCount, int startX, int startY, int width, int height, int tileCount)
         {
             if (_compatibility == null)
@@ -300,7 +339,12 @@ namespace Last_Hope.Engine.LevelGenerator
             return true;
         }
 
-        // ── Neighbour lookup ─────────────────────────────────────────
+        // Neighbour lookup
+        /// <summary>
+        /// Translates a direction index (0 up, 1 right, 2 down, 3 left) into the coordinates of the
+        /// adjacent cell. Keeps the direction logic in one place so the propagation loop doesn't have
+        /// to repeat the same switch every time it checks a neighbour.
+        /// </summary>
         private static void GetNeighbor(int x, int y, int direction, out int nx, out int ny)
         {
             nx = x;
@@ -323,9 +367,12 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
-        // ── Random fallback ──────────────────────────────────────────
-        // Used when WFC fails after all retry attempts – fill every
-        // cell with a random tile from the allowed set.
+        // Random fallback
+        /// <summary>
+        /// If WFC fails every retry attempt this just fills the whole map with random tiles from the
+        /// allowed set so the game never crashes on level load. The output won't look as good as a
+        /// proper WFC result, but it's a safe fallback.
+        /// </summary>
         private void FillRandomFallback(int[,] map, IReadOnlyList<int> allowedTiles)
         {
             for (int y = 0; y < map.GetLength(1); y++)
@@ -337,11 +384,13 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
-        // ── Edge difference scoring ──────────────────────────────────
-        // Compares a row (or column) of pixels along the touching edge
-        // of two tiles.  Returns the average per-channel difference.
-        // A low score means the tiles look similar along that edge and
-        // can be placed next to each other.
+        // Edge difference scoring
+        /// <summary>
+        /// Reads the row or column of pixels along the touching edge of two tiles and returns the
+        /// average per-channel (R, G, B) colour difference. A low score means those edges look similar
+        /// and the tiles can sit next to each other without a visible seam. This score is what
+        /// BuildCompatibility uses to decide whether to allow a tile pairing.
+        /// </summary>
         private float GetEdgeDifference(Color[] pixels, int textureWidth, Rectangle a, Rectangle b, int direction)
         {
             int length = TileSize;

@@ -33,7 +33,7 @@ namespace Last_Hope.Engine.LevelGenerator
         private int _decorationColumns;
         private int _decorationRows;
 
-        // ── Public properties ────────────────────────────────────────
+        // Public properties
         public int TileSize { get; }
         public int MapWidthInTiles => _map?.GetLength(0) ?? 0;
         public int MapHeightInTiles => _map?.GetLength(1) ?? 0;
@@ -46,7 +46,11 @@ namespace Last_Hope.Engine.LevelGenerator
         public float PebbleChance { get; set; } = 0.18f;
         public float BunnyChance { get; set; } = 0.015f;
         public float SnailChance { get; set; } = 0.015f;
-        // ── Constructor ──────────────────────────────────────────────
+        //  Constructor
+        /// <summary>
+        /// Sets up the generator with a tile size and an optional random seed. Passing a seed makes
+        /// the output reproducible, which is handy for debugging a specific map layout.
+        /// </summary>
         public LevelGenerator(int tileSize = 32, int? seed = null)
         {
             TileSize = tileSize;
@@ -56,6 +60,12 @@ namespace Last_Hope.Engine.LevelGenerator
             _animatedDecorations = new List<AnimatedDecoration>();
         }
 
+        /// <summary>
+        /// Takes the terrain, decoration, and village textures and slices each one into individual
+        /// tile rectangles that the rest of the generator uses. Also calls BuildCompatibility
+        /// straight away so the WFC solver has its compatibility data ready before GenerateMap
+        /// is ever called.
+        /// </summary>
         public void LoadSpriteSheets(Texture2D terrainSheet, Texture2D decorationsSheet, Texture2D villageSheet, int terrainUsableRows = 5)
         {
             _terrainSheet = terrainSheet;
@@ -88,15 +98,11 @@ namespace Last_Hope.Engine.LevelGenerator
             BuildCompatibility();
         }
 
-        // ── Map generation ───────────────────────────────────────────
-        // 1. Restricts WFC to grass tiles only (rows 1 & 3) so stone
-        //    never appears as a base tile.
-        // 2. Attempts to fill the tile map with the WFC solver.
-        // 3. Falls back to random grass placement on failure.
-        // 4. Carves stone walkways on top of the WFC output.
-        // 5. Stamps a single flower-field square somewhere on the grass.
-        // 6. Scatters decorations (weed, rocks, pebbles, critters) from
-        //    the decorations sheet onto the overlay layer.
+        /// <summary>
+        /// Top-level entry point that builds a complete level. Runs WFC on grass tiles only, falls
+        /// back to random fill if every attempt fails, then places the village, stamps a flower field
+        /// somewhere on the grass, and scatters decorations across the overlay layer on top.
+        /// </summary>
         public void GenerateMap(int pixelWidth, int pixelHeight)
         {
             if (_terrainTiles.Count == 0)
@@ -136,6 +142,11 @@ namespace Last_Hope.Engine.LevelGenerator
             ApplyFlowerField(_map);
             ApplyDecorations(_map, _overlayMap);
         }
+        /// <summary>
+        /// Draws the whole level each frame. Terrain tiles go first, then any static overlay
+        /// decorations on top of them, then animated critters (their animation gets updated here
+        /// too), and finally the village buildings drawn last so they appear above everything else.
+        /// </summary>
         public void Draw(SpriteBatch spriteBatch, Vector2 origin)
         {
             if (_terrainSheet == null || _decorationsSheet == null || _map == null)
