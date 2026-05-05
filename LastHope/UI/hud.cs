@@ -25,12 +25,12 @@ public class Hud
 		{
 			if (dashIcon != null)
 				_elements.Add(new AbilityCooldownIcon(dashIcon, cooldownShader, pixel,
-					() => (GameManager.GetGameManager()._player as Warrior)?.DashCooldownProgress ?? 0f,
+					() => GameManager.GetGameManager()._player?.DashCooldownProgress ?? 0f,
 					slotIndex: 0));
 
 			if (teleportIcon != null)
 				_elements.Add(new AbilityCooldownIcon(teleportIcon, cooldownShader, pixel,
-					() => (GameManager.GetGameManager()._player as Warrior)?.TeleportCooldownProgress ?? 0f,
+					() => GameManager.GetGameManager()._player?.TeleportCooldownProgress ?? 0f,
 					slotIndex: 1));
 		}
 	}

@@ -34,11 +34,6 @@ public class Warrior : BasePlayer
     protected override float _bodyWidth => FrameSize * WarriorDrawScale;
     private float _axePixelSize => FrameSize * AxeDrawScale;
     private float AxeOffsetY => (_bodyWidth - _axePixelSize) * 0.5f;
-
-    private const float DashCooldown = 0.75f;
-    public float DashCooldownProgress => MathHelper.Clamp(_dashCooldown / DashCooldown, 0f, 1f);
-    public float TeleportCooldownProgress => MathHelper.Clamp(_teleportCooldown / TeleportCooldownDuration, 0f, 1f);
-    private const float TeleportCooldownDuration = 60f;
     private const float TeleportEnemyClearance = 160f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
@@ -47,11 +42,7 @@ public class Warrior : BasePlayer
     // --- TIMERS & COOLDOWNS ---
     private double _timeSinceLastAttack = 0;
     private float _currentAttackCooldown = 0.7f;
-    private float _dashCooldown;
-    private float _teleportCooldown;
     private float _hurtCooldown;
-    private float _bombActionCooldown;
-    private float _greenGlowTimer = 0f;
     private float _speedBuffTimer = 0f;
     private float _dmgBuffTimer = 0f;
     private float _defBuffTimer = 0f;
@@ -68,7 +59,6 @@ public class Warrior : BasePlayer
     private const float BuffDurationSeconds = 10.0f;
     private const double ProcChance = 0.10;
     private const float AdrenalineRegenRate = 5.0f;
-    private const float BombActionCooldown = 0.25f;
     private SoundEffect _deathSound;
     private SoundEffect _attackSound;
 
@@ -154,7 +144,7 @@ public class Warrior : BasePlayer
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         _hurtCooldown = TimerHelper.DecreaseTimer(_hurtCooldown, dt);
-        _bombActionCooldown = TimerHelper.DecreaseTimer(_bombActionCooldown, dt);
+        _itemActionCooldown = TimerHelper.DecreaseTimer(_itemActionCooldown, dt);
         _greenGlowTimer = TimerHelper.DecreaseTimer(_greenGlowTimer, dt);
         _dashCooldown = TimerHelper.DecreaseTimer(_dashCooldown, dt);
         _teleportCooldown = TimerHelper.DecreaseTimer(_teleportCooldown, dt);
@@ -213,18 +203,18 @@ public class Warrior : BasePlayer
                 _timeSinceLastAttack = 0;
             }
 
-            // place bomb at feet
-            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _bombActionCooldown <= 0f)
+            // place item at feet
+            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _itemActionCooldown <= 0f)
             {
                 ItemSystem.PlaceSelectedItem(this);
-                _bombActionCooldown = BombActionCooldown;
+                _itemActionCooldown = ItemActionCooldown;
             }
 
-            // throw bomb toward mouse
-            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _bombActionCooldown <= 0f)
+            // throw item toward mouse
+            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _itemActionCooldown <= 0f)
             {
                 ItemSystem.ThrowSelectedItemTowardMouse(this);
-                _bombActionCooldown = BombActionCooldown;
+                _itemActionCooldown = ItemActionCooldown;
             }
 
             if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)

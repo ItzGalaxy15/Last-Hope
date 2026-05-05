@@ -32,14 +32,12 @@ public class Archer : BasePlayer
     private float BowOffsetY => (_bodyWidth - _bowPixelSize) * 0.5f;
 
     private const float AttackCooldown = 0.7f;
-    private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = true;
     private const float TeleportEnemyClearance = 160f;
 
     private double timeSinceLastAttack = 0;
-    private float _dashCooldown;
     private Vector2 _moveInput;
     private bool _facingLeft;
     private RectangleCollider _collider;
@@ -51,15 +49,8 @@ public class Archer : BasePlayer
     private bool _isDrawingBow;
     private float _bowDrawTimer;
     private Vector2 _bowAimDirection;
-
-    private const float BombThrowSpeed = 520f;
-    private const float BombActionCooldown = 0.25f;
-    private float _bombActionCooldown;
-
-    private float _greenGlowTimer;
+    
     private SoundEffect _deathSound;
-
-    private const float DecoyThrowSpeed = 420f;
     private const float ArrowSpeed = 600f;
 
     public Archer(Vector2 startPosition)
@@ -107,21 +98,19 @@ public class Archer : BasePlayer
 
         Move(_moveInput, gameTime);
         SyncColliderToPosition();
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (_hurtCooldown > 0f)
-            _hurtCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_bombActionCooldown > 0f)
-            _bombActionCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_greenGlowTimer > 0f)
-            _greenGlowTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _hurtCooldown = TimerHelper.DecreaseTimer(_hurtCooldown, dt);
+        _itemActionCooldown = TimerHelper.DecreaseTimer(_itemActionCooldown, dt);
+        _greenGlowTimer = TimerHelper.DecreaseTimer(_greenGlowTimer, dt);
+        _dashCooldown = TimerHelper.DecreaseTimer(_dashCooldown, dt);
+        _teleportCooldown = TimerHelper.DecreaseTimer(_teleportCooldown, dt);
 
         bool moving = _moveInput != Vector2.Zero;
         if (moving)
         {
             SetWalkRowFromDirection(_moveInput);
-            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            
             _walkFrameTimer += dt;
             while (_walkFrameTimer >= WalkFrameDuration)
             {
@@ -156,22 +145,19 @@ public class Archer : BasePlayer
                 timeSinceLastAttack = 0;
             }
 
-            // place bomb at feet
-            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _bombActionCooldown <= 0f)
+            // place item at feet
+            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _itemActionCooldown <= 0f)
             {
                 ItemSystem.PlaceSelectedItem(this);
-                _bombActionCooldown = BombActionCooldown;
+                _itemActionCooldown = ItemActionCooldown;
             }
 
-            // throw bomb toward mouse
-            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _bombActionCooldown <= 0f)
+            // throw item toward mouse
+            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _itemActionCooldown <= 0f)
             {
                 ItemSystem.ThrowSelectedItemTowardMouse(this);
-                _bombActionCooldown = BombActionCooldown;
+                _itemActionCooldown = ItemActionCooldown;
             }
-
-            if (_dashCooldown > 0f)
-                _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
             {
@@ -183,6 +169,12 @@ public class Archer : BasePlayer
                     SetWalkRowFromDirection(towardMouse);
                     _dashCooldown = DashCooldown;
                 }
+            }
+
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Teleport) && _teleportCooldown <= 0f)
+            {
+                if (Teleport())
+                    _teleportCooldown = TeleportCooldownDuration;
             }
         }
 

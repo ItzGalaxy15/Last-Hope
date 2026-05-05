@@ -32,6 +32,18 @@ public abstract class BasePlayer : GameObject
     // Teleportation parameters
     private const float TeleportMinTileDistance = 20f;
 
+    // global cooldowns constants
+    protected const float ItemActionCooldown = 1f;
+    protected const float TeleportCooldownDuration = 60f;
+    protected const float DashCooldown = 0.75f;
+
+    // global cooldown timers
+    protected float _itemActionCooldown;
+    protected float _teleportCooldown;
+    protected float _dashCooldown;
+    protected float _greenGlowTimer;
+
+
     // Level EXP
     public int _Level { get; protected set; }
     public float _Experience { get; protected set; }
@@ -42,6 +54,9 @@ public abstract class BasePlayer : GameObject
     public float LevelUpFlashProgress => MathHelper.Clamp(_levelUpFlashTimer / LevelUpFlashDuration, 0f, 1f);
 
     // UI bar properties
+    public float DashCooldownProgress => MathHelper.Clamp(_dashCooldown / DashCooldown, 0f, 1f);
+    public float TeleportCooldownProgress => MathHelper.Clamp(_teleportCooldown / TeleportCooldownDuration, 0f, 1f);
+
     public float ExperienceProgress
     {
         get
