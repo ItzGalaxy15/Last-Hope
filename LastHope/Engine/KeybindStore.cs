@@ -6,6 +6,9 @@ namespace Last_Hope.Engine;
 
 //Reference used for inspiration: https://community.monogame.net/t/custom-key-binding-am-i-on-the-right-track/7740
 
+/// <summary>
+/// Defines the logical gameplay actions that can be mapped to physical user inputs.
+/// </summary>
 public enum KeybindId
 {
     MoveUp,
@@ -24,6 +27,9 @@ public enum KeybindId
     ThrowItem,
 }
 
+/// <summary>
+/// Specifies the hardware source of an input binding.
+/// </summary>
 public enum BindingKind : byte
 {
     None,
@@ -31,6 +37,9 @@ public enum BindingKind : byte
     Mouse,
 }
 
+/// <summary>
+/// Specifies which mouse button is used for a mouse-based input binding.
+/// </summary>
 public enum MouseBindButton : byte
 {
     None,
@@ -39,7 +48,13 @@ public enum MouseBindButton : byte
     Middle,
 }
 
-/// <summary>Single gameplay input: a keyboard key or a mouse button.</summary>
+/// <summary>
+/// Represents a single, immutable physical input assignment (either a keyboard key or a mouse button).
+/// </summary>
+/// <remarks>
+/// Acts essentially as a discriminated union, using <see cref="BindingKind"/> to dictate whether 
+/// the <see cref="Key"/> or <see cref="Mouse"/> field holds the valid configuration.
+/// </remarks>
 public readonly struct GameInputBinding : IEquatable<GameInputBinding>
 {
     public readonly BindingKind Kind;
@@ -53,11 +68,22 @@ public readonly struct GameInputBinding : IEquatable<GameInputBinding>
         Mouse = mouse;
     }
 
+    /// <summary>
+    /// Indicates whether this binding represents an empty or unassigned state.
+    /// </summary>
     public bool IsUnbound => Kind == BindingKind.None;
 
+    /// <summary>
+    /// Creates a new binding configured for a specific keyboard key.
+    /// </summary>
+    /// <param name="k">The key to bind. Passing <see cref="Keys.None"/> returns an unbound state.</param>
     public static GameInputBinding Keyboard(Keys k) =>
         k == Keys.None ? default : new(BindingKind.Keyboard, k, MouseBindButton.None);
 
+    /// <summary>
+    /// Creates a new binding configured for a specific mouse button.
+    /// </summary>
+    /// <param name="b">The mouse button to bind. Passing <see cref="MouseBindButton.None"/> returns an unbound state.</param>
     public static GameInputBinding FromMouse(MouseBindButton b) =>
         b == MouseBindButton.None ? default : new(BindingKind.Mouse, Keys.None, b);
 
@@ -70,10 +96,11 @@ public readonly struct GameInputBinding : IEquatable<GameInputBinding>
 
     public override int GetHashCode() => HashCode.Combine(Kind, Key, Mouse);
 
+    public override string ToString() => Format(this);
+
     /// <summary>Short label for settings UI (e.g. <c>LMB</c>, <c>RMB</c>, key names).</summary>
     public static string Format(GameInputBinding b) => b.Kind switch
     {
-        BindingKind.None => "(none)",
         BindingKind.Keyboard => FormatKey(b.Key),
         BindingKind.Mouse => b.Mouse switch
         {
@@ -95,7 +122,14 @@ public readonly struct GameInputBinding : IEquatable<GameInputBinding>
     }
 }
 
-/// <summary>In-memory gameplay bindings for the current run only (not written to disk).</summary>
+/// <summary>
+/// Manages the mapping between logical gameplay actions (<see cref="KeybindId"/>) and physical inputs (<see cref="GameInputBinding"/>).
+/// In-memory gameplay bindings for the current run only (not written to disk).
+/// </summary>
+/// <remarks>
+/// Based on the standard Input Mapping pattern to decouple hardware inputs from gameplay logic. 
+/// Provides conflict resolution to ensure multiple actions aren't unintentionally mapped to the same key.
+/// </remarks>
 public static class KeybindStore
 {
     private static readonly Dictionary<KeybindId, GameInputBinding> Defaults = new()
@@ -117,9 +151,18 @@ public static class KeybindStore
 
     private static readonly Dictionary<KeybindId, GameInputBinding> Current = new(Defaults);
 
+    /// <summary>
+    /// Retrieves the current physical input assigned to a logical action.
+    /// Falls back to the default binding if the action has no specific current override.
+    /// </summary>
+    /// <param name="id">The logical action to look up.</param>
+    /// <returns>The active <see cref="GameInputBinding"/>.</returns>
     public static GameInputBinding GetBinding(KeybindId id) =>
         Current.TryGetValue(id, out GameInputBinding b) ? b : Defaults[id];
 
+    /// <summary>
+    /// Retrieves a human-readable string representation of the binding currently assigned to an action.
+    /// </summary>
     public static string FormatBinding(KeybindId id) => GameInputBinding.Format(GetBinding(id));
 
     /// <summary>Returns another action that already uses <paramref name="binding"/>, if any (excluding <paramref name="exceptId"/>).</summary>
@@ -137,7 +180,10 @@ public static class KeybindStore
         return null;
     }
 
-    /// <summary>Assigns <paramref name="newBinding"/> to <paramref name="targetId"/> and removes it from all other actions.</summary>
+    /// <summary>
+    /// Assigns <paramref name="newBinding"/> to <paramref name="targetId"/> and removes it from all other actions.
+    /// Acts as a safe reassignment to prevent input mapping conflicts.
+    /// </summary>
     public static void ApplyRebind(KeybindId targetId, GameInputBinding newBinding)
     {
         if (newBinding.IsUnbound)
@@ -156,23 +202,29 @@ public static class KeybindStore
         Current[targetId] = newBinding;
     }
 
+    /// <summary>
+    /// Directly forces a binding onto an action without resolving conflicts for other actions.
+    /// Internally used to clear bindings if an unbound state is passed.
+    /// </summary>
     public static void SetBinding(KeybindId id, GameInputBinding binding)
     {
-        if (binding.IsUnbound)
-        {
-            Current[id] = default;
-            return;
-        }
-
-        Current[id] = binding;
+        Current[id] = binding.IsUnbound ? default : binding;
     }
 
+    /// <summary>
+    /// Wipes all user-defined bindings and restores the default control scheme.
+    /// </summary>
     public static void ResetToDefaults()
     {
         foreach (var kv in Defaults)
             Current[kv.Key] = kv.Value;
     }
 
+    /// <summary>
+    /// Provides a human-readable, UI-friendly label for a given logical action.
+    /// </summary>
+    /// <param name="id">The action to format.</param>
+    /// <returns>A formatted string description (e.g. "Move up" instead of "MoveUp").</returns>
     public static string Label(KeybindId id) => id switch
     {
         KeybindId.MoveUp => "Move up",
