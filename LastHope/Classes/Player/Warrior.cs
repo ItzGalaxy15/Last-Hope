@@ -68,11 +68,7 @@ public class Warrior : BasePlayer
     private const float BuffDurationSeconds = 10.0f;
     private const double ProcChance = 0.10;
     private const float AdrenalineRegenRate = 5.0f;
-
-    private const float BombThrowSpeed = 520f;
     private const float BombActionCooldown = 0.25f;
-
-    private const float DecoyThrowSpeed = 420f;
     private SoundEffect _deathSound;
     private SoundEffect _attackSound;
 
@@ -154,17 +150,14 @@ public class Warrior : BasePlayer
         Move(_moveInput, gameTime);
         SyncColliderToPosition();
 
-        if (_hurtCooldown > 0f)
-            _hurtCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_bombActionCooldown > 0f)
-            _bombActionCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_greenGlowTimer > 0f)
-            _greenGlowTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
         bool buffsChanged = false;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        _hurtCooldown = TimerHelper.DecreaseTimer(_hurtCooldown, dt);
+        _bombActionCooldown = TimerHelper.DecreaseTimer(_bombActionCooldown, dt);
+        _greenGlowTimer = TimerHelper.DecreaseTimer(_greenGlowTimer, dt);
+        _dashCooldown = TimerHelper.DecreaseTimer(_dashCooldown, dt);
+        _teleportCooldown = TimerHelper.DecreaseTimer(_teleportCooldown, dt);
 
         if (_speedBuffTimer > 0f) {
             _speedBuffTimer -= dt;
@@ -234,9 +227,6 @@ public class Warrior : BasePlayer
                 _bombActionCooldown = BombActionCooldown;
             }
 
-            if (_dashCooldown > 0f)
-                _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
             if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
             {
                 Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
@@ -248,9 +238,6 @@ public class Warrior : BasePlayer
                     _dashCooldown = DashCooldown;
                 }
             }
-
-            if (_teleportCooldown > 0f)
-                _teleportCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (_inputManager.IsGameplayKeyPress(KeybindId.Teleport) && _teleportCooldown <= 0f)
             {
@@ -303,9 +290,6 @@ public class Warrior : BasePlayer
 
     public void UseWeapon()
     {
-        if (_inputManager is null)
-            return;
-
         // Anchor at warrior body center, then lift upward.
         Vector2 castAnchor = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
 
