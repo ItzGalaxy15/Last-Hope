@@ -46,8 +46,6 @@ public class Archer : BasePlayer
     private bool _isDrawingBow;
     private float _bowDrawTimer;
     private Vector2 _bowAimDirection;
-    
-    private SoundEffect _deathSound;
     private const float ArrowSpeed = 600f;
 
     public Archer(Vector2 startPosition)

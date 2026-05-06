@@ -8,7 +8,7 @@ namespace LastHope.Audio;
 
 public static class AudioManager
 {
-    private static float _masterVolume;
+    private static float _masterVolume = 1.0f;
     public static float MasterVolume
     { 
         get
@@ -21,7 +21,7 @@ public static class AudioManager
         }
     }
 
-    private static float _musicVolume;
+    private static float _musicVolume = 1.0f;
     public static float MusicVolume
     { 
         get
@@ -34,7 +34,7 @@ public static class AudioManager
         }
     }
 
-    private static float _sfxVolume;
+    private static float _sfxVolume = 1.0f;
     public static float SfxVolume
     { 
         get

@@ -1,10 +1,11 @@
+using LastHope.Audio;
 using Last_Hope.Classes.Items;
+using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Last_Hope.Helpers;
-using Last_Hope.Collision;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
-using LastHope.Audio;
 
 namespace Last_Hope.BaseModel;
 
@@ -45,6 +46,9 @@ public abstract class BasePlayer : GameObject
     protected float _dashCooldown;
     protected float _greenGlowTimer;
     protected float _hurtCooldown;
+
+    // Sounds
+    protected SoundEffect _deathSound;
 
 
     // Level EXP
@@ -295,7 +299,7 @@ public abstract class BasePlayer : GameObject
     protected void Die()
     {
         _currentHp = 0f;
-        //AudioManager.PlaySfx(_deathSound);
+        AudioManager.PlaySfx(_deathSound);
         GameManager.GetGameManager().playerAlive = false;
         GameManager.GetGameManager()._state = GameState.GameOver;
     }

@@ -57,7 +57,6 @@ public class Warrior : BasePlayer
     private const float BuffDurationSeconds = 10.0f;
     private const double ProcChance = 0.10;
     private const float AdrenalineRegenRate = 5.0f;
-    private SoundEffect _deathSound;
     private SoundEffect _attackSound;
 
     // --- Skill Tree States ---
