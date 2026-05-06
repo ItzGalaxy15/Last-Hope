@@ -6,11 +6,13 @@ using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Last_Hope.BaseModel;
 
 public abstract class BasePlayer : GameObject
 {
+    public Texture2D AimArrowSprite;
     public Vector2 _position { get; protected set; }
 
     // Fraction of the body size used as the hitbox — tune this to adjust fairness.
@@ -22,6 +24,10 @@ public abstract class BasePlayer : GameObject
     public float _currentHp { get; protected set; }
     public BaseWeapon _Weapon { get; protected set; }
     public float _Speed { get; protected set; }
+
+    // Aim arrow parameters
+    private const float AimArrowDistance = 70f;
+    private const float AimArrowScale = 2f;
 
     // Dash parameters
     public float _DashDistance {get; protected set; }
@@ -302,6 +308,42 @@ public abstract class BasePlayer : GameObject
         AudioManager.PlaySfx(_deathSound);
         GameManager.GetGameManager().playerAlive = false;
         GameManager.GetGameManager()._state = GameState.GameOver;
+    }
+
+    protected void DrawAimArrow(SpriteBatch spriteBatch)
+    {
+        if (AimArrowSprite == null)
+            return;
+
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 mousePos = GameManager.GetGameManager().GetWorldMousePosition();
+        Vector2 direction = mousePos - center;
+
+        if (direction == Vector2.Zero)
+            return;
+
+        direction.Normalize();
+
+        Vector2 arrowPos = center + direction * AimArrowDistance;
+
+        float rotation = (float)Math.Atan2(direction.Y, direction.X) + MathHelper.PiOver2;
+
+        Vector2 origin = new Vector2(
+            AimArrowSprite.Width * 0.5f,
+            AimArrowSprite.Height * 0.5f
+        );
+
+        spriteBatch.Draw(
+            AimArrowSprite,
+            arrowPos,
+            null,
+            Color.White,
+            rotation,
+            origin,
+            AimArrowScale,
+            SpriteEffects.None,
+            0f
+        );
     }
 
     public abstract void Damage(float amount);
