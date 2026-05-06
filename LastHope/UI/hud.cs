@@ -9,16 +9,23 @@ namespace Last_Hope.UI;
 public class Hud
 {
 	private readonly List<UIElement> _elements;
+	private BossWarningIndicator _bossWarningIndicator;
 
-	public Hud(BasePlayer? player, Texture2D pixel, Texture2D? itemSpriteSheet = null, Texture2D? dashIcon = null, Texture2D? teleportIcon = null, Effect? cooldownShader = null)
+	public Hud(BasePlayer? player, Texture2D pixel, Texture2D? itemSpriteSheet = null, Texture2D? dashIcon = null, Texture2D? teleportIcon = null, Effect? cooldownShader = null, Microsoft.Xna.Framework.Content.ContentManager content = null)
 	{
+		_bossWarningIndicator = new BossWarningIndicator();
+		if (content != null)
+		{
+			_bossWarningIndicator.LoadContent(content);
+		}
+
 		_elements = new List<UIElement>
 		{
 			new ExperienceBar(player, pixel),
 			new HealthBar(player, pixel),
 			new ItemSlotsBar(pixel, itemSpriteSheet),
 			new WaveIndicator(),
-			new BossWarningIndicator()
+			_bossWarningIndicator
 		};
 
 		if (cooldownShader != null)
