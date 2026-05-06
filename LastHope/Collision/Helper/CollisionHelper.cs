@@ -5,18 +5,21 @@ namespace Last_Hope.Collision;
 //Helper to check if a position would collide with the world.
 public static class CollisionHelper
 {
+    public static Rectangle CreateHitbox(Vector2 position, float bodyWidth, float hitboxFraction)
+    {
+        float size = bodyWidth * hitboxFraction;
+        float offset = (bodyWidth - size) / 2f;
+
+        return new Rectangle(
+            (int)(position.X + offset),
+            (int)(position.Y + offset),
+            (int)size,
+            (int)size
+        );
+    }
     public static bool WouldCollideAt(Vector2 testPosition, float bodyWidth, float hitboxFraction)
     {
-        float hitboxSize = bodyWidth * hitboxFraction;
-        float offset = (bodyWidth - hitboxSize) / 2f;
-
-        Rectangle testRect = new Rectangle(
-            (int)(testPosition.X + offset),
-            (int)(testPosition.Y + offset),
-            (int)hitboxSize,
-            (int)hitboxSize
-        );
-
+        Rectangle testRect = CreateHitbox(testPosition, bodyWidth, hitboxFraction);
         return CollisionWorld.CollidesWithStaticForMovement(testRect);
     }
 }
