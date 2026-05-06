@@ -152,7 +152,7 @@ namespace Last_Hope.Engine.LevelGenerator
             return CreateAndRegisterAnimation(ranges[_random.Next(ranges.Count)], x, y);
         }
 
-        // Ensures each animation range is only used onceWW prevents
+        // Ensures each animation range is only used once prevents
         // duplicate snail sprites on the map.
         /// <summary>
         /// Same as TryAddAnimatedDecoration but filters out any animation ranges whose start frame
