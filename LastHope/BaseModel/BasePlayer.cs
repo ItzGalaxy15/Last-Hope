@@ -4,6 +4,7 @@ using Last_Hope.Helpers;
 using Last_Hope.Collision;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using LastHope.Audio;
 
 namespace Last_Hope.BaseModel;
 
@@ -13,7 +14,7 @@ public abstract class BasePlayer : GameObject
 
     // Fraction of the body size used as the hitbox — tune this to adjust fairness.
     protected const float HitboxFraction = 0.55f;
-    protected abstract float _bodyWidth { get; }
+    public abstract float _bodyWidth { get; }
 
     // Player stats
     public float _maxHp { get; protected set; }
@@ -31,6 +32,7 @@ public abstract class BasePlayer : GameObject
 
     // Teleportation parameters
     private const float TeleportMinTileDistance = 20f;
+    private const float TeleportEnemyClearance = 160f;
 
     // global cooldowns constants
     protected const float ItemActionCooldown = 1f;
@@ -42,6 +44,7 @@ public abstract class BasePlayer : GameObject
     protected float _teleportCooldown;
     protected float _dashCooldown;
     protected float _greenGlowTimer;
+    protected float _hurtCooldown;
 
 
     // Level EXP
@@ -250,9 +253,54 @@ public abstract class BasePlayer : GameObject
         _position = MovementHelper.ClampToMapBounds(_position, _bodyWidth);
     }
 
-    public abstract void Damage(float amount);
+    protected bool IsPositionSafe(Vector2 position)
+    {
+        var gm = GameManager.GetGameManager();
+        Vector2 center = position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        foreach (var obj in gm._gameObjects)
+        {
+            if (obj is not BaseEnemy) continue;
+            var collider = obj.GetCollider();
+            if (collider == null) continue;
+            if (Vector2.Distance(center, collider.GetBoundingBox().Center.ToVector2()) < TeleportEnemyClearance)
+                return false;
+        }
+        return true;
+    }
 
-    protected virtual bool IsPositionSafe(Vector2 position) => true;
+    protected void CheckDeath()
+    {
+        if (_currentHp <= 0f)
+        {
+            if (ExtraLives > 0)
+            {
+                Revive();
+            }
+            else
+            {
+                Die();
+            }
+        }
+    }
+
+    protected void Revive()
+    {
+        ExtraLives--;
+        _currentHp = _maxHp; // Prevent death
+
+        _greenGlowTimer = 1.5f;
+        _hurtCooldown = 1.5f; // Grant 1.5 seconds of invincibility to escape
+    }
+
+    protected void Die()
+    {
+        _currentHp = 0f;
+        //AudioManager.PlaySfx(_deathSound);
+        GameManager.GetGameManager().playerAlive = false;
+        GameManager.GetGameManager()._state = GameState.GameOver;
+    }
+
+    public abstract void Damage(float amount);
 
     protected abstract void ApplyTeleportPosition(Vector2 newPosition);
 }

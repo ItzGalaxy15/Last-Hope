@@ -11,7 +11,7 @@ public static class ItemSystem
     {
         GameManager gm = GameManager.GetGameManager();
 
-        Vector2 spawnPosition = player.GetPosition() + new Vector2(GetBodyWidth(player) * 0.5f);
+        Vector2 spawnPosition = player.GetPosition() + new Vector2(player._bodyWidth * 0.5f);
 
         ItemType[] inv = player.Inventory!;
         ItemType currentItem = inv[gm.SelectedItemSlot];
@@ -46,7 +46,7 @@ public static class ItemSystem
     {
         GameManager gm = GameManager.GetGameManager();
 
-        Vector2 spawnPosition = player.GetPosition() + new Vector2(GetBodyWidth(player) * 0.5f);
+        Vector2 spawnPosition = player.GetPosition() + new Vector2(player._bodyWidth * 0.5f);
 
         Vector2 mouseWorld = gm.GetWorldMousePosition();
         Vector2 direction = mouseWorld - spawnPosition;
@@ -93,14 +93,5 @@ public static class ItemSystem
         Decoy decoy = new Decoy(spawnPosition, initialVelocity, lifetimeSeconds: 5f);
         gm.AddGameObject(decoy);
         gm.ActiveDecoy = decoy;
-    }
-
-    // helper (since _bodyWidth is protected abstract)
-    private static float GetBodyWidth(BasePlayer player)
-    {
-        var field = typeof(BasePlayer)
-            .GetProperty("_bodyWidth", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
-
-        return field != null ? (float)field.GetValue(player)! : 64f;
     }
 }

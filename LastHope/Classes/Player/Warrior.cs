@@ -31,10 +31,9 @@ public class Warrior : BasePlayer
     private int _walkRow;
     private int _walkFrameIndex;
     private float _walkFrameTimer;
-    protected override float _bodyWidth => FrameSize * WarriorDrawScale;
+    public override float _bodyWidth => FrameSize * WarriorDrawScale;
     private float _axePixelSize => FrameSize * AxeDrawScale;
     private float AxeOffsetY => (_bodyWidth - _axePixelSize) * 0.5f;
-    private const float TeleportEnemyClearance = 160f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = false;
@@ -42,7 +41,6 @@ public class Warrior : BasePlayer
     // --- TIMERS & COOLDOWNS ---
     private double _timeSinceLastAttack = 0;
     private float _currentAttackCooldown = 0.7f;
-    private float _hurtCooldown;
     private float _speedBuffTimer = 0f;
     private float _dmgBuffTimer = 0f;
     private float _defBuffTimer = 0f;
@@ -701,25 +699,7 @@ public class Warrior : BasePlayer
 
         _currentHp -= amount;
         TriggerHurtFlash();
-
-        if (_currentHp <= 0f)
-        {
-            if (ExtraLives > 0)
-            {
-                ExtraLives--;
-                _currentHp = 0.1f; // Prevent death
-                Heal(9999f); // Restore to Max HP
-                _greenGlowTimer = 1.5f;
-                _hurtCooldown = 1.5f; // Grant 1.5 seconds of invincibility to escape
-            }
-            else
-            {
-                _currentHp = 0f;
-                AudioManager.PlaySfx(_deathSound);
-                GameManager.GetGameManager().playerAlive = false;
-                GameManager.GetGameManager()._state = GameState.GameOver;
-            }
-        }
+        CheckDeath();
     }
 
     protected override void ApplyDashOffset(Vector2 delta)
@@ -734,20 +714,5 @@ public class Warrior : BasePlayer
         _position = newPosition;
         MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
-    }
-
-    protected override bool IsPositionSafe(Vector2 position)
-    {
-        var gm = GameManager.GetGameManager();
-        Vector2 center = position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        foreach (var obj in gm._gameObjects)
-        {
-            if (obj is not BaseEnemy) continue;
-            var collider = obj.GetCollider();
-            if (collider == null) continue;
-            if (Vector2.Distance(center, collider.GetBoundingBox().Center.ToVector2()) < TeleportEnemyClearance)
-                return false;
-        }
-        return true;
     }
 }
