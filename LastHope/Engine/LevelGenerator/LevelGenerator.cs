@@ -8,8 +8,8 @@ namespace Last_Hope.Engine.LevelGenerator
     /// <summary>
     ///  implemented the Wave Function Collapse algorithm as originally published by Maxim Gumin
     /// (github.com/mxgmn/WaveFunctionCollapse, MIT License). The algorithm structure
-    ///  observe, collapse, propagate, retry — follows his design. The implementation is my own,
-    /// adapted for MonoGame with pixel-based edge compatibility instead of XML adjacency rules
+    ///  observe, collapse, propagate, retry follows his design. The implementation is my own,
+    /// adapted for MonoGame with pixel based edge compatibility instead of XML adjacency rules
     /// </summary>
     internal partial class LevelGenerator
     {
@@ -99,7 +99,7 @@ namespace Last_Hope.Engine.LevelGenerator
         }
 
         /// <summary>
-        /// Top-level entry point that builds a complete level. Runs WFC on grass tiles only, falls
+        /// Top level entry point that builds a complete level. Runs WFC on grass tiles only, falls
         /// back to random fill if every attempt fails, then places the village, stamps a flower field
         /// somewhere on the grass, and scatters decorations across the overlay layer on top.
         /// </summary>
