@@ -632,42 +632,6 @@ public class Warrior : BasePlayer
         Damage(damageToTake);
     }
 
-    private void SetWalkRowFromDirection(Vector2 dir)
-    {
-        if (dir == Vector2.Zero)
-            return;
-
-        float ax = Math.Abs(dir.X);
-        float ay = Math.Abs(dir.Y);
-
-        if (ay >= ax)
-        {
-            _walkRow = dir.Y > 0f ? 0 : 1;
-        }
-        else
-        {
-            _walkRow = dir.X > 0f ? 2 : 3;
-            _facingLeft = dir.X < 0f;
-        }
-    }
-
-    private void SyncColliderToPosition()
-    {
-        if (_collider is null)
-            return;
-
-        float hitboxSize = _bodyWidth * HitboxFraction;
-        float offset = (_bodyWidth - hitboxSize) / 2f;
-
-        _collider.shape = new Rectangle(
-            (int)(_position.X + offset),
-            (int)(_position.Y + offset),
-            (int)hitboxSize,
-            (int)hitboxSize
-        );
-        SetCollider(_collider);
-    }
-
     public override void Damage(float amount)
     {
         GameManager gm = GameManager.GetGameManager();
@@ -700,6 +664,34 @@ public class Warrior : BasePlayer
         _currentHp -= amount;
         TriggerHurtFlash();
         CheckDeath();
+    }
+
+    private void SetWalkRowFromDirection(Vector2 dir)
+    {
+        if (dir == Vector2.Zero)
+            return;
+
+        float ax = Math.Abs(dir.X);
+        float ay = Math.Abs(dir.Y);
+
+        if (ay >= ax)
+        {
+            _walkRow = dir.Y > 0f ? 0 : 1;
+        }
+        else
+        {
+            _walkRow = dir.X > 0f ? 2 : 3;
+            _facingLeft = dir.X < 0f;
+        }
+    }
+
+    private void SyncColliderToPosition()
+    {
+        if (_collider is null)
+            return;
+
+        _collider.shape = CollisionHelper.CreateHitbox(_position, _bodyWidth, HitboxFraction);
+        SetCollider(_collider);
     }
 
     protected override void ApplyDashOffset(Vector2 delta)

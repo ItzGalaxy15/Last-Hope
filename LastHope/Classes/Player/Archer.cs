@@ -259,6 +259,13 @@ public class Archer : BasePlayer
         Damage(damageToTake);
     }
 
+    public override void Damage(float amount)
+    {
+        _currentHp -= amount;
+        TriggerHurtFlash();
+        CheckDeath();
+    }
+
     private void SetWalkRowFromDirection(Vector2 dir)
     {
         if (dir == Vector2.Zero)
@@ -283,22 +290,8 @@ public class Archer : BasePlayer
         if (_collider is null)
             return;
 
-        float hitboxSize = _bodyWidth * HitboxFraction;
-        float offset = (_bodyWidth - hitboxSize) / 2f;
-
-        _collider.shape = new Rectangle(
-            (int)(_position.X + offset),
-            (int)(_position.Y + offset),
-            (int)hitboxSize,
-            (int)hitboxSize);
+        _collider.shape = CollisionHelper.CreateHitbox(_position, _bodyWidth, HitboxFraction);
         SetCollider(_collider);
-    }
-
-    public override void Damage(float amount)
-    {
-        _currentHp -= amount;
-        TriggerHurtFlash();
-        CheckDeath();
     }
 
     protected override void ApplyDashOffset(Vector2 delta)
