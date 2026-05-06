@@ -13,6 +13,9 @@ public class PausedMenu : MenuBase
 {
     private Panel _rootPanel;
 
+    /// <summary>
+    /// Cleans up and releases the Gum UI components used by the pause menu.
+    /// </summary>
     public void ReleaseGumUi()
     {
         if (_rootPanel == null)
@@ -22,6 +25,10 @@ public class PausedMenu : MenuBase
         _rootPanel = null;
     }
 
+    /// <summary>
+    /// Updates the pause menu state and handles keyboard input to unpause the game.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
     public void Update(GameTime gameTime)
     {
         EnsurePauseGum();
@@ -33,6 +40,9 @@ public class PausedMenu : MenuBase
         }
     }
 
+    /// <summary>
+    /// Ensures that the Gum UI components for the pause menu are initialized and configured.
+    /// </summary>
     private void EnsurePauseGum()
     {
         if (_rootPanel != null)
@@ -114,6 +124,12 @@ public class PausedMenu : MenuBase
         continueBtn.IsFocused = true;
     }
 
+    /// <summary>
+    /// Draws the pause menu overlays and Gum UI to the screen.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="spriteBatch">The SpriteBatch used for rendering.</param>
+    /// <param name="transformMatrix">Optional transformation matrix.</param>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         DrawWorld(gameTime, spriteBatch, transformMatrix);
