@@ -3,6 +3,7 @@ using Last_Hope.BaseModel;
 using Last_Hope.Classes.Spell;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -12,7 +13,7 @@ namespace Last_Hope;
 public class Boss : BaseEnemy
 {
     private const float SpriteScale = 2.5f;
-
+    private const bool DebugDrawHitbox = false;
     private Vector2 _precisePosition;
 
     private AnimationManager _walkAnimation;
@@ -185,6 +186,9 @@ public class Boss : BaseEnemy
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Vector2 center = _precisePosition + new Vector2(FullSize / 2f);
+
+        if (DebugDrawHitbox)
+            HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.Red);
 
         // Row and X offsets are baked into each AnimationManager — no Y override needed
         Rectangle sourceRect;
