@@ -1,6 +1,5 @@
 using System;
 using Last_Hope.BaseModel;
-using Last_Hope.Classes.Items;
 using Last_Hope.Collision;
 using Microsoft.Xna.Framework;
 
@@ -32,8 +31,6 @@ public class EnemySpawner
     
     /// <summary>The absolute maximum number of enemies allowed per wave, if <see cref="UseMaxEnemyLimit"/> is true.</summary>
     public int MaxEnemiesPerWave { get; set; } = 35;
-
-    private const float MinSpawnInterval = 0.2f;
 
     private float spawnTimer = 0f;
     private float spawnInterval = 0.2f; // spawn an enemy every 0.2s

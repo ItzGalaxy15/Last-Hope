@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
-using Last_Hope.BaseModel;
 using Last_Hope.Classes.Items;
 
 namespace Last_Hope.UI.Menus;
