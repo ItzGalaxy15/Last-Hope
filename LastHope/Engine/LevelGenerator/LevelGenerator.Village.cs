@@ -39,7 +39,7 @@ namespace Last_Hope.Engine.LevelGenerator
 
         /// <summary>
         /// Places the village centered on the player's spawn tile. Lays out 6 buildings in a
-        /// 2-row by 3-column grid with a main street running between the two rows, then calls
+        /// 2 row by 3 column grid with a main street running between the two rows, then calls
         /// ApplyVillageWalkways to paint the stone paths connecting everything together.
         /// </summary>
         private void GenerateVillage()
@@ -142,7 +142,7 @@ namespace Last_Hope.Engine.LevelGenerator
 
         /// <summary>
         /// Paints stone tiles across the full width of the map to form the main street, then draws
-        /// a 2-tile-wide path down from each building's door to connect it to that street. Buildings
+        /// a 2 tile wide path down from each building's door to connect it to that street. Buildings
         /// above the street get paths going down; buildings below get paths going up.
         /// </summary>
         private void ApplyVillageWalkways(int clusterOriginX, int streetY, int clusterW)
@@ -199,7 +199,7 @@ namespace Last_Hope.Engine.LevelGenerator
         // Helpers
 
         /// <summary>
-        /// Bounds-checks the coordinates and then replaces that map tile with a random stone tile
+        /// Bounds checks the coordinates and then replaces that map tile with a random stone tile
         /// picked from the stone set. The randomness stops all walkways looking identical.
         /// </summary>
         private void SetStoneTile(int[,] map, int x, int y, List<int> stoneTiles)
@@ -227,8 +227,8 @@ namespace Last_Hope.Engine.LevelGenerator
         }
 
         // Logic: Manual Hitbox Adjustments.
-        // Note: Houses use a Y-offset to allow the player to walk "behind" the roof/top of the building
-        // (pseudo-depth/Z-order) while colliding with the walls.
+        // Note: Houses use a Y offset to allow the player to walk "behind" the roof/top of the building
+        // (pseudo depth/Z order) while colliding with the walls.
         private static readonly Dictionary<int, (int OffsetY, int HeightPx)> _houseCollisionData
             = new Dictionary<int, (int, int)>
             {

@@ -13,7 +13,7 @@ namespace Last_Hope.Engine.LevelGenerator
         /// Compares every tile against every other tile along each of their four edges, pixel by pixel.
         /// If the average colour difference is low enough I mark those two tiles as compatible in that
         /// direction, meaning WFC is allowed to place them next to each other. If a tile ends up with
-        /// too few compatible neighbours I force-add the closest ones so the solver doesn't get stuck
+        /// too few compatible neighbours I force add the closest ones so the solver doesn't get stuck
         /// right away.
         /// </summary>
         private void BuildCompatibility()
@@ -48,7 +48,7 @@ namespace Last_Hope.Engine.LevelGenerator
                         }
                     }
 
-                    // If too few neighbours passed the tolerance, force-
+                    // If too few neighbours passed the tolerance, force
                     // add the closest ones so the solver has room to work.
                     while (allowedCount < minNeighborsPerDirection)
                     {
@@ -78,12 +78,12 @@ namespace Last_Hope.Engine.LevelGenerator
         }
 
         // Algorithm: Wave Function Collapse (Maxim Gumin, github.com/mxgmn/WaveFunctionCollapse)
-        // Reimplemented — observe-collapse-propagate-retry structure follows his design;
+        // Reimplemented observe collapse propagate retry structure follows his design;
         // retry loop, data structures, and helper split are my own.
         /// <summary>
         /// The main WFC loop. It repeatedly picks the undecided cell with the fewest remaining tile
         /// options, collapses it to one choice, then propagates the constraints outward to rule out
-        /// now-impossible options in neighbouring cells. If it hits a contradiction a cell ends up
+        /// now impossible options in neighbouring cells. If it hits a contradiction a cell ends up
         /// with zero valid tiles it wipes the grid and retries from scratch, up to
         /// <see cref="MaxGenerationAttempts"/> times. Returns true if a valid map was produced.
         /// </summary>
@@ -155,14 +155,14 @@ namespace Last_Hope.Engine.LevelGenerator
 
             return false;
         }
-        // Algorithm: minimum-entropy cell selection (github.com/mxgmn/WaveFunctionCollapse)
+        // Algorithm: minimum entropy cell selection (github.com/mxgmn/WaveFunctionCollapse)
         // Reimplemented using plain option count + reservoir sampling for ties;
-        // mxgmn uses Shannon entropy with per-cell Gaussian noise instead.
+        // mxgmn uses Shannon entropy with per cell Gaussian noise instead.
         /// <summary>
         /// Scans the whole grid and returns the coordinates of the undecided cell that has the fewest
         /// tiles still possible. Cells already collapsed to one option are skipped. When multiple cells
         /// share the same minimum count, ties are broken randomly using reservoir sampling so it's not
-        /// always biased towards the top-left corner.
+        /// always biased towards the top left corner.
         /// </summary>
         private bool TryFindLowestEntropyCell(int[,] optionCount, out int resultX, out int resultY)
         {
@@ -387,7 +387,7 @@ namespace Last_Hope.Engine.LevelGenerator
         // Edge difference scoring
         /// <summary>
         /// Reads the row or column of pixels along the touching edge of two tiles and returns the
-        /// average per-channel (R, G, B) colour difference. A low score means those edges look similar
+        /// average per channel (R, G, B) colour difference. A low score means those edges look similar
         /// and the tiles can sit next to each other without a visible seam. This score is what
         /// BuildCompatibility uses to decide whether to allow a tile pairing.
         /// </summary>
