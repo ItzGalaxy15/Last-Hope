@@ -8,12 +8,13 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Audio;
 using Last_Hope.Classes.Items;
+using Last_Hope.Helpers;
+using Last_Hope.Systems.ItemSystem;
 
 namespace Last_Hope;
 
 public class Archer : BasePlayer
 {
-    public Vector2 Position { get; private set; }
     public Texture2D BowSprite;
     public Texture2D ArcherSprite;
     public InputManager _inputManager { get; private set; }
@@ -26,24 +27,18 @@ public class Archer : BasePlayer
     private int _walkRow;
     private int _walkFrameIndex;
     private float _walkFrameTimer;
-    private float _bodyWidth => FrameSize * ArcherDrawScale;
+    public override float _bodyWidth => FrameSize * ArcherDrawScale;
     private float _bowPixelSize => FrameSize * BowDrawScale;
     private float BowOffsetY => (_bodyWidth - _bowPixelSize) * 0.5f;
 
     private const float AttackCooldown = 0.7f;
-    private const float DashCooldown = 0.75f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = true;
-    private const float HitboxFraction = 0.55f;
-    private const float TeleportEnemyClearance = 160f;
-
     private double timeSinceLastAttack = 0;
-    private float _dashCooldown;
     private Vector2 _moveInput;
     private bool _facingLeft;
     private RectangleCollider _collider;
-    private float _hurtCooldown;
 
     // Bow attack animation
     private const int BowSheetColumns = 3;
@@ -51,51 +46,16 @@ public class Archer : BasePlayer
     private bool _isDrawingBow;
     private float _bowDrawTimer;
     private Vector2 _bowAimDirection;
-
-    private const float BombThrowSpeed = 520f;
-    private const float BombActionCooldown = 0.25f;
-    private float _bombActionCooldown;
-
-    private float _greenGlowTimer;
-    private SoundEffect _deathSound;
-
-    private const float DecoyThrowSpeed = 420f;
     private const float ArrowSpeed = 600f;
 
     public Archer(Vector2 startPosition)
-        : base(maxHp: 100f, weapon: new Bow("Bow", damage: 20, critChance: 1.0f, speed: 600f, owner: null), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(position: startPosition, maxHp: 100f, weapon: new Bow("Bow", damage: 20, critChance: 1.0f, speed: 600f, owner: null), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
     {
-        Position = startPosition;
+        _position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
         _collider = new RectangleCollider(new Rectangle(origin, Point.Zero));
         SetCollider(_collider);
         Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
-    }
-
-    public override Vector2 GetPosition()
-    {
-        return Position;
-    }
-
-    public void Move(Vector2 direction, GameTime gameTime)
-    {
-        if (direction == Vector2.Zero)
-            return;
-
-        direction.Normalize();
-
-        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Vector2 velocity = direction * _Speed * dt;
-
-        Vector2 newPosX = new Vector2(Position.X + velocity.X, Position.Y);
-        if (!WouldCollideAt(newPosX))
-            Position = newPosX;
-
-        Vector2 newPosY = new Vector2(Position.X, Position.Y + velocity.Y);
-        if (!WouldCollideAt(newPosY))
-            Position = newPosY;
-
-        ClampToMapBounds();
     }
 
     public override void Load(ContentManager content)
@@ -109,7 +69,7 @@ public class Archer : BasePlayer
 
         SyncColliderToPosition();
         SetCollider(_collider);
-        ClampToMapBounds();
+        MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
     }
 
@@ -133,21 +93,19 @@ public class Archer : BasePlayer
 
         Move(_moveInput, gameTime);
         SyncColliderToPosition();
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (_hurtCooldown > 0f)
-            _hurtCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_bombActionCooldown > 0f)
-            _bombActionCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_greenGlowTimer > 0f)
-            _greenGlowTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _hurtCooldown = TimerHelper.DecreaseTimer(_hurtCooldown, dt);
+        _itemActionCooldown = TimerHelper.DecreaseTimer(_itemActionCooldown, dt);
+        _greenGlowTimer = TimerHelper.DecreaseTimer(_greenGlowTimer, dt);
+        _dashCooldown = TimerHelper.DecreaseTimer(_dashCooldown, dt);
+        _teleportCooldown = TimerHelper.DecreaseTimer(_teleportCooldown, dt);
 
         bool moving = _moveInput != Vector2.Zero;
         if (moving)
         {
             SetWalkRowFromDirection(_moveInput);
-            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            
             _walkFrameTimer += dt;
             while (_walkFrameTimer >= WalkFrameDuration)
             {
@@ -182,27 +140,24 @@ public class Archer : BasePlayer
                 timeSinceLastAttack = 0;
             }
 
-            // G = place bomb at feet
-            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _bombActionCooldown <= 0f)
+            // place item at feet
+            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _itemActionCooldown <= 0f)
             {
-                PlaceSelectedItem();
-                _bombActionCooldown = BombActionCooldown;
+                ItemSystem.PlaceSelectedItem(this);
+                _itemActionCooldown = ItemActionCooldown;
             }
 
-            // T = throw bomb toward mouse
-            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _bombActionCooldown <= 0f)
+            // throw item toward mouse
+            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _itemActionCooldown <= 0f)
             {
-                ThrowSelectedItemTowardMouse();
-                _bombActionCooldown = BombActionCooldown;
+                ItemSystem.ThrowSelectedItemTowardMouse(this);
+                _itemActionCooldown = ItemActionCooldown;
             }
-
-            if (_dashCooldown > 0f)
-                _dashCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
             {
                 Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
-                Vector2 towardMouse = mousePosition - Position;
+                Vector2 towardMouse = mousePosition - _position;
                 if (towardMouse != Vector2.Zero)
                 {
                     Dash(towardMouse, _DashDistance);
@@ -210,20 +165,15 @@ public class Archer : BasePlayer
                     _dashCooldown = DashCooldown;
                 }
             }
+
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Teleport) && _teleportCooldown <= 0f)
+            {
+                if (Teleport())
+                    _teleportCooldown = TeleportCooldownDuration;
+            }
         }
 
         base.Update(gameTime);
-    }
-
-    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
-    {
-        Texture2D pixel = GameManager.GetGameManager().Pixel;
-        const int thickness = 2;
-
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
     private void StartBowDraw()
@@ -231,7 +181,7 @@ public class Archer : BasePlayer
         if (_inputManager is null)
             return;
 
-        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
         Vector2 direction = mousePosition - center;
         if (direction == Vector2.Zero)
@@ -245,7 +195,7 @@ public class Archer : BasePlayer
 
     private void FireArrow()
     {
-        Vector2 center = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         _Weapon.Attack(_bowAimDirection, center);
     }
 
@@ -256,7 +206,7 @@ public class Archer : BasePlayer
         if (_greenGlowTimer > 0f)
             drawColor = Color.Lerp(drawColor, Color.LimeGreen, 0.5f);
 
-        spriteBatch.Draw(ArcherSprite, Position, archerSource, drawColor, 0f, Vector2.Zero, ArcherDrawScale, SpriteEffects.None, 0f);
+        spriteBatch.Draw(ArcherSprite, _position, archerSource, drawColor, 0f, Vector2.Zero, ArcherDrawScale, SpriteEffects.None, 0f);
 
         // Draw bow sprite
         int bowFrame = 0;
@@ -274,10 +224,10 @@ public class Archer : BasePlayer
             ? new Vector2(_bodyWidth - bowW - 40f, y)
             : new Vector2(40f, y);
 
-        spriteBatch.Draw(BowSprite, Position + bowOffset, bowSource, Color.White, 0f, Vector2.Zero, BowDrawScale, bowFlip, 0f);
+        spriteBatch.Draw(BowSprite, _position + bowOffset, bowSource, Color.White, 0f, Vector2.Zero, BowDrawScale, bowFlip, 0f);
 
         if (DebugDrawHitbox && _collider is not null)
-            DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
+            HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
 
         base.Draw(gameTime, spriteBatch);
     }
@@ -294,6 +244,13 @@ public class Archer : BasePlayer
             damageToTake *= 2;
 
         Damage(damageToTake);
+    }
+
+    public override void Damage(float amount)
+    {
+        _currentHp -= amount;
+        TriggerHurtFlash();
+        CheckDeath();
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)
@@ -320,166 +277,21 @@ public class Archer : BasePlayer
         if (_collider is null)
             return;
 
-        float hitboxSize = _bodyWidth * HitboxFraction;
-        float offset = (_bodyWidth - hitboxSize) / 2f;
-
-        _collider.shape = new Rectangle(
-            (int)(Position.X + offset),
-            (int)(Position.Y + offset),
-            (int)hitboxSize,
-            (int)hitboxSize);
+        _collider.shape = CollisionHelper.CreateHitbox(_position, _bodyWidth, HitboxFraction);
         SetCollider(_collider);
-    }
-
-    public override void Damage(float amount)
-    {
-        _currentHp -= amount;
-        TriggerHurtFlash();
-
-        if (_currentHp <= 0f)
-        {
-            if (ExtraLives > 0)
-            {
-                ExtraLives--;
-                _currentHp = 0.1f;
-                Heal(9999f);
-                _greenGlowTimer = 1.5f;
-                _hurtCooldown = 1.5f;
-            }
-            else
-            {
-                _currentHp = 0f;
-                _deathSound?.Play();
-                GameManager.GetGameManager().playerAlive = false;
-                GameManager.GetGameManager()._state = GameState.GameOver;
-            }
-        }
     }
 
     protected override void ApplyDashOffset(Vector2 delta)
     {
-        Position += delta;
-        ClampToMapBounds();
+        _position += delta;
+        MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
     }
 
     protected override void ApplyTeleportPosition(Vector2 newPosition)
     {
-        Position = newPosition;
-        ClampToMapBounds();
+        _position = newPosition;
+        MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
-    }
-
-    protected override bool IsPositionSafe(Vector2 position)
-    {
-        var gm = GameManager.GetGameManager();
-        Vector2 center = position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        foreach (var obj in gm._gameObjects)
-        {
-            if (obj is not BaseEnemy) continue;
-            var collider = obj.GetCollider();
-            if (collider == null) continue;
-            if (Vector2.Distance(center, collider.GetBoundingBox().Center.ToVector2()) < TeleportEnemyClearance)
-                return false;
-        }
-        return true;
-    }
-
-    private void ClampToMapBounds()
-    {
-        var grid = GameManager.GetGameManager().NavigationGrid;
-        if (grid == null)
-            return;
-
-        float mapW = grid.WidthInTiles * grid.TileSize;
-        float mapH = grid.HeightInTiles * grid.TileSize;
-
-        Position = new Vector2(
-            MathHelper.Clamp(Position.X, 0f, mapW - _bodyWidth),
-            MathHelper.Clamp(Position.Y, 0f, mapH - _bodyWidth)
-        );
-    }
-
-    protected override bool WouldCollideAt(Vector2 testPosition)
-    {
-        float hitboxSize = _bodyWidth * HitboxFraction;
-        float offset = (_bodyWidth - hitboxSize) / 2f;
-
-        Rectangle testRect = new Rectangle(
-            (int)(testPosition.X + offset),
-            (int)(testPosition.Y + offset),
-            (int)hitboxSize,
-            (int)hitboxSize
-        );
-
-        return CollisionWorld.CollidesWithStaticForMovement(testRect);
-    }
-
-    private void PlaceSelectedItem()
-    {
-        GameManager gm = GameManager.GetGameManager();
-        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-
-        ItemType[] inv = Inventory!;
-        ItemType currentItem = inv[gm.SelectedItemSlot];
-        if (currentItem == ItemType.None)
-            return;
-
-        if (currentItem == ItemType.Decoy)
-            SpawnDecoy(gm, spawnPosition, Vector2.Zero);
-        else if (currentItem == ItemType.Bomb)
-            gm.AddGameObject(new Bomb(spawnPosition, Vector2.Zero));
-        else if (currentItem == ItemType.HealingPotion)
-            Heal(50f);
-        else if (currentItem == ItemType.OneUp)
-        {
-            AddLife(1);
-            _greenGlowTimer = 1.5f;
-            gm.HasUsedOneUp = true;
-        }
-
-        inv[gm.SelectedItemSlot] = ItemType.None;
-    }
-
-    private void ThrowSelectedItemTowardMouse()
-    {
-        GameManager gm = GameManager.GetGameManager();
-        Vector2 spawnPosition = Position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        Vector2 mouseWorld = gm.GetWorldMousePosition();
-        Vector2 direction = mouseWorld - spawnPosition;
-        if (direction == Vector2.Zero)
-            return;
-
-        direction.Normalize();
-
-        ItemType[] inv = Inventory!;
-        ItemType currentItem = inv[gm.SelectedItemSlot];
-        if (currentItem == ItemType.None)
-            return;
-
-        if (currentItem == ItemType.Decoy)
-            SpawnDecoy(gm, spawnPosition, direction * DecoyThrowSpeed);
-        else if (currentItem == ItemType.Bomb)
-            gm.AddGameObject(new Bomb(spawnPosition, direction * BombThrowSpeed));
-        else if (currentItem == ItemType.HealingPotion)
-            Heal(50f);
-        else if (currentItem == ItemType.OneUp)
-        {
-            AddLife(1);
-            _greenGlowTimer = 1.5f;
-            gm.HasUsedOneUp = true;
-        }
-
-        inv[gm.SelectedItemSlot] = ItemType.None;
-    }
-
-    private static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
-    {
-        if (gm.ActiveDecoy is not null)
-            gm.RemoveGameObject(gm.ActiveDecoy);
-
-        Decoy decoy = new Decoy(spawnPosition, initialVelocity, lifetimeSeconds: 5f);
-        gm.AddGameObject(decoy);
-        gm.ActiveDecoy = decoy;
     }
 }

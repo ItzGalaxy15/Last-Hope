@@ -1,24 +1,55 @@
+using LastHope.Audio;
 using Last_Hope.Classes.Items;
+using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.BaseModel;
 
 public abstract class BasePlayer : GameObject
 {
+    public Vector2 _position { get; protected set; }
+
+    // Fraction of the body size used as the hitbox — tune this to adjust fairness.
+    protected const float HitboxFraction = 0.55f;
+    public abstract float _bodyWidth { get; }
+
+    // Player stats
     public float _maxHp { get; protected set; }
     public float _currentHp { get; protected set; }
     public BaseWeapon _Weapon { get; protected set; }
     public float _Speed { get; protected set; }
 
+    // Dash parameters
     public float _DashDistance {get; protected set; }
     protected abstract void ApplyDashOffset(Vector2 delta);
 
-    public int ExtraLives { get; protected set; } = 0;
-
     /// <summary>Two-slot utility hotbar. When null, pickups and the item HUD skip this player.</summary>
     public ItemType[]? Inventory { get; protected set; }
+    public int ExtraLives { get; protected set; } = 0;
+
+    // Teleportation parameters
+    private const float TeleportMinTileDistance = 20f;
+    private const float TeleportEnemyClearance = 160f;
+
+    // global cooldowns constants
+    protected const float ItemActionCooldown = 1f;
+    protected const float TeleportCooldownDuration = 60f;
+    protected const float DashCooldown = 0.75f;
+
+    // global cooldown timers
+    protected float _itemActionCooldown;
+    protected float _teleportCooldown;
+    protected float _dashCooldown;
+    protected float _greenGlowTimer;
+    protected float _hurtCooldown;
+
+    // Sounds
+    protected SoundEffect _deathSound;
+
 
     // Level EXP
     public int _Level { get; protected set; }
@@ -28,6 +59,10 @@ public abstract class BasePlayer : GameObject
     private float _levelUpFlashTimer;
     public int Level => _Level;
     public float LevelUpFlashProgress => MathHelper.Clamp(_levelUpFlashTimer / LevelUpFlashDuration, 0f, 1f);
+
+    // UI bar properties
+    public float DashCooldownProgress => MathHelper.Clamp(_dashCooldown / DashCooldown, 0f, 1f);
+    public float TeleportCooldownProgress => MathHelper.Clamp(_teleportCooldown / TeleportCooldownDuration, 0f, 1f);
 
     public float ExperienceProgress
     {
@@ -47,8 +82,9 @@ public abstract class BasePlayer : GameObject
         }
     }
 
-    protected BasePlayer(float maxHp, BaseWeapon weapon, float speed, int level, int experience, float dashDistance)
+    protected BasePlayer(Vector2 position, float maxHp, BaseWeapon weapon, float speed, int level, int experience, float dashDistance)
     {
+        _position = position;
         _maxHp = maxHp;
         _currentHp = maxHp;
         _Weapon = weapon;
@@ -128,7 +164,7 @@ public abstract class BasePlayer : GameObject
         {
             Vector2 next = current + step;
 
-            if (WouldCollideAt(next))
+            if (CollisionHelper.WouldCollideAt(next, _bodyWidth, HitboxFraction))
                 break;
 
             current = next;
@@ -137,8 +173,6 @@ public abstract class BasePlayer : GameObject
 
         ApplyDashOffset(current - start);
     }
-
-    private const float TeleportMinTileDistance = 20f;
 
     protected bool Teleport()
     {
@@ -163,7 +197,7 @@ public abstract class BasePlayer : GameObject
             if (Vector2.Distance(current, candidate) < minDist)
                 continue;
 
-            if (WouldCollideAt(candidate))
+            if (CollisionHelper.WouldCollideAt(candidate, _bodyWidth, HitboxFraction))
                 continue;
 
             if (!IsPositionSafe(candidate))
@@ -175,10 +209,6 @@ public abstract class BasePlayer : GameObject
 
         return false;
     }
-
-    protected virtual bool IsPositionSafe(Vector2 position) => true;
-    protected abstract void ApplyTeleportPosition(Vector2 newPosition);
-
 
     public override void Update(GameTime gameTime)
     {
@@ -193,10 +223,88 @@ public abstract class BasePlayer : GameObject
 
     }
     
+    public Vector2 GetPosition()
+    {
+        return _position;
+    }
 
-    public abstract Vector2 GetPosition();
+    public void Move(Vector2 direction, GameTime gameTime)
+    {
+        if (direction == Vector2.Zero)
+        {
+            return;
+        }
+
+        direction.Normalize();
+
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        Vector2 velocity = direction * _Speed * dt;
+
+        // --- X movement ---
+        Vector2 newPosX = new Vector2(_position.X + velocity.X, _position.Y);
+        if (!CollisionHelper.WouldCollideAt(newPosX, _bodyWidth, HitboxFraction))
+        {
+            _position = newPosX;
+        }
+
+        // --- Y movement ---
+        Vector2 newPosY = new Vector2(_position.X, _position.Y + velocity.Y);
+        if (!CollisionHelper.WouldCollideAt(newPosY, _bodyWidth, HitboxFraction))
+        {
+            _position = newPosY;
+        }
+
+        _position = MovementHelper.ClampToMapBounds(_position, _bodyWidth);
+    }
+
+    protected bool IsPositionSafe(Vector2 position)
+    {
+        var gm = GameManager.GetGameManager();
+        Vector2 center = position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        foreach (var obj in gm._gameObjects)
+        {
+            if (obj is not BaseEnemy) continue;
+            var collider = obj.GetCollider();
+            if (collider == null) continue;
+            if (Vector2.Distance(center, collider.GetBoundingBox().Center.ToVector2()) < TeleportEnemyClearance)
+                return false;
+        }
+        return true;
+    }
+
+    protected void CheckDeath()
+    {
+        if (_currentHp <= 0f)
+        {
+            if (ExtraLives > 0)
+            {
+                Revive();
+            }
+            else
+            {
+                Die();
+            }
+        }
+    }
+
+    protected void Revive()
+    {
+        ExtraLives--;
+        _currentHp = _maxHp; // Prevent death
+
+        _greenGlowTimer = 1.5f;
+        _hurtCooldown = 1.5f; // Grant 1.5 seconds of invincibility to escape
+    }
+
+    protected void Die()
+    {
+        _currentHp = 0f;
+        AudioManager.PlaySfx(_deathSound);
+        GameManager.GetGameManager().playerAlive = false;
+        GameManager.GetGameManager()._state = GameState.GameOver;
+    }
 
     public abstract void Damage(float amount);
 
-    protected abstract bool WouldCollideAt(Vector2 testPosition);
+    protected abstract void ApplyTeleportPosition(Vector2 newPosition);
 }
