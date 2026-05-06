@@ -9,10 +9,20 @@ public class WaveIndicator : UIElement
     private const float TextScale = 0.4f;
     private Texture2D _pixel;
 
+    /// <summary>
+    /// Updates the logic and state of the wave indicator.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="viewport">The current game viewport.</param>
     public override void Update(GameTime gameTime, Viewport viewport)
     {
     }
 
+    /// <summary>
+    /// Draws the wave progress and enemies left count on the screen.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="spriteBatch">The SpriteBatch used to draw the text and background.</param>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         var gm = GameManager.GetGameManager();
