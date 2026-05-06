@@ -169,6 +169,7 @@ public class Warrior : BasePlayer
         try { ShieldSprite = content.Load<Texture2D>("ShieldSprite"); } catch { ShieldSprite = AxeSprite; } // Fallback to avoid crashes
         
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
+        AimArrowSprite = content.Load<Texture2D>("AimArrow");
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
         _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
         _inputManager = GameManager.GetGameManager().InputManager;
@@ -666,6 +667,7 @@ public class Warrior : BasePlayer
         if (DebugDrawHitbox && _collider is not null)
             DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
 
+        DrawAimArrow(spriteBatch);
         base.Draw(gameTime, spriteBatch);
     }
 

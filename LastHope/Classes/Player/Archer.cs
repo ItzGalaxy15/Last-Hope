@@ -101,6 +101,7 @@ public class Archer : BasePlayer
     public override void Load(ContentManager content)
     {
         base.Load(content);
+        AimArrowSprite = content.Load<Texture2D>("AimArrow");
         BowSprite = content.Load<Texture2D>("Bow sheet");
         ArcherSprite = content.Load<Texture2D>("ArcherSheet");
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
@@ -279,6 +280,7 @@ public class Archer : BasePlayer
         if (DebugDrawHitbox && _collider is not null)
             DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
 
+        DrawAimArrow(spriteBatch);
         base.Draw(gameTime, spriteBatch);
     }
 
