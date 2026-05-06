@@ -7,8 +7,6 @@ using Microsoft.Xna.Framework;
 using MonoGameGum;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
 
 namespace Last_Hope;
 
@@ -115,7 +113,7 @@ public class Last_Hope : Game
         Texture2D? teleportIcon = null;
         try { teleportIcon = Content.Load<Texture2D>("icons/teleport"); } catch { }
 
-        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon);
+        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon, Content);
 
         GumBootstrap.Initialize(this, Content);
     }
@@ -159,21 +157,4 @@ public class Last_Hope : Game
 
     private static bool ShouldShowHud(GameState state) =>
         state is GameState.Running or GameState.Paused;
-
-    private Rectangle GetPlayerSpawnArea()
-    {
-        int size = 6 * _levelGenerator.TileSize; // safe radius around player
-
-        Vector2 center = new Vector2(
-            MapWidthInTiles * _levelGenerator.TileSize / 2f,
-            MapHeightInTiles * _levelGenerator.TileSize / 2f
-        );
-
-        return new Rectangle(
-            (int)(center.X - size / 2),
-            (int)(center.Y - size / 2),
-            size,
-            size
-        );
-    }
 }

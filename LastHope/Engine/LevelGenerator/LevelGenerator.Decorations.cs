@@ -7,31 +7,38 @@ namespace Last_Hope.Engine.LevelGenerator
 {
     internal partial class LevelGenerator
     {
+
+        /// <summary>
+        /// Scans every grass tile on the map and uses weighted random rolls to decide what decoration
+        /// to place there, if any. Checks the 8 surrounding tiles first to stop decorations spawning
+        /// right next to each other. Animated critters (bunnies, snails) are handled separately from
+        /// static props (weeds, rocks, pebbles) and are checked first since they're rarest.
+        /// </summary>
         private void ApplyDecorations(int[,] baseMap, int[,] overlayMap)
         {
             // Grass is rows 1 and 3 of the terrain sheet; stone walkways
             // live on rows 2 and 4. Decorations only land on grass.
-            HashSet<int> grassSet = new HashSet<int>(GetTerrainTileIndicesForRowsOneBased(1, 3));
+            HashSet<int> grassSet = new HashSet<int>(GetTerrainTileIndicesForRows(0, 2));
 
             // All decoration indices below are into the decorations sheet.
-            int weedTile = GetDecorationTileIndexOneBased(1, 1);
-            int rockTile = GetDecorationTileIndexOneBased(1, 2);
-            int pebble1 = GetDecorationTileIndexOneBased(1, 3);
-            int pebble2 = GetDecorationTileIndexOneBased(1, 4);
+            int weedTile = GetDecorationTileIndex(0, 0);
+            int rockTile = GetDecorationTileIndex(0, 1);
+            int pebble1 = GetDecorationTileIndex(0, 2);
+            int pebble2 = GetDecorationTileIndex(0, 3);
 
             // Bunny animations live on rows 2-3 cols 5-8 of decorations.png
             // (two 4-frame animations, duplicates allowed on the map).
             List<(int firstFrame, int lastFrame)> bunnyRanges = new List<(int firstFrame, int lastFrame)>();
-            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndexOneBased(2, 5), GetDecorationTileIndexOneBased(2, 8));
-            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndexOneBased(3, 5), GetDecorationTileIndexOneBased(3, 8));
+            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndex(1, 4), GetDecorationTileIndex(1, 7));
+            AddValidAnimationRange(bunnyRanges, GetDecorationTileIndex(2, 4), GetDecorationTileIndex(2, 7));
 
             // Snail animations live on rows 2-5 cols 1-4 of decorations.png
             // (four 4-frame animations, each variant only appears once).
             List<(int firstFrame, int lastFrame)> snailRanges = new List<(int firstFrame, int lastFrame)>();
-            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(2, 1), GetDecorationTileIndexOneBased(2, 4));
-            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(3, 1), GetDecorationTileIndexOneBased(3, 4));
-            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(4, 1), GetDecorationTileIndexOneBased(4, 4));
-            AddValidAnimationRange(snailRanges, GetDecorationTileIndexOneBased(5, 1), GetDecorationTileIndexOneBased(5, 4));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndex(1, 0), GetDecorationTileIndex(1, 3));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndex(2, 0), GetDecorationTileIndex(2, 3));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndex(3, 0), GetDecorationTileIndex(3, 3));
+            AddValidAnimationRange(snailRanges, GetDecorationTileIndex(4, 0), GetDecorationTileIndex(4, 3));
 
             List<int> pebbleTiles = new List<int>();
             if (pebble1 >= 0)
@@ -131,39 +138,26 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
-        // ── Animated decoration helpers ──────────────────────────────
+        // Animated decoration helpers
 
-        // Creates an AnimationManager for a randomly chosen animation
-        // range and registers it so the Draw loop can render it.
+        /// <summary>
+        /// Picks a random animation range from the list and tries to register an animated decoration
+        /// at the given tile. Returns false if the list is empty or the decoration sheet isn't loaded.
+        /// </summary>
         private bool TryAddAnimatedDecoration(List<(int firstFrame, int lastFrame)> ranges, int x, int y)
         {
             if (ranges.Count == 0 || _decorationColumns <= 0)
                 return false;
 
-            (int firstFrame, int lastFrame) range = ranges[_random.Next(ranges.Count)];
-            int frameCount = (range.lastFrame - range.firstFrame) + 1;
-            if (frameCount <= 0)
-                return false;
-
-            int startRow = range.firstFrame / _decorationColumns;
-            int startColumn = range.firstFrame % _decorationColumns;
-
-            int interval = _random.Next(10, 20);
-            AnimationManager animation = new AnimationManager(
-                frameCount,
-                _decorationColumns,
-                new Vector2(TileSize, TileSize),
-                interval,
-                true,
-                startColumn * TileSize,
-                startRow * TileSize);
-
-            _animatedDecorations.Add(new AnimatedDecoration(x, y, animation));
-            return true;
+            return CreateAndRegisterAnimation(ranges[_random.Next(ranges.Count)], x, y);
         }
 
-        // Same as above but ensures each animation range is only used
-        // once — prevents duplicate snail sprites on the map.
+        // Ensures each animation range is only used once prevents
+        // duplicate snail sprites on the map.
+        /// <summary>
+        /// Same as TryAddAnimatedDecoration but filters out any animation ranges whose start frame
+        /// has already been used, so each snail variant only appears once on the whole map.
+        /// </summary>
         private bool TryAddUniqueAnimatedDecoration(List<(int firstFrame, int lastFrame)> ranges, HashSet<int> usedStartFrames, int x, int y)
         {
             List<(int firstFrame, int lastFrame)> availableRanges = new List<(int firstFrame, int lastFrame)>();
@@ -177,6 +171,20 @@ namespace Last_Hope.Engine.LevelGenerator
                 return false;
 
             (int firstFrame, int lastFrame) range = availableRanges[_random.Next(availableRanges.Count)];
+            if (!CreateAndRegisterAnimation(range, x, y))
+                return false;
+
+            usedStartFrames.Add(range.firstFrame);
+            return true;
+        }
+
+        /// <summary>
+        /// Converts a flat tile index range into the matching row and column on the decoration sheet,
+        /// creates an AnimationManager with a randomised frame interval so critters don't all animate
+        /// in sync, then adds the result to the animated decorations list so it gets drawn every frame.
+        /// </summary>
+        private bool CreateAndRegisterAnimation((int firstFrame, int lastFrame) range, int x, int y)
+        {
             int frameCount = (range.lastFrame - range.firstFrame) + 1;
             if (frameCount <= 0)
                 return false;
@@ -195,19 +203,26 @@ namespace Last_Hope.Engine.LevelGenerator
                 startRow * TileSize);
 
             _animatedDecorations.Add(new AnimatedDecoration(x, y, animation));
-            usedStartFrames.Add(range.firstFrame);
             return true;
         }
 
+        /// <summary>
+        /// Adds a (firstFrame, lastFrame) pair to the ranges list only if both indices are valid.
+        /// Just a safety guard so bad sheet coordinates don't silently produce broken animations.
+        /// </summary>
         private static void AddValidAnimationRange(List<(int firstFrame, int lastFrame)> ranges, int firstFrame, int lastFrame)
         {
             if (firstFrame >= 0 && lastFrame >= firstFrame)
                 ranges.Add((firstFrame, lastFrame));
         }
 
-        // ── Spacing check ────────────────────────────────────────────
+        // Spacing check
         // Returns true if any of the 8 surrounding tiles already has
         // a decoration, preventing clumping.
+        /// <summary>
+        /// Returns true if any of the 8 tiles immediately surrounding (x, y) already has a decoration
+        /// placed on it. Used to enforce a minimum gap so decorations don't end up stacked or touching.
+        /// </summary>
         private bool HasNearbyDecoration(int[,] overlayMap, int x, int y)
         {
             for (int oy = -1; oy <= 1; oy++)
@@ -231,9 +246,11 @@ namespace Last_Hope.Engine.LevelGenerator
             return false;
         }
 
-        // ── AnimatedDecoration data class ────────────────────────────
-        // Pairs a tile coordinate with its animation so the Draw loop
-        // can update and render it each frame.
+        /// <summary>
+        /// AnimatedDecoration data class
+        /// Pairs a tile coordinate with its animation so the Draw loop
+        /// can update and render it each frame.
+        /// </summary>
         private sealed class AnimatedDecoration
         {
             public int TileX { get; }

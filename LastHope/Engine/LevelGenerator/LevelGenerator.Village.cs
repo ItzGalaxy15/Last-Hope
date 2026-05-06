@@ -8,7 +8,7 @@ namespace Last_Hope.Engine.LevelGenerator
 {
     internal partial class LevelGenerator
     {
-        // ── House sprite settings ────────────────────────────────
+        // House sprite settings
 
         private const int HouseSourceSize = 64;
         private const int HouseRenderScale = 4;
@@ -24,7 +24,7 @@ namespace Last_Hope.Engine.LevelGenerator
         private const int BuildingsPerRow = 3;
         private const int Rows = 2;
 
-        // ── Village state ────────────────────────────────────────
+        // Village state
 
         private Texture2D? _villageSheet;
         private readonly List<VillageBuilding> _villageBuildings = new();
@@ -37,8 +37,11 @@ namespace Last_Hope.Engine.LevelGenerator
                 ? 0
                 : Math.Min(3, _villageSheet.Width / HouseSourceSize);
 
-        // ── Generation ───────────────────────────────────────────
-
+        /// <summary>
+        /// Places the village centered on the player's spawn tile. Lays out 6 buildings in a
+        /// 2 row by 3 column grid with a main street running between the two rows, then calls
+        /// ApplyVillageWalkways to paint the stone paths connecting everything together.
+        /// </summary>
         private void GenerateVillage()
         {
             Vector2 playerPosition = new Vector2(
@@ -62,7 +65,7 @@ namespace Last_Hope.Engine.LevelGenerator
             int clusterW = BuildingsPerRow * houseW + (BuildingsPerRow - 1) * BuildingGapTiles;
             int clusterH = Rows * houseH + StreetWidthTiles;
 
-            // ── BUILD VILLAGE AROUND PLAYER ─────────────────────────
+            // BUILD VILLAGE AROUND PLAYER
 
             int originX = playerTileX - clusterW / 2;
 
@@ -77,7 +80,7 @@ namespace Last_Hope.Engine.LevelGenerator
 
             _villageBounds = new Rectangle(originX, originY, clusterW, clusterH);
 
-            // ── BUILD HOUSES ───────────────────────────────────────
+            // BUILD HOUSES
 
             for (int row = 0; row < Rows; row++)
             {
@@ -99,8 +102,13 @@ namespace Last_Hope.Engine.LevelGenerator
             ApplyVillageWalkways(originX, streetY, clusterW);
         }
 
-        // ── Drawing ──────────────────────────────────────────────
+        // Drawing
 
+        /// <summary>
+        /// Draws every building in the village, scaling each 64 px source sprite up by a factor
+        /// of 4 to match the game's tile resolution. The source rectangle selects which house type
+        /// to draw from the village spritesheet.
+        /// </summary>
         private void DrawVillage(SpriteBatch spriteBatch, Vector2 origin)
         {
             if (_villageSheet == null)
@@ -130,14 +138,19 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
-        // ── PATHS ───────────────────────────────────────────────
+        // PATHS
 
+        /// <summary>
+        /// Paints stone tiles across the full width of the map to form the main street, then draws
+        /// a 2 tile wide path down from each building's door to connect it to that street. Buildings
+        /// above the street get paths going down; buildings below get paths going up.
+        /// </summary>
         private void ApplyVillageWalkways(int clusterOriginX, int streetY, int clusterW)
         {
             if (_map == null)
                 return;
 
-            List<int> stoneTiles = GetTerrainTileIndicesForRowsOneBased(2, 4);
+            List<int> stoneTiles = GetTerrainTileIndicesForRows(1, 3);
             if (stoneTiles.Count == 0)
                 return;
 
@@ -183,8 +196,12 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
-        // ── Helpers ──────────────────────────────────────────────
+        // Helpers
 
+        /// <summary>
+        /// Bounds checks the coordinates and then replaces that map tile with a random stone tile
+        /// picked from the stone set. The randomness stops all walkways looking identical.
+        /// </summary>
         private void SetStoneTile(int[,] map, int x, int y, List<int> stoneTiles)
         {
             if (x < 0 || y < 0 || x >= map.GetLength(0) || y >= map.GetLength(1))
@@ -193,7 +210,7 @@ namespace Last_Hope.Engine.LevelGenerator
             map[x, y] = stoneTiles[_random.Next(stoneTiles.Count)];
         }
 
-        // ── Data ────────────────────────────────────────────────
+        // Data
 
         private sealed class VillageBuilding
         {
@@ -209,20 +226,34 @@ namespace Last_Hope.Engine.LevelGenerator
             }
         }
 
+        // Logic: Manual Hitbox Adjustments.
+        // Note: Houses use a Y offset to allow the player to walk "behind" the roof/top of the building
+        // (pseudo depth/Z order) while colliding with the walls.
+        private static readonly Dictionary<int, (int OffsetY, int HeightPx)> _houseCollisionData
+            = new Dictionary<int, (int, int)>
+            {
+                { 2, (20 * HouseRenderScale, 44 * HouseRenderScale) },
+            };
+
+        /// <summary>
+        /// Returns the Y pixel offset and collision box height for a given house type. The Y offset
+        /// pushes the box down past the roof graphic so the player can walk behind the top of the
+        /// building before hitting the actual wall — a simple way to fake depth without a Z axis.
+        /// </summary>
         private (int offsetY, int heightPx) GetHouseCollisionData(int houseType)
         {
-            return houseType switch
-            {
-                // Type 2: roof starts at 20px, height is 44px visible body
-                2 => (20 * HouseRenderScale, 44 * HouseRenderScale),
-
-                // default houses
-                _ => (0, HouseRenderPx)
-            };
+            if (_houseCollisionData.TryGetValue(houseType, out var data))
+                return data;
+            return (0, HouseRenderPx);
         }
 
-        // ── Colliders ────────────────────────────────────────────
+        // Colliders
 
+        /// <summary>
+        /// Builds and returns a RectangleCollider for every building in the village, applying each
+        /// house type's Y offset and height from GetHouseCollisionData so the boxes line up with
+        /// the visible walls rather than the full sprite bounds.
+        /// </summary>
         public IReadOnlyList<RectangleCollider> GetVillageBuildingColliders()
         {
             var list = new List<RectangleCollider>();

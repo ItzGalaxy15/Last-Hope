@@ -5,9 +5,14 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Engine.LevelGenerator
 {
+    /// <summary>
+    ///  implemented the Wave Function Collapse algorithm as originally published by Maxim Gumin
+    /// (github.com/mxgmn/WaveFunctionCollapse, MIT License). The algorithm structure
+    ///  observe, collapse, propagate, retry follows his design. The implementation is my own,
+    /// adapted for MonoGame with pixel based edge compatibility instead of XML adjacency rules
+    /// </summary>
     internal partial class LevelGenerator
     {
-        // Direction constants – shared by WFC propagation and edge comparison.
         private const int Up = 0;
         private const int Right = 1;
         private const int Down = 2;
@@ -28,7 +33,7 @@ namespace Last_Hope.Engine.LevelGenerator
         private int _decorationColumns;
         private int _decorationRows;
 
-        // ── Public properties ────────────────────────────────────────
+        // Public properties
         public int TileSize { get; }
         public int MapWidthInTiles => _map?.GetLength(0) ?? 0;
         public int MapHeightInTiles => _map?.GetLength(1) ?? 0;
@@ -41,13 +46,11 @@ namespace Last_Hope.Engine.LevelGenerator
         public float PebbleChance { get; set; } = 0.18f;
         public float BunnyChance { get; set; } = 0.015f;
         public float SnailChance { get; set; } = 0.015f;
-        public float DecorationChance
-        {
-            get => WeedChance;
-            set => WeedChance = value;
-        }
-
-        // ── Constructor ──────────────────────────────────────────────
+        //  Constructor
+        /// <summary>
+        /// Sets up the generator with a tile size and an optional random seed. Passing a seed makes
+        /// the output reproducible, which is handy for debugging a specific map layout.
+        /// </summary>
         public LevelGenerator(int tileSize = 32, int? seed = null)
         {
             TileSize = tileSize;
@@ -57,11 +60,12 @@ namespace Last_Hope.Engine.LevelGenerator
             _animatedDecorations = new List<AnimatedDecoration>();
         }
 
-        // ── Sprite-sheet loading ─────────────────────────────────────
-        // Slices both sheets into TileSize × TileSize source rectangles.
-        // The terrain sheet feeds the WFC solver (and drives the
-        // compatibility table), the decorations sheet feeds the overlay
-        // layer — weed, rocks, pebbles, snails, bunnies.
+        /// <summary>
+        /// Takes the terrain, decoration, and village textures and slices each one into individual
+        /// tile rectangles that the rest of the generator uses. Also calls BuildCompatibility
+        /// straight away so the WFC solver has its compatibility data ready before GenerateMap
+        /// is ever called.
+        /// </summary>
         public void LoadSpriteSheets(Texture2D terrainSheet, Texture2D decorationsSheet, Texture2D villageSheet, int terrainUsableRows = 5)
         {
             _terrainSheet = terrainSheet;
@@ -94,33 +98,11 @@ namespace Last_Hope.Engine.LevelGenerator
             BuildCompatibility();
         }
 
-        // ── Tile weights ─────────────────────────────────────────────
-        // Optional per-terrain-tile weights so some tiles show up more
-        // often during WFC selection and the random fallback.
-        public void SetTileWeights(IReadOnlyList<float> weights)
-        {
-            if (_terrainTiles.Count == 0)
-                throw new InvalidOperationException("Call LoadSpriteSheets before setting weights.");
-
-            if (weights.Count != _terrainTiles.Count)
-                throw new ArgumentException($"Expected {_terrainTiles.Count} weights, got {weights.Count}.", nameof(weights));
-
-            _weights = new float[weights.Count];
-            for (int i = 0; i < weights.Count; i++)
-            {
-                _weights[i] = Math.Max(0f, weights[i]);
-            }
-        }
-
-        // ── Map generation ───────────────────────────────────────────
-        // 1. Restricts WFC to grass tiles only (rows 1 & 3) so stone
-        //    never appears as a base tile.
-        // 2. Attempts to fill the tile map with the WFC solver.
-        // 3. Falls back to random grass placement on failure.
-        // 4. Carves stone walkways on top of the WFC output.
-        // 5. Stamps a single flower-field square somewhere on the grass.
-        // 6. Scatters decorations (weed, rocks, pebbles, critters) from
-        //    the decorations sheet onto the overlay layer.
+        /// <summary>
+        /// Top level entry point that builds a complete level. Runs WFC on grass tiles only, falls
+        /// back to random fill if every attempt fails, then places the village, stamps a flower field
+        /// somewhere on the grass, and scatters decorations across the overlay layer on top.
+        /// </summary>
         public void GenerateMap(int pixelWidth, int pixelHeight)
         {
             if (_terrainTiles.Count == 0)
@@ -143,7 +125,7 @@ namespace Last_Hope.Engine.LevelGenerator
             }
 
             // WFC only places grass tiles — stone is reserved for walkways.
-            List<int> grassTiles = GetTerrainTileIndicesForRowsOneBased(1, 3);
+            List<int> grassTiles = GetTerrainTileIndicesForRows(0, 2);
             HashSet<int> grassSet = new HashSet<int>(grassTiles);
 
             if (!TryGenerateWfc(_map, grassSet))
@@ -160,11 +142,11 @@ namespace Last_Hope.Engine.LevelGenerator
             ApplyFlowerField(_map);
             ApplyDecorations(_map, _overlayMap);
         }
-
-        // ── Drawing ──────────────────────────────────────────────────
-        // Renders the base tile layer (terrain sheet), then the overlay
-        // layer (decorations sheet), and finally any animated decorations
-        // on top (also decorations sheet).
+        /// <summary>
+        /// Draws the whole level each frame. Terrain tiles go first, then any static overlay
+        /// decorations on top of them, then animated critters (their animation gets updated here
+        /// too), and finally the village buildings drawn last so they appear above everything else.
+        /// </summary>
         public void Draw(SpriteBatch spriteBatch, Vector2 origin)
         {
             if (_terrainSheet == null || _decorationsSheet == null || _map == null)

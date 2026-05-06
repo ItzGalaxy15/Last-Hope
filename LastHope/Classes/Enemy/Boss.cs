@@ -3,6 +3,7 @@ using Last_Hope.BaseModel;
 using Last_Hope.Classes.Spell;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -13,7 +14,6 @@ public class Boss : BaseEnemy
 {
     private const float SpriteScale = 2.5f;
     private const bool DebugDrawHitbox = false;
-
     private Vector2 _precisePosition;
 
     private AnimationManager _walkAnimation;
@@ -63,6 +63,10 @@ public class Boss : BaseEnemy
         _precisePosition = position.ToVector2();
     }
 
+    /// <summary>
+    /// Loads the graphics content for the boss, including textures and animations.
+    /// </summary>
+    /// <param name="content">The ContentManager to load from.</param>
     public override void Load(ContentManager content)
     {
         base.Load(content);
@@ -77,6 +81,10 @@ public class Boss : BaseEnemy
         _precisePosition = _collider.shape.Location.ToVector2();
     }
 
+    /// <summary>
+    /// Updates the logic and behavior of the boss each frame, including attacking and pathfinding.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void UpdateBehavior(GameTime gameTime)
     {
         var gm = GameManager.GetGameManager();
@@ -170,12 +178,17 @@ public class Boss : BaseEnemy
         }
     }
 
+    /// <summary>
+    /// Draws the boss to the screen, handling sprite sheets and animations.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="spriteBatch">The SpriteBatch used to draw the texture.</param>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Vector2 center = _precisePosition + new Vector2(FullSize / 2f);
 
         if (DebugDrawHitbox)
-            DrawHitbox(spriteBatch, _collider.shape, Color.Red);
+            HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.Red);
 
         // Row and X offsets are baked into each AnimationManager — no Y override needed
         Rectangle sourceRect;
@@ -205,10 +218,23 @@ public class Boss : BaseEnemy
         base.Draw(gameTime, spriteBatch);
     }
 
+    /// <summary>
+    /// Called when the boss collides with another game object.
+    /// </summary>
+    /// <param name="other">The other GameObject involved in the collision.</param>
     public override void OnCollision(GameObject other) { }
 
+    /// <summary>
+    /// Gets the current position of the boss based on its collision box.
+    /// </summary>
+    /// <returns>A Vector2 representing the exact center of the boss.</returns>
     public override Vector2 GetPosition() => _collider.shape.Center.ToVector2();
 
+    /// <summary>
+    /// Creates and configures the walking animation for the boss.
+    /// </summary>
+    /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
+    /// <returns>An AnimationManager for the walking state.</returns>
     private AnimationManager CreateWalkAnimation(bool facingLeft) => new AnimationManager(
         WalkFrameCount, SheetColumns,
         new Vector2(FrameSize, FrameSize),
@@ -217,6 +243,11 @@ public class Boss : BaseEnemy
         (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
     );
 
+    /// <summary>
+    /// Creates and configures the charging/wind-up animation for the boss attack.
+    /// </summary>
+    /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
+    /// <returns>An AnimationManager for the charging state.</returns>
     private AnimationManager CreateChargeAnimation(bool facingLeft) => new AnimationManager(
         ChargeFrameCount, SheetColumns,
         new Vector2(FrameSize, FrameSize),
@@ -225,6 +256,11 @@ public class Boss : BaseEnemy
         (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
     );
 
+    /// <summary>
+    /// Creates and configures the attack launch animation for the boss.
+    /// </summary>
+    /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
+    /// <returns>An AnimationManager for the attack launch state.</returns>
     private AnimationManager CreateLaunchAnimation(bool facingLeft) => new AnimationManager(
         LaunchFrameCount, SheetColumns,
         new Vector2(FrameSize, FrameSize),
@@ -232,14 +268,4 @@ public class Boss : BaseEnemy
         (facingLeft ? LeftLaunch : RightLaunch) * FrameSize,
         (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
     );
-
-    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
-    {
-        Texture2D pixel = GameManager.GetGameManager().Pixel;
-        const int thickness = 2;
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
-    }
 }

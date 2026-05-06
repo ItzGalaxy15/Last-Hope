@@ -2,6 +2,7 @@ using System;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -224,7 +225,7 @@ public class Goblin : BaseEnemy
         Vector2 center = _precisePosition + new Vector2(FullSize / 2f);
 
         if (DebugDrawHitbox && _collider is not null)
-            DrawHitbox(spriteBatch, _collider.shape, Color.Yellow);
+            HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.Yellow);
 
         Rectangle sourceRect;
 
@@ -286,17 +287,6 @@ public class Goblin : BaseEnemy
             WalkStartColumn * FrameSize,
             WalkRightRow * FrameSize
         );
-    }
-
-    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
-    {
-        Texture2D pixel = GameManager.GetGameManager().Pixel;
-        const int thickness = 2;
-
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
     }
 
     public override void OnCollision(GameObject other) { }

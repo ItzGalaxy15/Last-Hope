@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
-using Last_Hope.BaseModel;
 using Last_Hope.Classes.Items;
 
 namespace Last_Hope.UI.Menus;
@@ -210,9 +209,24 @@ public abstract class MenuBase
         return (body, mul);
     }
 
+    /// <summary>
+    /// Gets a Rectangle representing the bounding box for the given text.
+    /// </summary>
+    /// <param name="text">The text to measure.</param>
+    /// <param name="position">The top-left position of the text.</param>
+    /// <param name="scale">The scale applied to the text.</param>
+    /// <returns>A Rectangle encompassing the text area.</returns>
     protected Rectangle GetTextRectangle(string text, Vector2 position, float scale = 1)
         => GetTextRectangleForFont(_font, text, position, scale);
 
+    /// <summary>
+    /// Gets a Rectangle representing the bounding box for the given text, using a specific font.
+    /// </summary>
+    /// <param name="font">The SpriteFont to use for measurement.</param>
+    /// <param name="text">The text to measure.</param>
+    /// <param name="position">The top-left position of the text.</param>
+    /// <param name="scale">The scale applied to the text.</param>
+    /// <returns>A Rectangle encompassing the text area.</returns>
     protected Rectangle GetTextRectangleForFont(SpriteFont font, string text, Vector2 position, float scale = 1f)
     {
         if (font == null && gm.FontBitmap == null)
@@ -225,6 +239,11 @@ public abstract class MenuBase
             (int)size.Y + 10);
     }
 
+    /// <summary>
+    /// Calculates the centered position for a given text string on the screen.
+    /// </summary>
+    /// <param name="text">The text to measure and center.</param>
+    /// <returns>A Vector2 representing the centered position.</returns>
     public Vector2 GetFontPosition(string text)
     {
         Viewport viewport = Game.GraphicsDevice.Viewport;
@@ -590,6 +609,13 @@ public abstract class MenuBase
         }
     }
 
+    /// <summary>
+    /// Draws the game world consisting of all active game objects.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="spriteBatch">The SpriteBatch used for drawing the world.</param>
+    /// <param name="transformMatrix">An optional projection matrix.</param>
+    /// <param name="effect">An optional shader effect to apply.</param>
     protected void DrawWorld(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix, Effect effect = null)
     {
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, effect: effect, transformMatrix: transformMatrix);
