@@ -113,7 +113,7 @@ public class Last_Hope : Game
         Texture2D? teleportIcon = null;
         try { teleportIcon = Content.Load<Texture2D>("icons/teleport"); } catch { }
 
-        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon);
+        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon, Content);
 
         GumBootstrap.Initialize(this, Content);
     }
