@@ -6,6 +6,10 @@ namespace Last_Hope.UI.Menus;
 
 public class WinnerMenu : MenuBase
 {
+    /// <summary>
+    /// Updates the Winner menu logic, primarily checking user input for restarting or quitting.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
     public void Update(GameTime gameTime)
     {
         string restartText = "Restart Game";
@@ -28,6 +32,12 @@ public class WinnerMenu : MenuBase
         }
     }
 
+    /// <summary>
+    /// Draws the Winner menu text and options to the screen.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="spriteBatch">The SpriteBatch used for rendering.</param>
+    /// <param name="transformMatrix">Optional transformation matrix.</param>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         string winnerText = "Winner";

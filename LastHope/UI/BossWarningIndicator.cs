@@ -17,15 +17,27 @@ public class BossWarningIndicator : UIElement
     private const int TotalFrames = 20;
     private const float TimePerFrame = 0.05f;
 
+    /// <summary>
+    /// Initializes a new instance of the BossWarningIndicator.
+    /// </summary>
     public BossWarningIndicator()
     {
     }
 
+    /// <summary>
+    /// Loads the graphical content needed for the boss warning indicator.
+    /// </summary>
+    /// <param name="content">The ContentManager to load from.</param>
     public void LoadContent(Microsoft.Xna.Framework.Content.ContentManager content)
     {
         _bossWarningTexture = content.Load<Texture2D>("BossWarning");
     }
 
+    /// <summary>
+    /// Updates the logic and timing for displaying the boss warning.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="viewport">The current game viewport.</param>
     public override void Update(GameTime gameTime, Viewport viewport)
     {
         var gm = GameManager.GetGameManager();
@@ -54,6 +66,11 @@ public class BossWarningIndicator : UIElement
         }
     }
 
+    /// <summary>
+    /// Draws the boss warning text or sprite to the screen.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="spriteBatch">The SpriteBatch used to draw the texture.</param>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         if (_timer <= 0) return;

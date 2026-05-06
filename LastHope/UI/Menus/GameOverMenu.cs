@@ -9,6 +9,10 @@ public class GameOverMenu : MenuBase
     private float _fadeAmount = 0f;
     private const float FadeSpeed = 0.5f;
 
+    /// <summary>
+    /// Updates the logic for the Game Over menu, handling user input and screen fading.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
     public void Update(GameTime gameTime)
     {
         _fadeAmount += (float)gameTime.ElapsedGameTime.TotalSeconds * FadeSpeed;
@@ -36,6 +40,12 @@ public class GameOverMenu : MenuBase
         }
     }
 
+    /// <summary>
+    /// Draws the Game Over menu text, buttons, and visual effects to the screen.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="spriteBatch">The SpriteBatch used for rendering.</param>
+    /// <param name="transformMatrix">Optional transformation matrix.</param>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         string gameOverText = "Game Over";
