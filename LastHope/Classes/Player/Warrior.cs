@@ -237,17 +237,6 @@ public class Warrior : BasePlayer
         base.Update(gameTime);
     }
 
-    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
-    {
-        Texture2D pixel = GameManager.GetGameManager().Pixel;
-        const int thickness = 2;
-
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
-    }
-
     public void HitFrontalArea(Vector2 direction, float range, int damage, float stunDuration)
     {
         var gm = GameManager.GetGameManager();
@@ -590,7 +579,7 @@ public class Warrior : BasePlayer
         }
 
         if (DebugDrawHitbox && _collider is not null)
-            DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
+            HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
 
         base.Draw(gameTime, spriteBatch);
     }

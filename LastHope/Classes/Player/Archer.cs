@@ -178,17 +178,6 @@ public class Archer : BasePlayer
         base.Update(gameTime);
     }
 
-    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
-    {
-        Texture2D pixel = GameManager.GetGameManager().Pixel;
-        const int thickness = 2;
-
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
-    }
-
     private void StartBowDraw()
     {
         if (_inputManager is null)
@@ -240,7 +229,7 @@ public class Archer : BasePlayer
         spriteBatch.Draw(BowSprite, _position + bowOffset, bowSource, Color.White, 0f, Vector2.Zero, BowDrawScale, bowFlip, 0f);
 
         if (DebugDrawHitbox && _collider is not null)
-            DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
+            HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
 
         base.Draw(gameTime, spriteBatch);
     }

@@ -3,6 +3,7 @@ using Last_Hope.BaseModel;
 using Last_Hope.Classes.Spell;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -175,7 +176,7 @@ public class Boss : BaseEnemy
         Vector2 center = _precisePosition + new Vector2(FullSize / 2f);
 
         if (DebugDrawHitbox)
-            DrawHitbox(spriteBatch, _collider.shape, Color.Red);
+            HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.Red);
 
         // Row and X offsets are baked into each AnimationManager — no Y override needed
         Rectangle sourceRect;
@@ -232,14 +233,4 @@ public class Boss : BaseEnemy
         (facingLeft ? LeftLaunch : RightLaunch) * FrameSize,
         (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
     );
-
-    private static void DrawHitbox(SpriteBatch spriteBatch, Rectangle rect, Color color)
-    {
-        Texture2D pixel = GameManager.GetGameManager().Pixel;
-        const int thickness = 2;
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Bottom - thickness, rect.Width, thickness), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, thickness, rect.Height), color);
-        spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
-    }
 }
