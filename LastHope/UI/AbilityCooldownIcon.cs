@@ -48,8 +48,6 @@ public class AbilityCooldownIcon : UIElement
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         GameManager gm = GameManager.GetGameManager();
-        if (gm._player is not Warrior)
-            return;
 
         float cooldown = _getCooldownProgress();
 
