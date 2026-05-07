@@ -126,5 +126,4 @@ public class HealthBar : UIElement
 
 		return _fallbackPixel;
 	}
-
 }
