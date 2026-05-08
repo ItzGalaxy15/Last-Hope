@@ -23,6 +23,7 @@ public class Bomb : GameObject
 
     private const float ExplosionRadius = 100f;
     private const float ExplosionDamage = 100f;
+    private const float BombDrawScale = 1f;
 
     private const int BombFrameSize = 32;
     private const int BombFrameCount = 8;
@@ -137,7 +138,7 @@ public class Bomb : GameObject
             Color.White,
             0f,
             origin,
-            1f,
+            BombDrawScale,
             SpriteEffects.None,
             0f);
     }
