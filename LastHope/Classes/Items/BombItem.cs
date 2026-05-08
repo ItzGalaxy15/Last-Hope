@@ -6,11 +6,17 @@ namespace Last_Hope.Classes.Items;
 
 public class BombItem : BaseItem
 {
-    public BombItem() 
+    /// <summary>
+    /// Registers the bomb as a usable item with a maximum stack of 3.
+    /// </summary>
+    public BombItem()
         : base("Bomb", "Drops a bomb that damages nearby enemies.", maxCount: 3, startingCount: 1)
     {
     }
 
+    /// <summary>
+    /// Spawns a bomb at the player's current position when the item is used.
+    /// </summary>
     protected override void OnUse(BasePlayer player)
     {
         var bomb = new Bomb(player.GetPosition(), Vector2.Zero);
