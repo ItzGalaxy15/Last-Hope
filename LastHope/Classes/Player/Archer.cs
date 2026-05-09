@@ -36,7 +36,6 @@ public class Archer : BasePlayer
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = true;
     private double timeSinceLastAttack = 0;
-    private Vector2 _moveInput;
     private bool _facingLeft;
     private RectangleCollider _collider;
 
@@ -72,19 +71,6 @@ public class Archer : BasePlayer
         SetCollider(_collider);
         MovementHelper.ClampToMapBounds(_position, _bodyWidth);
         SyncColliderToPosition();
-    }
-
-    public override void HandleInput(InputManager inputManager)
-    {
-        _moveInput = Vector2.Zero;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp) || inputManager.IsKeyDown(Keys.Up))
-            _moveInput.Y -= 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown) || inputManager.IsKeyDown(Keys.Down))
-            _moveInput.Y += 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft) || inputManager.IsKeyDown(Keys.Left))
-            _moveInput.X -= 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveRight) || inputManager.IsKeyDown(Keys.Right))
-            _moveInput.X += 1f;
     }
 
     public override void Update(GameTime gameTime)
@@ -135,7 +121,9 @@ public class Archer : BasePlayer
         if (_inputManager is not null)
         {
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && timeSinceLastAttack >= AttackCooldown && !_isDrawingBow)
+            bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
+                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _aimInput != Vector2.Zero && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
+            if (attackPressed && timeSinceLastAttack >= AttackCooldown && !_isDrawingBow)
             {
                 StartBowDraw();
                 timeSinceLastAttack = 0;
@@ -182,13 +170,22 @@ public class Archer : BasePlayer
         if (_inputManager is null)
             return;
 
-        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
-        Vector2 direction = mousePosition - center;
-        if (direction == Vector2.Zero)
-            return;
+        Vector2 direction;
+        if (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _aimInput != Vector2.Zero)
+        {
+            direction = _aimInput;
+            direction.Normalize();
+        }
+        else
+        {
+            Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+            Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
+            direction = mousePosition - center;
+            if (direction == Vector2.Zero)
+                return;
+            direction.Normalize();
+        }
 
-        direction.Normalize();
         _bowAimDirection = direction;
         _isDrawingBow = true;
         _bowDrawTimer = 0f;

@@ -46,7 +46,6 @@ public class Warrior : BasePlayer
     private float _defBuffTimer = 0f;
 
     // --- STATE & PHYSICS ---
-    private Vector2 _moveInput;
     private bool _facingLeft;
     private RectangleCollider _collider;
 
@@ -117,19 +116,6 @@ public class Warrior : BasePlayer
         SyncColliderToPosition();
     }
 
-    public override void HandleInput(InputManager inputManager)
-    {
-        _moveInput = Vector2.Zero;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp) || inputManager.IsKeyDown(Keys.Up))
-            _moveInput.Y -= 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown) || inputManager.IsKeyDown(Keys.Down))
-            _moveInput.Y += 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft) || inputManager.IsKeyDown(Keys.Left))
-            _moveInput.X -= 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveRight) || inputManager.IsKeyDown(Keys.Right))
-            _moveInput.X += 1f;
-    }
-
     public override void Update(GameTime gameTime)
     {
         if (!GameManager.GetGameManager().playerAlive || _currentHp <= 0f)
@@ -194,7 +180,9 @@ public class Warrior : BasePlayer
         if (_inputManager is not null)
         {
             _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && _timeSinceLastAttack >= _currentAttackCooldown)
+            bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
+                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _aimInput != Vector2.Zero && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
+            if (attackPressed && _timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();
                 AudioManager.PlaySfx(_attackSound);
@@ -267,15 +255,22 @@ public class Warrior : BasePlayer
 
     public void UseWeapon()
     {
-        // Anchor at warrior body center, then lift upward.
         Vector2 castAnchor = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
 
-        Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
-        Vector2 direction = mousePosition - castAnchor;
-        if (direction == Vector2.Zero)
-            return;
-
-        direction.Normalize();
+        Vector2 direction;
+        if (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _aimInput != Vector2.Zero)
+        {
+            direction = _aimInput;
+            direction.Normalize();
+        }
+        else
+        {
+            Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
+            direction = mousePosition - castAnchor;
+            if (direction == Vector2.Zero)
+                return;
+            direction.Normalize();
+        }
 
         Vector2 slashOrigin = castAnchor + direction * SlashDistance;
         _Weapon.Attack(direction, slashOrigin);

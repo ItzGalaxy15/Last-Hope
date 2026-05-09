@@ -32,6 +32,7 @@ public sealed class SettingsMenu : MenuBase
 
     private SettingsChromeLayout _chrome;
     private List<(Rectangle rect, KeybindId id)> _bindTargets = new();
+    private Rectangle _schemeToggleRect;
 
     private float _masterVolume = 1f;
     private float _musicVolume = 1f;
@@ -163,6 +164,14 @@ public sealed class SettingsMenu : MenuBase
 
             if (_tab == SettingsTab.Controls)
             {
+                if (_schemeToggleRect.Contains(mouse))
+                {
+                    KeybindStore.CurrentScheme = KeybindStore.CurrentScheme == ControlScheme.MouseAndKeyboard
+                        ? ControlScheme.KeyboardOnly
+                        : ControlScheme.MouseAndKeyboard;
+                    return;
+                }
+
                 foreach (var (rect, id) in _bindTargets)
                 {
                     if (rect.Contains(mouse))
@@ -362,7 +371,24 @@ public sealed class SettingsMenu : MenuBase
         float colW = (content.Width - colPad * 2f - gutter) / 2f;
         float leftX = content.X + colPad;
         float rightX = content.X + colPad + colW + gutter;
-        float yTop = content.Y + 8f * ui;
+        bool keyboardOnly = KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly;
+        float toggleH = 36f * ui;
+        float toggleW = 400f * ui;
+        int toggleX = (int)(content.X + content.Width / 2f - toggleW / 2f);
+        int toggleY = (int)(content.Y + 8f * ui);
+        _schemeToggleRect = new Rectangle(toggleX, toggleY, (int)toggleW, (int)toggleH);
+
+        spriteBatch.Draw(Pixel, _schemeToggleRect, keyboardOnly ? new Color(60, 100, 160, 220) : new Color(40, 48, 62, 200));
+        DrawPanelOutline(spriteBatch, _schemeToggleRect, keyboardOnly ? new Color(140, 185, 255, 200) : new Color(120, 140, 170, 120));
+
+        string schemeLabel = keyboardOnly ? "Controls: Keyboard Only  [click to switch]" : "Controls: Mouse + Keyboard  [click to switch]";
+        float labelScale = textScale * 0.82f * labelMul;
+        Vector2 labelSz = gm.MeasureUiString(labelFont, schemeLabel, labelScale);
+        gm.DrawUiString(spriteBatch, labelFont, schemeLabel,
+            new Vector2(_schemeToggleRect.Center.X - labelSz.X / 2f, _schemeToggleRect.Center.Y - labelSz.Y / 2f),
+            Color.White, 0f, Vector2.Zero, labelScale, SpriteEffects.None, 0f);
+
+        float yTop = toggleY + toggleH + 14f * ui;
         float yL = yTop;
         float yR = yTop;
 
@@ -403,6 +429,8 @@ public sealed class SettingsMenu : MenuBase
 
         SectionHeader("Combat", ref yR, rightX);
         BindingRow("Attack", KeybindId.Attack, ref yR, rightX, colW);
+        if (keyboardOnly)
+            BindingRow("Attack (KB)", KeybindId.KeyboardAttack, ref yR, rightX, colW);
         BindingRow("Place Item:", KeybindId.PlaceItem, ref yR, rightX, colW);
         BindingRow("Throw Item:", KeybindId.ThrowItem, ref yR, rightX, colW);
 
@@ -544,7 +572,15 @@ public sealed class SettingsMenu : MenuBase
         float colW = (content.Width - colPad * 2f - gutter) / 2f;
         float leftX = content.X + colPad;
         float rightX = content.X + colPad + colW + gutter;
-        float yTop = content.Y + 8f * ui;
+
+        bool keyboardOnly = KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly;
+        float toggleH = 36f * ui;
+        float toggleW = 280f * ui;
+        int toggleX = (int)(content.X + content.Width / 2f - toggleW / 2f);
+        int toggleY = (int)(content.Y + 8f * ui);
+        _schemeToggleRect = new Rectangle(toggleX, toggleY, (int)toggleW, (int)toggleH);
+
+        float yTop = toggleY + toggleH + 14f * ui;
         float yL = yTop;
         float yR = yTop;
 
@@ -570,6 +606,8 @@ public sealed class SettingsMenu : MenuBase
 
         AfterSectionHeader(ref yR);
         RegisterRow(KeybindId.Attack, ref yR, rightX, colW);
+        if (keyboardOnly)
+            RegisterRow(KeybindId.KeyboardAttack, ref yR, rightX, colW);
         RegisterRow(KeybindId.PlaceItem, ref yR, rightX, colW);
         RegisterRow(KeybindId.ThrowItem, ref yR, rightX, colW);
 
