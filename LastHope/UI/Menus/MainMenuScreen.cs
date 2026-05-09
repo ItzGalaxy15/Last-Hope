@@ -24,6 +24,7 @@ public sealed class MainMenuScreen : MenuBase
 
     private Panel _rootPanel;
     private bool _hintAdded;
+    private Texture2D _backgroundTexture;
 
     public void ReleaseGumUi()
     {
@@ -52,10 +53,10 @@ public sealed class MainMenuScreen : MenuBase
         _rootPanel.Dock(Gum.Wireframe.Dock.Fill);
         _rootPanel.AddToRoot();
 
-        // Full-screen wash behind everything (Gum draws after SpriteBatch backdrop in Game.Draw).
+        // Subtle dark tint so menu buttons remain readable over the background image.
         var fill = new ColoredRectangleRuntime();
         fill.Dock(Gum.Wireframe.Dock.Fill);
-        fill.Color = new Color(8, 10, 20, 220);
+        fill.Color = new Color(8, 10, 20, 130);
         _rootPanel.AddChild(fill);
 
         float marginX = 40f * ui;
@@ -129,11 +130,11 @@ public sealed class MainMenuScreen : MenuBase
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         Viewport vp = Game.GraphicsDevice.Viewport;
-        Texture2D px = Pixel;
+        _backgroundTexture ??= _content.Load<Texture2D>("menu/background");
 
         // Screen-space menu backdrop (do not use gameplay camera transform or the level map).
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        DrawHubMenuBackdrop(spriteBatch, px, vp);
+        spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
+        spriteBatch.Draw(_backgroundTexture, new Rectangle(0, 0, vp.Width, vp.Height), Color.White);
         spriteBatch.End();
     }
 }
