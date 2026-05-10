@@ -181,7 +181,7 @@ public class Warrior : BasePlayer
         {
             _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
             bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
-                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _aimInput != Vector2.Zero && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
+                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
             if (attackPressed && _timeSinceLastAttack >= _currentAttackCooldown)
             {
                 UseWeapon();

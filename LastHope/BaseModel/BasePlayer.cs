@@ -241,24 +241,21 @@ public abstract class BasePlayer : GameObject
     public override void HandleInput(InputManager inputManager)
     {
         _moveInput = Vector2.Zero;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp))
-            _moveInput.Y -= 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown))
-            _moveInput.Y += 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft))
-            _moveInput.X -= 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.MoveRight))
-            _moveInput.X += 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp))    _moveInput.Y -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown))  _moveInput.Y += 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft))  _moveInput.X -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveRight)) _moveInput.X += 1f;
 
-        _aimInput = Vector2.Zero;
-        if (inputManager.IsGameplayKeyDown(KeybindId.AimUp))
-            _aimInput.Y -= 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.AimDown))
-            _aimInput.Y += 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.AimLeft))
-            _aimInput.X -= 1f;
-        if (inputManager.IsGameplayKeyDown(KeybindId.AimRight))
-            _aimInput.X += 1f;
+        Vector2 rawAim = Vector2.Zero;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimUp))    rawAim.Y -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimDown))  rawAim.Y += 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimLeft))  rawAim.X -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimRight)) rawAim.X += 1f;
+
+        if (rawAim != Vector2.Zero)
+            _aimInput = rawAim;
+        else if (_moveInput != Vector2.Zero)
+            _aimInput = _moveInput;
     }
 
     public void Move(Vector2 direction, GameTime gameTime)
