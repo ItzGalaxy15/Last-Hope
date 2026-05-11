@@ -7,6 +7,10 @@ using Microsoft.Xna.Framework.Content;
 
 namespace Last_Hope.UI;
 
+/// <summary>
+/// Aggregates screen-space HUD widgets (health, XP, waves, boss warning, optional ability cooldowns).
+/// Owned by gameplay; see <see cref="GameManager"/> draw/update paths.
+/// </summary>
 public class Hud
 {
 	private readonly List<UIElement> _elements;
