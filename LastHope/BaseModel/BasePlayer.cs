@@ -25,6 +25,10 @@ public abstract class BasePlayer : GameObject
     public BaseWeapon _Weapon { get; protected set; }
     public float _Speed { get; protected set; }
 
+    // Shared input state
+    protected Vector2 _moveInput;
+    protected Vector2 _aimInput;
+
     // Aim arrow parameters
     private const float AimArrowDistance = 70f;
     private const float AimArrowScale = 2f;
@@ -234,6 +238,26 @@ public abstract class BasePlayer : GameObject
         return _position;
     }
 
+    public override void HandleInput(InputManager inputManager)
+    {
+        _moveInput = Vector2.Zero;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp))    _moveInput.Y -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown))  _moveInput.Y += 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft))  _moveInput.X -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveRight)) _moveInput.X += 1f;
+
+        Vector2 rawAim = Vector2.Zero;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimUp))    rawAim.Y -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimDown))  rawAim.Y += 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimLeft))  rawAim.X -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimRight)) rawAim.X += 1f;
+
+        if (rawAim != Vector2.Zero)
+            _aimInput = rawAim;
+        else if (_moveInput != Vector2.Zero)
+            _aimInput = _moveInput;
+    }
+
     public void Move(Vector2 direction, GameTime gameTime)
     {
         if (direction == Vector2.Zero)
@@ -316,13 +340,23 @@ public abstract class BasePlayer : GameObject
             return;
 
         Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        Vector2 mousePos = GameManager.GetGameManager().GetWorldMousePosition();
-        Vector2 direction = mousePos - center;
+        Vector2 direction;
 
-        if (direction == Vector2.Zero)
-            return;
-
-        direction.Normalize();
+        if (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly)
+        {
+            direction = _aimInput;
+            if (direction == Vector2.Zero)
+                return;
+            direction.Normalize();
+        }
+        else
+        {
+            Vector2 mousePos = GameManager.GetGameManager().GetWorldMousePosition();
+            direction = mousePos - center;
+            if (direction == Vector2.Zero)
+                return;
+            direction.Normalize();
+        }
 
         Vector2 arrowPos = center + direction * AimArrowDistance;
 

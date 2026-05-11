@@ -120,6 +120,7 @@ public class Last_Hope : Game
 
     protected override void Update(GameTime gameTime)
     {
+        IsMouseVisible = !(KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _gameManager._state == GameState.Running);
         _gameManager.Update(gameTime);
         GumService.Default.Update(gameTime);
         if (_gameManager.playerAlive && _gameManager._player != null)

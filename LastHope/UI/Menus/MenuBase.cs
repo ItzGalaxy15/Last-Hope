@@ -89,6 +89,15 @@ public abstract class MenuBase
         Array.Empty<Segment>(),
         new[] { Segment.T("Combat") },
         new[] { Segment.B(KeybindId.Attack), Segment.T(" -> Attack") },
+        new[] { Segment.B(KeybindId.KeyboardAttack), Segment.T(" -> Attack (KB)") },
+        Array.Empty<Segment>(),
+        new[] { Segment.T("Aim") },
+        new[] {
+            Segment.B(KeybindId.AimUp), Segment.T(" "),
+            Segment.B(KeybindId.AimDown), Segment.T(" "),
+            Segment.B(KeybindId.AimLeft), Segment.T(" "),
+            Segment.B(KeybindId.AimRight), Segment.T(" -> Aim"),
+        },
         Array.Empty<Segment>(),
         new[] { Segment.T("Hotbar") },
         new[] {
