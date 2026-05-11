@@ -274,6 +274,8 @@ namespace Last_Hope.UI
         private float _btnResetHover = 0f;
 
         private SkillNodeUI _hoveredNode;
+        private int _layoutViewportW;
+        private int _layoutViewportH;
 
         public SkillTreeMenuCanvas(BaseSkillTree tree, UIThemeData theme, Texture2D pixel, Viewport viewport)
         {
@@ -295,7 +297,14 @@ namespace Last_Hope.UI
                 _uiConnections.Add(new SkillConnectionUI { ParentNode = parent, ChildNode = child });
             }
 
-            // 3. Layout Generation
+            ApplyViewportLayout(viewport);
+        }
+
+        private void ApplyViewportLayout(Viewport viewport)
+        {
+            _layoutViewportW = viewport.Width;
+            _layoutViewportH = viewport.Height;
+
             int panelWidth = (int)(viewport.Width * 0.8f);
             int panelHeight = (int)(viewport.Height * 0.8f);
             _mainPanel = new Rectangle(
@@ -304,31 +313,27 @@ namespace Last_Hope.UI
                 panelWidth,
                 panelHeight
             );
-            
+
             _topBarRect = new Rectangle(_mainPanel.X, _mainPanel.Y, _mainPanel.Width, 75);
             _bottomBarRect = new Rectangle(_mainPanel.X, _mainPanel.Bottom - 85, _mainPanel.Width, 85);
 
             int btnWidth = 130;
             int btnHeight = 44;
             int btnY = _bottomBarRect.Center.Y - (btnHeight / 2);
-            
+
             _btnCancel = new Rectangle(_bottomBarRect.Right - btnWidth - 30, btnY, btnWidth, btnHeight);
             _btnConfirm = new Rectangle(_btnCancel.Left - btnWidth - 15, btnY, btnWidth, btnHeight);
             _btnReset = new Rectangle(_bottomBarRect.Left + 30, btnY, btnWidth, btnHeight);
 
             Rectangle treeArea = new Rectangle(_mainPanel.X, _topBarRect.Bottom, _mainPanel.Width, _bottomBarRect.Top - _topBarRect.Bottom);
             _layout.GenerateLayout(_uiNodes, treeArea);
-
-            // [DEBUG STEP 3]: Coordinate System Check
-            if (_uiNodes.Count > 0)
-            {
-                System.Console.WriteLine($"[SkillTree UI] Panel Center: {_mainPanel.Center.X}, {_mainPanel.Center.Y}");
-                System.Console.WriteLine($"[SkillTree UI] First Node Generated at Absolute Position: {_uiNodes[0].Position.X}, {_uiNodes[0].Position.Y}");
-            }
         }
 
         public override void Update(GameTime gameTime, Viewport viewport)
         {
+            if (viewport.Width != _layoutViewportW || viewport.Height != _layoutViewportH)
+                ApplyViewportLayout(viewport);
+
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             var input = GameManager.GetGameManager().InputManager;
             Vector2 mousePos = input.CurrentMouseState.Position.ToVector2();
@@ -354,7 +359,7 @@ namespace Last_Hope.UI
             {
                 _tree.Respec();
             }
-            if (input.IsKeyPress(Keys.Enter))
+            if (input.IsKeyPress(Keys.Enter) || input.IsKeyPress(Keys.Space))
             {
                 _tree.ConfirmPendingPoints();
             }
@@ -363,8 +368,8 @@ namespace Last_Hope.UI
             if (isLeftClickPressed)
             {
                 if (_btnCancel.Contains(mousePos)) { _tree.CancelPendingPoints(); IsClosed = true; return; }
-                if (_btnReset.Contains(mousePos)) { _tree.Respec(); }
-                if (_btnConfirm.Contains(mousePos)) { _tree.ConfirmPendingPoints(); }
+                if (_btnReset.Contains(mousePos)) { _tree.Respec(); return; }
+                if (_btnConfirm.Contains(mousePos)) { _tree.ConfirmPendingPoints(); return; }
             }
 
             _hoveredNode = null;
@@ -486,7 +491,7 @@ namespace Last_Hope.UI
                 DrawPremiumButton(spriteBatch, font, _btnReset, "RESET", new Color(90, 30, 25), new Color(160, 50, 40), _btnResetHover, globalAlpha);
                 
                 // Instructions
-                string hint = "LMB: Assign   |   RMB: Remove   |   ENTER: Confirm   |   ESC: Close";
+                string hint = "LMB: Assign   |   RMB: Remove   |   ENTER / SPACE: Confirm   |   ESC: Close";
                 Vector2 hintSize = font.MeasureString(hint) * 0.3f;
                 spriteBatch.DrawString(font, hint, new Vector2(_bottomBarRect.Center.X - hintSize.X/2, _bottomBarRect.Center.Y - hintSize.Y/2), Fade(new Color(120, 125, 130), globalAlpha), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
