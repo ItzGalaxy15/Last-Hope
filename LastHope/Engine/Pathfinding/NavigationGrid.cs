@@ -12,6 +12,11 @@ public sealed class NavigationGrid
 {
     private readonly bool[,] _walkable;
 
+    // Cache the last computed direction for each (startTile, goalTile) pair.
+    // Entries older than PathCacheTtlMs are recomputed; everything else is returned instantly.
+    private readonly Dictionary<(Point start, Point goal), (Vector2 direction, long timestampMs)> _pathCache = new();
+    private const long PathCacheTtlMs = 400;
+
     public NavigationGrid(int widthInTiles, int heightInTiles, int tileSize)
     {
         if (widthInTiles <= 0 || heightInTiles <= 0)
@@ -136,6 +141,15 @@ public sealed class NavigationGrid
             return false;
         }
 
+        // Return cached direction if the tile pair hasn't changed and the entry is still fresh.
+        long now = Environment.TickCount64;
+        var cacheKey = (startTile, goalTile);
+        if (_pathCache.TryGetValue(cacheKey, out var cached) && now - cached.timestampMs < PathCacheTtlMs)
+        {
+            direction = cached.direction;
+            return direction != Vector2.Zero;
+        }
+
         List<Point>? tilePath = AStarPathfinder.FindPath(
             WidthInTiles,
             HeightInTiles,
@@ -147,11 +161,9 @@ public sealed class NavigationGrid
         {
             Vector2 delta = toWorld - fromWorld;
             if (delta != Vector2.Zero)
-            {
                 direction = Vector2.Normalize(delta);
-                return true;
-            }
-            return false;
+            _pathCache[cacheKey] = (direction, now);
+            return direction != Vector2.Zero;
         }
 
         if (tilePath.Count == 1)
@@ -159,8 +171,12 @@ public sealed class NavigationGrid
             // Already at the (snapped) goal tile — steer straight at the final world target.
             Vector2 delta = toWorld - fromWorld;
             if (delta == Vector2.Zero)
+            {
+                _pathCache[cacheKey] = (Vector2.Zero, now);
                 return false;
+            }
             direction = Vector2.Normalize(delta);
+            _pathCache[cacheKey] = (direction, now);
             return true;
         }
 
@@ -170,20 +186,19 @@ public sealed class NavigationGrid
         Vector2 toNext = nextCenter - fromWorld;
         if (toNext.LengthSquared() < 1f)
         {
-            if (tilePath.Count > 2)
-            {
-                toNext = TileCenterToWorld(tilePath[2]) - fromWorld;
-            }
-            else
-            {
-                toNext = toWorld - fromWorld;
-            }
+            toNext = tilePath.Count > 2
+                ? TileCenterToWorld(tilePath[2]) - fromWorld
+                : toWorld - fromWorld;
         }
 
         if (toNext == Vector2.Zero)
+        {
+            _pathCache[cacheKey] = (Vector2.Zero, now);
             return false;
+        }
 
         direction = Vector2.Normalize(toNext);
+        _pathCache[cacheKey] = (direction, now);
         return true;
     }
 }

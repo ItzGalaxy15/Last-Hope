@@ -7,13 +7,14 @@ using Microsoft.Xna.Framework;
 using MonoGameGum;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Last_Hope;
 
 public class Last_Hope : Game
 {
-    private const int MapWidthInTiles = 100;
-    private const int MapHeightInTiles = 50;
+    private const int MapWidthInTiles = 200;
+    private const int MapHeightInTiles = 100;
 
     private GraphicsDeviceManager _graphics;
     private InputManager _inputManager;
@@ -23,6 +24,7 @@ public class Last_Hope : Game
     private Texture2D _decorationsSheet;
     private Texture2D _villageSheet;
     private Texture2D? _itemSpriteSheet;
+    private Texture2D[] _treeTextures = Array.Empty<Texture2D>();
     private LevelGenerator _levelGenerator;
     private Camera _camera;
     private Hud _hud;
@@ -68,6 +70,16 @@ public class Last_Hope : Game
         }
 
         _levelGenerator.LoadSpriteSheets(_terrainSheet, _decorationsSheet, _villageSheet, terrainUsableRows: 5);
+
+        _treeTextures = new Texture2D[]
+        {
+            Content.Load<Texture2D>("forest/trees-version-1"),
+            Content.Load<Texture2D>("forest/trees-version-2"),
+            Content.Load<Texture2D>("forest/trees-version-3"),
+            Content.Load<Texture2D>("forest/trees-version-4"),
+        };
+        _levelGenerator.LoadForestSprites(_treeTextures);
+
         _levelGenerator.GenerateMap(MapWidthInTiles * _levelGenerator.TileSize, MapHeightInTiles * _levelGenerator.TileSize);
 
         _gameManager.NavigationGrid = new NavigationGrid(
@@ -92,6 +104,23 @@ public class Last_Hope : Game
             int tileTop    = (bounds.Top         / tileSize) - NavPaddingTiles;
             int tileRight  = ((bounds.Right - 1) / tileSize) + NavPaddingTiles;
             int tileBottom = ((bounds.Bottom - 1)/ tileSize) + NavPaddingTiles;
+
+            for (int ty = tileTop; ty <= tileBottom; ty++)
+                for (int tx = tileLeft; tx <= tileRight; tx++)
+                    _gameManager.NavigationGrid.SetWalkable(tx, ty, false);
+        }
+
+        foreach (var collider in _levelGenerator.GetTreeColliders())
+        {
+            CollisionWorld.RegisterStatic(collider);
+
+            Rectangle bounds = collider.GetBoundingBox();
+            const int TreeNavPaddingTiles = 1;
+            int tileSize = _levelGenerator.TileSize;
+            int tileLeft   = (bounds.Left        / tileSize) - TreeNavPaddingTiles;
+            int tileTop    = (bounds.Top         / tileSize) - TreeNavPaddingTiles;
+            int tileRight  = ((bounds.Right - 1) / tileSize) + TreeNavPaddingTiles;
+            int tileBottom = ((bounds.Bottom - 1)/ tileSize) + TreeNavPaddingTiles;
 
             for (int ty = tileTop; ty <= tileBottom; ty++)
                 for (int tx = tileLeft; tx <= tileRight; tx++)
@@ -131,18 +160,30 @@ public class Last_Hope : Game
 
         base.Update(gameTime);
     }
-
+    // idea for drawing player behind trees (Y-sorting) = https://eliasdaler.wordpress.com/2013/11/20/z-order-in-top-down-2d-games/
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         Effect backgroundEffect = _gameManager._state == GameState.GameOver ? _gameManager.DeathFade : null;
 
+        float playerY = _gameManager.playerAlive && _gameManager._player != null
+            ? _gameManager._player.GetPosition().Y + _gameManager._player._bodyWidth
+            : float.MaxValue;
+
+        // Pass 1: terrain, overlay, critters, village + trees that are north of the player.
         _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp, effect: backgroundEffect);
         _levelGenerator.Draw(_spriteBatch, Vector2.Zero);
+        _levelGenerator.DrawForestBehindPlayer(_spriteBatch, Vector2.Zero, playerY);
         _spriteBatch.End();
 
+        // Player and all entities.
         _gameManager.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
+
+        // Pass 2: trees that are south of the player overlap the player's feet.
+        _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp, effect: backgroundEffect);
+        _levelGenerator.DrawForestInFrontOfPlayer(_spriteBatch, Vector2.Zero, playerY);
+        _spriteBatch.End();
 
         GumService.Default.Draw();
 

@@ -134,11 +134,13 @@ namespace Last_Hope.Engine.LevelGenerator
             }
 
             _animatedDecorations.Clear();
+            _treePlacements.Clear();
             _villageBounds = Rectangle.Empty;
             if (_villageSheet != null)
             {
                 GenerateVillage();
             }
+            GenerateForest();
             ApplyFlowerField(_map);
             ApplyDecorations(_map, _overlayMap);
         }

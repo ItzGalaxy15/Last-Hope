@@ -69,6 +69,10 @@ namespace Last_Hope.Engine.LevelGenerator
                     if (!grassSet.Contains(baseMap[x, y]))
                         continue;
 
+                    // No decorations inside the forest — only trees there.
+                    if (_forestBounds.Width > 0 && _forestBounds.Contains(x, y))
+                        continue;
+
                     // Enforce minimum spacing between decorations.
                     if (HasNearbyDecoration(overlayMap, x, y))
                         continue;
