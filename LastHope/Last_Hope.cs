@@ -13,7 +13,7 @@ namespace Last_Hope;
 
 public class Last_Hope : Game
 {
-    private const int MapWidthInTiles = 200;
+    private const int MapWidthInTiles = 150;
     private const int MapHeightInTiles = 100;
 
     private GraphicsDeviceManager _graphics;
@@ -86,6 +86,7 @@ public class Last_Hope : Game
             _levelGenerator.MapWidthInTiles,
             _levelGenerator.MapHeightInTiles,
             _levelGenerator.TileSize);
+        _gameManager.PlayerSpawnSearchCenter = _levelGenerator.VillageCenterTile;
 
         // Register building colliders and block them in the navigation grid
         CollisionWorld.ClearStatic();
