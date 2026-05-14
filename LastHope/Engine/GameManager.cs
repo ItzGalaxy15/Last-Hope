@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using Last_Hope;
 using Last_Hope.BaseModel;
@@ -78,6 +79,9 @@ public class GameManager
     /// </summary>
     public NavigationGrid NavigationGrid { get; set; }
     public Point PlayerSpawnSearchCenter { get; set; } = new Point(-1, -1);
+
+    public IEnumerable<GameObject> GetYSortedObjects() =>
+        _gameObjects.Where(g => g.IsYSorted);
 
     public Effect DeathFade { get; private set; }
     public Effect? CooldownIcon { get; private set; }

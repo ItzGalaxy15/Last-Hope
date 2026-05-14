@@ -232,7 +232,10 @@ public abstract class BasePlayer : GameObject
     {
 
     }
-    
+
+    public override bool IsYSorted => true;
+    public override float GetSortY() => GetPosition().Y + _bodyWidth;
+
     public Vector2 GetPosition()
     {
         return _position;

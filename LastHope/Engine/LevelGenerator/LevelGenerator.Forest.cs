@@ -121,6 +121,21 @@ namespace Last_Hope.Engine.LevelGenerator
         private int TrunkBaseY(TreePlacement tree) =>
             tree.TileY * TileSize + TreeRenderPx;
 
+        // Fills the shared Y-sort list with one entry per tree so Last_Hope.cs
+        // can merge trees and entities into a single depth-sorted draw pass.
+        public void AppendTreeDrawItems(Vector2 origin, List<(float sortY, Action<SpriteBatch> draw)> list)
+        {
+            if (_treeTextures == null || _treeTextures.Length == 0)
+                return;
+
+            foreach (var tree in _treePlacements)
+            {
+                var captured = tree;
+                // most important. Trees are sorted by the Y of their trunk base, so the player can be drawn in front of or behind them based on their Y position.
+                list.Add((TrunkBaseY(captured), sb => DrawTree(sb, origin, captured)));
+            }
+        }
+
         // Trees whose trunk base is above (north of) the player draw before the player,
         // so the player appears in front of them.
         public void DrawForestBehindPlayer(SpriteBatch spriteBatch, Vector2 origin, float playerY)

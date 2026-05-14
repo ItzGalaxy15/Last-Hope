@@ -8,6 +8,7 @@ using MonoGameGum;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 
 namespace Last_Hope;
 
@@ -168,23 +169,31 @@ public class Last_Hope : Game
 
         Effect backgroundEffect = _gameManager._state == GameState.GameOver ? _gameManager.DeathFade : null;
 
-        float playerY = _gameManager.playerAlive && _gameManager._player != null
-            ? _gameManager._player.GetPosition().Y + _gameManager._player._bodyWidth
-            : float.MaxValue;
-
-        // Pass 1: terrain, overlay, critters, village + trees that are north of the player.
+        // Ground layer: terrain, overlay decorations, village buildings.
         _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp, effect: backgroundEffect);
         _levelGenerator.Draw(_spriteBatch, Vector2.Zero);
-        _levelGenerator.DrawForestBehindPlayer(_spriteBatch, Vector2.Zero, playerY);
         _spriteBatch.End();
 
-        // Player and all entities.
-        _gameManager.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
+        // Y-sorted layer: trees and all entities (player + enemies) sorted together by depth.
+        var ySortList = new List<(float sortY, Action<SpriteBatch> draw)>();
 
-        // Pass 2: trees that are south of the player overlap the player's feet.
+        _levelGenerator.AppendTreeDrawItems(Vector2.Zero, ySortList);
+
+        foreach (var obj in _gameManager.GetYSortedObjects())
+        {
+            var captured = obj;
+            ySortList.Add((captured.GetSortY(), sb => captured.Draw(gameTime, sb)));
+        }
+
+        ySortList.Sort((a, b) => a.sortY.CompareTo(b.sortY));
+
         _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp, effect: backgroundEffect);
-        _levelGenerator.DrawForestInFrontOfPlayer(_spriteBatch, Vector2.Zero, playerY);
+        foreach ((float _, Action<SpriteBatch> draw) in ySortList)
+            draw(_spriteBatch);
         _spriteBatch.End();
+
+        // Non-Y-sorted layer: projectiles, items, UI elements in world space.
+        _gameManager.Draw(gameTime, _spriteBatch, _camera.ViewMatrix);
 
         GumService.Default.Draw();
 
