@@ -8,7 +8,7 @@ namespace Last_Hope.Engine.LevelGenerator
 {
     internal partial class LevelGenerator
     {
-        private const int TreeRenderPx = 256; // 2x scale — 8 tiles wide/tall at 32 px/tile
+        private const int TreeRenderPx = 256; // 2x scale, 8 tiles wide/tall at 32 px/tile
 
         // How many px to inset the trunk collision box on each side. Increase to shrink it inward.
         private const int TreeTrunkSideInset = 20;
@@ -18,13 +18,13 @@ namespace Last_Hope.Engine.LevelGenerator
         private const int TreeTrunkOffsetY = 192; // 256 - 64
         private const int TreeTrunkHeight  = 64;
 
-        private const int TreeMinSpacingTiles     = 6;
+        private const int TreeMinSpacingTiles = 6;
         private const int ForestPlacementAttempts = 2000;
-        private const int ForestBufferTiles        = 5;
+        private const int ForestBufferTiles = 5;
 
         // Clear horizontal corridors so the player can always walk north/south.
         private const int ForestCorridorSpacingTiles = 10; // one corridor every N tiles in Y
-        private const int ForestCorridorWidthTiles   = 3;  // each corridor is this many tiles wide
+        private const int ForestCorridorWidthTiles = 6;  // each corridor is this many tiles wide
 
         private Texture2D[]? _treeTextures;
         private readonly List<TreePlacement> _treePlacements = new();
@@ -57,7 +57,7 @@ namespace Last_Hope.Engine.LevelGenerator
             int trunkRowStart = TreeTrunkOffsetY / TileSize;                          // 6
             int trunkRowEnd   = (TreeTrunkOffsetY + TreeTrunkHeight) / TileSize - 1; // 7
 
-            HashSet<int> grassSet = new HashSet<int>(GetTerrainTileIndicesForRows(0, 2));
+            HashSet<int> grassSet = new HashSet<int>(GetTerrainTileIndicesForRows(0, 2, 6, 7));
 
             var placed = new List<Point>(128);
 
@@ -117,7 +117,7 @@ namespace Last_Hope.Engine.LevelGenerator
             _treePlacements.Sort((a, b) => a.TileY.CompareTo(b.TileY));
         }
 
-        // Pixel Y of the trunk base — used as the depth anchor for Y-sorting.
+        // Pixel Y of the trunk base, used as the depth anchor for Y-sorting.
         private int TrunkBaseY(TreePlacement tree) =>
             tree.TileY * TileSize + TreeRenderPx;
 

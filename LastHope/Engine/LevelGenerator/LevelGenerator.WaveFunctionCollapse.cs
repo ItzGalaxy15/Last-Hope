@@ -87,7 +87,9 @@ namespace Last_Hope.Engine.LevelGenerator
         /// with zero valid tiles it wipes the grid and retries from scratch, up to
         /// <see cref="MaxGenerationAttempts"/> times. Returns true if a valid map was produced.
         /// </summary>
-        private bool TryGenerateWfc(int[,] outputMap, HashSet<int> allowedTiles)
+        private bool TryGenerateWfc(int[,] outputMap, HashSet<int> allowedTiles,
+            Rectangle forestBounds = default, HashSet<int> forestTiles = null,
+            Rectangle boundaryBounds = default, HashSet<int> boundaryTiles = null)
         {
             if (_compatibility == null)
                 return false;
@@ -98,7 +100,7 @@ namespace Last_Hope.Engine.LevelGenerator
 
             for (int attempt = 0; attempt < MaxGenerationAttempts; attempt++)
             {
-                // Only mark allowed tiles as possible — everything else starts false.
+                // Only mark allowed tiles as possible, everything else starts false.
                 bool[,,] possible = new bool[width, height, tileCount];
                 int[,] optionCount = new int[width, height];
 
@@ -107,9 +109,13 @@ namespace Last_Hope.Engine.LevelGenerator
                     for (int x = 0; x < width; x++)
                     {
                         int count = 0;
+                        bool inBoundary = boundaryTiles != null && boundaryBounds.Width > 0 && boundaryBounds.Contains(x, y);
+                        bool inForest = !inBoundary && forestTiles != null && forestBounds.Width > 0 && forestBounds.Contains(x, y);
                         for (int t = 0; t < tileCount; t++)
                         {
-                            bool allowed = allowedTiles.Contains(t);
+                            bool allowed = inBoundary ? boundaryTiles.Contains(t) :
+                                           inForest   ? forestTiles.Contains(t)   :
+                                                        allowedTiles.Contains(t);
                             possible[x, y, t] = allowed;
                             if (allowed) count++;
                         }
@@ -124,7 +130,7 @@ namespace Last_Hope.Engine.LevelGenerator
                     // Find the undecided cell with the fewest options.
                     if (!TryFindLowestEntropyCell(optionCount, out int cellX, out int cellY))
                     {
-                        // No undecided cells left → success.
+                        // No undecided cells left, all cells are collapsed.
                         for (int y = 0; y < height; y++)
                         {
                             for (int x = 0; x < width; x++)
@@ -373,13 +379,18 @@ namespace Last_Hope.Engine.LevelGenerator
         /// allowed set so the game never crashes on level load. The output won't look as good as a
         /// proper WFC result, but it's a safe fallback.
         /// </summary>
-        private void FillRandomFallback(int[,] map, IReadOnlyList<int> allowedTiles)
+        private void FillRandomFallback(int[,] map, IReadOnlyList<int> allowedTiles,
+            Rectangle forestBounds = default, IReadOnlyList<int> forestTiles = null,
+            Rectangle boundaryBounds = default, IReadOnlyList<int> boundaryTiles = null)
         {
             for (int y = 0; y < map.GetLength(1); y++)
             {
                 for (int x = 0; x < map.GetLength(0); x++)
                 {
-                    map[x, y] = allowedTiles[_random.Next(allowedTiles.Count)];
+                    bool inBoundary = boundaryTiles != null && boundaryBounds.Width > 0 && boundaryBounds.Contains(x, y);
+                    bool inForest = !inBoundary && forestTiles != null && forestBounds.Width > 0 && forestBounds.Contains(x, y);
+                    IReadOnlyList<int> tiles = inBoundary ? boundaryTiles : inForest ? forestTiles : allowedTiles;
+                    map[x, y] = tiles[_random.Next(tiles.Count)];
                 }
             }
         }

@@ -70,7 +70,7 @@ public class Last_Hope : Game
             _itemSpriteSheet = null;
         }
 
-        _levelGenerator.LoadSpriteSheets(_terrainSheet, _decorationsSheet, _villageSheet, terrainUsableRows: 5);
+        _levelGenerator.LoadSpriteSheets(_terrainSheet, _decorationsSheet, _villageSheet, terrainUsableRows: 8);
 
         _treeTextures = new Texture2D[]
         {

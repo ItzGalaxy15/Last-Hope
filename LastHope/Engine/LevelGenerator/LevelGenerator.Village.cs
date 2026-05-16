@@ -246,7 +246,7 @@ namespace Last_Hope.Engine.LevelGenerator
         /// <summary>
         /// Returns the Y pixel offset and collision box height for a given house type. The Y offset
         /// pushes the box down past the roof graphic so the player can walk behind the top of the
-        /// building before hitting the actual wall — a simple way to fake depth without a Z axis.
+        /// building before hitting the actual wall, a simple way to fake depth without a Z axis.
         /// </summary>
         private (int offsetY, int heightPx) GetHouseCollisionData(int houseType)
         {
