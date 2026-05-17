@@ -1,0 +1,173 @@
+{
+  "ClassId": "Archer",
+  "Theme": {
+    "PrimaryColorHex": "#2D9E4F",
+    "SecondaryColorHex": "#D4EDDA",
+    "DefaultShape": 0
+  },
+  "LayerUnlockRequirements": {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 4,
+    "5": 5
+  },
+  "Nodes": [
+    {
+      "Id": "archer_dmg_l0", "Name": "Strong Draw", "Description": "Increases Attack Damage.",
+      "MaxPoints": 1, "Type": 0, "Layer": 0, "Rarity": "Common", "IconId": "icon_swift_draw",
+      "Tags": ["Damage"], "Dependencies": [],
+      "Effects": [{ "EffectId": "base_damage", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 0
+    },
+    {
+      "Id": "archer_spd_l0", "Name": "Swift Feet", "Description": "Increases Movement Speed.",
+      "MaxPoints": 1, "Type": 0, "Layer": 0, "Rarity": "Common", "IconId": "icon_swift_feet",
+      "Tags": ["Speed"], "Dependencies": [],
+      "Effects": [{ "EffectId": "base_speed", "ValuePerPoint": 5.0 }], "GridX": 0, "GridY": 0
+    },
+    {
+      "Id": "archer_hst_l0", "Name": "Quick Draw", "Description": "Increases Attack Speed.",
+      "MaxPoints": 3, "Type": 0, "Layer": 0, "Rarity": "Common", "IconId": "icon_hardened_body",
+      "Tags": ["Haste"], "Dependencies": [],
+      "Effects": [{ "EffectId": "base_haste", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 0
+    },
+
+    {
+      "Id": "crit_chance_l1", "Name": "Precision", "Description": "Increases Critical Strike Chance.",
+      "MaxPoints": 3, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_precision",
+      "Tags": ["Crit"], "Dependencies": ["archer_haste_l0"],
+      "Effects": [{ "EffectId": "crit_chance", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 1
+    },
+    {
+      "Id": "shortbow_stance_l1", "Name": "Shortbow", "Description": "Equips a Shortbow. Lowers base damage, but greatly increases attack speed.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_shortbow",
+      "Tags": ["Stance"], "Dependencies": ["archer_haste_l0"],
+      "Effects": [{ "EffectId": "unlock_shortbow_stance", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 1
+    },
+    {
+      "Id": "armor_pen_l1", "Name": "Piercing Shot", "Description": "Increases Armor Penetration.",
+      "MaxPoints": 3, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_piercing_shot",
+      "Tags": ["Damage"], "Dependencies": ["archer_dmg_l0"],
+      "Effects": [{ "EffectId": "armor_pen", "ValuePerPoint": 1.0 }], "GridX": -0.5, "GridY": 1
+    },
+    {
+      "Id": "longbow_stance_l1", "Name": "Longbow", "Description": "Equips a Longbow. Lowers attack speed, but massively increases base damage and range.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_longbow",
+      "Tags": ["Stance"], "Dependencies": ["archer_dmg_l0"],
+      "Effects": [{ "EffectId": "unlock_longbow_stance", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 1
+    },
+    {
+      "Id": "crossbow_stance_l1", "Name": "Crossbow", "Description": "Equips a Crossbow. Grants flat damage reduction and a damage bonus, at the cost of mobility.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_crossbow",
+      "Tags": ["Stance"], "Dependencies": ["archer_hp_l0"],
+      "Effects": [{ "EffectId": "unlock_crossbow_stance", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 1
+    },
+    {
+      "Id": "dodge_l1", "Name": "Fleet Foot", "Description": "Increases Dodge Chance.",
+      "MaxPoints": 3, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_fleet_foot",
+      "Tags": ["Defense"], "Dependencies": ["archer_hp_l0"],
+      "Effects": [{ "EffectId": "dodge_chance", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 1
+    },
+
+    {
+      "Id": "on_crit_speed_l2", "Name": "Rapid Fire Rhythm", "Description": "Landing a Critical Strike grants a temporary Attack Speed buff.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
+      "Tags": ["Proc"], "Dependencies": ["crit_chance_l1"],
+      "Effects": [{ "EffectId": "proc_rapid_fire_rhythm", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 2
+    },
+    {
+      "Id": "flurry_l2", "Name": "Flurry", "Description": "10% chance on attack to fire an additional arrow at no cost.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
+      "Tags": ["Proc"], "Dependencies": ["shortbow_stance_l1"],
+      "Effects": [{ "EffectId": "proc_flurry", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 2
+    },
+    {
+      "Id": "on_hit_poison_l2", "Name": "Venomous Tips", "Description": "Your attacks have a chance to apply a stacking poison that deals damage over time.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_dmg",
+      "Tags": ["Proc"], "Dependencies": ["armor_pen_l1"],
+      "Effects": [{ "EffectId": "proc_venomous_tips", "ValuePerPoint": 1.0 }], "GridX": -0.5, "GridY": 2
+    },
+    {
+      "Id": "deadeye_l2", "Name": "Deadeye", "Description": "10% chance on attack to deal a massive guaranteed Critical Strike.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_dmg",
+      "Tags": ["Proc"], "Dependencies": ["longbow_stance_l1"],
+      "Effects": [{ "EffectId": "proc_deadeye", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 2
+    },
+    {
+      "Id": "fortify_l2", "Name": "Fortify", "Description": "100% chance on hit taken to briefly increase your own damage reduction.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
+      "Tags": ["Proc"], "Dependencies": ["crossbow_stance_l1"],
+      "Effects": [{ "EffectId": "proc_fortify", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 2
+    },
+    {
+      "Id": "on_dodge_counter_l2", "Name": "Counter Shot", "Description": "Successfully dodging an attack instantly triggers a free counter-attack.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
+      "Tags": ["Proc"], "Dependencies": ["dodge_l1"],
+      "Effects": [{ "EffectId": "proc_counter_shot", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 2
+    },
+
+    {
+      "Id": "archer_haste_l3", "Name": "Lightning Reflexes", "Description": "Further increases Attack Speed.",
+      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_swift_draw",
+      "Tags": ["Speed"], "Dependencies": [],
+      "Effects": [{ "EffectId": "haste_percent", "ValuePerPoint": 1.0 }], "GridX": -2, "GridY": 3
+    },
+    {
+      "Id": "archer_dmg_l3", "Name": "Deadly Aim", "Description": "Further increases Ranged Damage.",
+      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_keen_eye",
+      "Tags": ["Damage"], "Dependencies": [],
+      "Effects": [{ "EffectId": "base_damage", "ValuePerPoint": 5.0 }], "GridX": 0, "GridY": 3
+    },
+    {
+      "Id": "archer_hp_l3", "Name": "Iron Will", "Description": "Further increases Maximum HP.",
+      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_hardened_body",
+      "Tags": ["Defense"], "Dependencies": [],
+      "Effects": [{ "EffectId": "max_hp", "ValuePerPoint": 25.0 }], "GridX": 2, "GridY": 3
+    },
+
+    {
+      "Id": "arrow_storm_l4", "Name": "Arrow Storm", "Description": "Active: Unleashes a volley of arrows that blankets a wide area in rapid-fire damage.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_arrow_storm",
+      "Tags": ["Active", "AoE"], "Dependencies": [],
+      "Effects": [{ "EffectId": "unlock_arrow_storm", "ValuePerPoint": 1.0 }], "GridX": -2, "GridY": 4
+    },
+    {
+      "Id": "snipe_l4", "Name": "Snipe", "Description": "Active: Charge and release a single devastating shot dealing massive single-target damage.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_snipe",
+      "Tags": ["Active", "Burst"], "Dependencies": [],
+      "Effects": [{ "EffectId": "unlock_snipe", "ValuePerPoint": 1.0 }], "GridX": 0, "GridY": 4
+    },
+    {
+      "Id": "concussive_shot_l4", "Name": "Concussive Shot", "Description": "Active: Fires a blunt-tipped bolt that deals moderate damage and applies a Stun effect.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_concussive_shot",
+      "Tags": ["Active", "Stun"], "Dependencies": [],
+      "Effects": [{ "EffectId": "unlock_concussive_shot", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 4
+    }
+  ],
+  "Connections": [
+    { "FromNodeId": "archer_haste_l0", "ToNodeId": "crit_chance_l1" },
+    { "FromNodeId": "archer_haste_l0", "ToNodeId": "shortbow_stance_l1" },
+    { "FromNodeId": "crit_chance_l1", "ToNodeId": "on_crit_speed_l2" },
+    { "FromNodeId": "shortbow_stance_l1", "ToNodeId": "flurry_l2" },
+    { "FromNodeId": "on_crit_speed_l2", "ToNodeId": "archer_haste_l3" },
+    { "FromNodeId": "flurry_l2", "ToNodeId": "archer_haste_l3" },
+    { "FromNodeId": "archer_haste_l3", "ToNodeId": "arrow_storm_l4" },
+
+    { "FromNodeId": "archer_dmg_l0", "ToNodeId": "armor_pen_l1" },
+    { "FromNodeId": "archer_dmg_l0", "ToNodeId": "longbow_stance_l1" },
+    { "FromNodeId": "armor_pen_l1", "ToNodeId": "on_hit_poison_l2" },
+    { "FromNodeId": "longbow_stance_l1", "ToNodeId": "deadeye_l2" },
+    { "FromNodeId": "on_hit_poison_l2", "ToNodeId": "archer_dmg_l3" },
+    { "FromNodeId": "deadeye_l2", "ToNodeId": "archer_dmg_l3" },
+    { "FromNodeId": "archer_dmg_l3", "ToNodeId": "snipe_l4" },
+
+    { "FromNodeId": "archer_hp_l0", "ToNodeId": "crossbow_stance_l1" },
+    { "FromNodeId": "archer_hp_l0", "ToNodeId": "dodge_l1" },
+    { "FromNodeId": "crossbow_stance_l1", "ToNodeId": "fortify_l2" },
+    { "FromNodeId": "dodge_l1", "ToNodeId": "on_dodge_counter_l2" },
+    { "FromNodeId": "fortify_l2", "ToNodeId": "archer_hp_l3" },
+    { "FromNodeId": "on_dodge_counter_l2", "ToNodeId": "archer_hp_l3" },
+    { "FromNodeId": "archer_hp_l3", "ToNodeId": "concussive_shot_l4" }
+  ]
+}

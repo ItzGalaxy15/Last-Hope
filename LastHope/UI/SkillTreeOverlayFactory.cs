@@ -16,6 +16,8 @@ namespace Last_Hope.UI;
 internal static class SkillTreeOverlayFactory
 {
     private const string WarriorTreeRelativePath = @"SkillTree\WarriorSkillTree.json";
+    private const string ArcherSkillTreeRelativePath = @"SkillTree\ArcherSkillTree.json";
+
 
     /// <summary>
     /// Loads warrior tree JSON, applies save state, hooks <see cref="Warrior"/> callbacks, returns canvas or throws if data is invalid.
@@ -55,6 +57,55 @@ internal static class SkillTreeOverlayFactory
             tree.OnEffectApplied += warrior.ApplyNodeEffect;
             tree.OnTreeRespec += warrior.RevertAllSkillStats;
         }
+
+        var theme = new UIThemeData
+        {
+            LockedDesaturation = new Color(80, 85, 95),
+            AccentGlowColor = new Color(255, 70, 20),
+            BorderColor = new Color(160, 170, 180)
+        };
+
+        return new SkillTreeMenuCanvas(tree, theme, gm.Pixel, viewport);
+    }
+
+    /// <summary>
+    /// Loads archer tree JSON, applies save state, hooks <see cref="Archer"/> callbacks, returns canvas or throws if data is invalid.
+    /// </summary>
+    public static SkillTreeMenuCanvas CreateArcherOverlay(GameManager gm, in Viewport viewport)
+    {
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string projectRoot = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\"));
+        string jsonPath = Path.Combine(projectRoot, ArcherSkillTreeRelativePath);
+
+        if (!File.Exists(jsonPath))
+            jsonPath = Path.Combine(baseDir, ArcherSkillTreeRelativePath);
+
+        ClassSkillTreeData? treeData = null;
+        if (File.Exists(jsonPath))
+        {
+            string rawJson = File.ReadAllText(jsonPath);
+            var options = new JsonSerializerOptions
+            {
+                ReadCommentHandling = JsonCommentHandling.Skip,
+                AllowTrailingCommas = true
+            };
+            treeData = JsonSerializer.Deserialize<ClassSkillTreeData>(rawJson, options);
+        }
+
+        if (treeData == null)
+            throw new InvalidOperationException($"[SkillTree] Could not load JSON at: {Path.GetFullPath(jsonPath)}. Set Copy to Output Directory if needed.");
+
+        if (treeData.Nodes == null || treeData.Nodes.Count == 0)
+            throw new InvalidOperationException("[SkillTree] JSON loaded but Nodes is empty.");
+
+        SkillTreeState state = SkillTreeSaveManager.Load("Archer");
+        BaseSkillTree tree = new BaseSkillTree(treeData, state);
+
+        // if (gm._player is Archer archer)
+        // {
+        //     tree.OnEffectApplied += archer.ApplyNodeEffect;
+        //     tree.OnTreeRespec += archer.RevertAllSkillStats;
+        // }
 
         var theme = new UIThemeData
         {
