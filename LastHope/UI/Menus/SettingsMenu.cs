@@ -33,6 +33,9 @@ public sealed class SettingsMenu : MenuBase
     private SettingsChromeLayout _chrome;
     private List<(Rectangle rect, KeybindId id)> _bindTargets = new();
     private Rectangle _schemeToggleRect;
+    private float _controlsScrollY;
+    private float _controlsMaxScroll;
+    private static readonly RasterizerState ScissorRasterizer = new RasterizerState { ScissorTestEnable = true, CullMode = CullMode.None };
 
     private float _masterVolume = 1f;
     private float _musicVolume = 1f;
@@ -158,6 +161,7 @@ public sealed class SettingsMenu : MenuBase
                 if (_chrome.TabRects[i].Contains(mouse))
                 {
                     _tab = (SettingsTab)i;
+                    _controlsScrollY = 0f;
                     return;
                 }
             }
@@ -195,6 +199,13 @@ public sealed class SettingsMenu : MenuBase
         AudioManager.MusicVolume = _musicVolume;
         AudioManager.SfxVolume = _sfxVolume;
         AudioManager.Apply();
+
+        if (_tab == SettingsTab.Controls)
+        {
+            int scrollDelta = InputManager.CurrentMouseState.ScrollWheelValue - InputManager.LastMouseState.ScrollWheelValue;
+            _controlsScrollY -= scrollDelta * 0.25f;
+            _controlsScrollY = MathHelper.Clamp(_controlsScrollY, 0f, _controlsMaxScroll);
+        }
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
@@ -244,25 +255,45 @@ public sealed class SettingsMenu : MenuBase
                 fg, 0f, Vector2.Zero, chrome.TabTextScale, SpriteEffects.None, 0f);
         }
 
+        spriteBatch.End();
+
         float textScale = 0.56f * ui;
-        switch (_tab)
+        if (_tab == SettingsTab.Controls)
         {
-            case SettingsTab.Controls:
-                DrawControlsRebindable(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
-                break;
-            case SettingsTab.Sound:
+            spriteBatch.GraphicsDevice.ScissorRectangle = chrome.ContentRect;
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp, rasterizerState: ScissorRasterizer);
+            DrawControlsRebindable(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
+            spriteBatch.End();
+        }
+        else
+        {
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            if (_tab == SettingsTab.Sound)
                 DrawSoundSettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
-                break;
-            case SettingsTab.Display:
+            else
                 DrawPlaceholderInRect(spriteBatch, layoutFont, chrome.ContentRect, "Coming soon.", 0.62f * ui);
-                break;
+            spriteBatch.End();
         }
 
-        if (_awaitingRebind.HasValue && _pendingConflict.HasValue && _pendingNewBind.HasValue)
-            DrawOverrideConfirmModal(spriteBatch, layoutFont, vp, ui, _overrideLayout, _awaitingRebind.Value, _pendingConflict.Value, _pendingNewBind.Value);
-        else if (_awaitingRebind.HasValue)
-            DrawRebindModal(spriteBatch, layoutFont, vp, ui, _awaitingRebind.Value);
-
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        if (_tab == SettingsTab.Controls && _controlsMaxScroll > 0)
+        {
+            int sbW = Math.Max(4, (int)(5f * ui));
+            var sbTrack = new Rectangle(chrome.ContentRect.Right - sbW - 2, chrome.ContentRect.Y, sbW, chrome.ContentRect.Height);
+            float viewRatio = (float)chrome.ContentRect.Height / (chrome.ContentRect.Height + _controlsMaxScroll);
+            int thumbH = Math.Max(20, (int)(sbTrack.Height * viewRatio));
+            float scrollT = _controlsScrollY / _controlsMaxScroll;
+            int thumbY = sbTrack.Y + (int)((sbTrack.Height - thumbH) * scrollT);
+            spriteBatch.Draw(Pixel, sbTrack, new Color(40, 48, 62, 150));
+            spriteBatch.Draw(Pixel, new Rectangle(sbTrack.X, thumbY, sbW, thumbH), new Color(140, 185, 255, 200));
+        }
+        if (_awaitingRebind.HasValue)
+        {
+            if (_pendingConflict.HasValue && _pendingNewBind.HasValue)
+                DrawOverrideConfirmModal(spriteBatch, layoutFont, vp, ui, _overrideLayout, _awaitingRebind.Value, _pendingConflict.Value, _pendingNewBind.Value);
+            else
+                DrawRebindModal(spriteBatch, layoutFont, vp, ui, _awaitingRebind.Value);
+        }
         spriteBatch.End();
     }
 
@@ -375,7 +406,7 @@ public sealed class SettingsMenu : MenuBase
         float toggleH = 36f * ui;
         float toggleW = 400f * ui;
         int toggleX = (int)(content.X + content.Width / 2f - toggleW / 2f);
-        int toggleY = (int)(content.Y + 8f * ui);
+        int toggleY = (int)(content.Y + 8f * ui - _controlsScrollY);
         _schemeToggleRect = new Rectangle(toggleX, toggleY, (int)toggleW, (int)toggleH);
 
         spriteBatch.Draw(Pixel, _schemeToggleRect, keyboardOnly ? new Color(60, 100, 160, 220) : new Color(40, 48, 62, 200));
@@ -426,6 +457,15 @@ public sealed class SettingsMenu : MenuBase
         BindingRow("Right", KeybindId.MoveRight, ref yL, leftX, colW);
         BindingRow("Dash", KeybindId.Dash, ref yL, leftX, colW);
         BindingRow("Teleport", KeybindId.Teleport, ref yL, leftX, colW);
+        if (keyboardOnly)
+        {
+            yL += 12f * ui;
+            SectionHeader("Aim", ref yL, leftX);
+            BindingRow("Up", KeybindId.AimUp, ref yL, leftX, colW);
+            BindingRow("Down", KeybindId.AimDown, ref yL, leftX, colW);
+            BindingRow("Left", KeybindId.AimLeft, ref yL, leftX, colW);
+            BindingRow("Right", KeybindId.AimRight, ref yL, leftX, colW);
+        }
 
         SectionHeader("Combat", ref yR, rightX);
         BindingRow("Attack", KeybindId.Attack, ref yR, rightX, colW);
@@ -575,9 +615,9 @@ public sealed class SettingsMenu : MenuBase
 
         bool keyboardOnly = KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly;
         float toggleH = 36f * ui;
-        float toggleW = 280f * ui;
+        float toggleW = 400f * ui;
         int toggleX = (int)(content.X + content.Width / 2f - toggleW / 2f);
-        int toggleY = (int)(content.Y + 8f * ui);
+        int toggleY = (int)(content.Y + 8f * ui - _controlsScrollY);
         _schemeToggleRect = new Rectangle(toggleX, toggleY, (int)toggleW, (int)toggleH);
 
         float yTop = toggleY + toggleH + 14f * ui;
@@ -603,6 +643,15 @@ public sealed class SettingsMenu : MenuBase
         RegisterRow(KeybindId.MoveRight, ref yL, leftX, colW);
         RegisterRow(KeybindId.Dash, ref yL, leftX, colW);
         RegisterRow(KeybindId.Teleport, ref yL, leftX, colW);
+        if (keyboardOnly)
+        {
+            yL += 12f * ui;
+            AfterSectionHeader(ref yL);
+            RegisterRow(KeybindId.AimUp, ref yL, leftX, colW);
+            RegisterRow(KeybindId.AimDown, ref yL, leftX, colW);
+            RegisterRow(KeybindId.AimLeft, ref yL, leftX, colW);
+            RegisterRow(KeybindId.AimRight, ref yL, leftX, colW);
+        }
 
         AfterSectionHeader(ref yR);
         RegisterRow(KeybindId.Attack, ref yR, rightX, colW);
@@ -616,6 +665,8 @@ public sealed class SettingsMenu : MenuBase
         AfterSectionHeader(ref yR);
         RegisterRow(KeybindId.ItemSlot1, ref yR, rightX, colW);
         RegisterRow(KeybindId.ItemSlot2, ref yR, rightX, colW);
+
+        _controlsMaxScroll = Math.Max(0f, Math.Max(yL, yR) + _controlsScrollY - content.Bottom);
     }
 
     private static int? KeySpriteRow(Keys k) => k switch
