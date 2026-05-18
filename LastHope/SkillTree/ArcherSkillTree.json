@@ -73,16 +73,16 @@
     },
 
     {
-      "Id": "on_crit_speed_l2", "Name": "Rapid Fire Rhythm", "Description": "Landing a Critical Strike grants a temporary Attack Speed buff.",
+      "Id": "attack_speed_keystone_l2", "Name": "Rapid Fire Rhythm", "Description": "Increased attack speed for short duration after 5 hits.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
       "Tags": ["Proc"], "Dependencies": ["crit_chance_l1"],
-      "Effects": [{ "EffectId": "proc_rapid_fire_rhythm", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 2
+      "Effects": [{ "EffectId": "unlock_rapid_fire", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 2
     },
     {
-      "Id": "flurry_l2", "Name": "Flurry", "Description": "10% chance on attack to fire an additional arrow at no cost.",
-      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
+      "Id": "crit_guarantee_l2", "Name": "Lock On", "Description": "Guarentee Critical Hit after 2 hits.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_crit_guarantee",
       "Tags": ["Proc"], "Dependencies": ["Piercing_stance_l1"],
-      "Effects": [{ "EffectId": "proc_flurry", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 2
+      "Effects": [{ "EffectId": "unlock_crit_guarantee", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 2
     },
     {
       "Id": "on_hit_poison_l2", "Name": "Venomous Tips", "Description": "Your attacks have a chance to apply a stacking poison that deals damage over time.",
@@ -112,7 +112,7 @@
     {
       "Id": "archer_haste_l3", "Name": "Lightning Draw", "Description": "Increases Attack Speed.",
       "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_lightning_draw",
-      "Tags": ["Haste"], "Dependencies": ["on_crit_speed_l2", "flurry_l2"],
+      "Tags": ["Haste"], "Dependencies": ["attack_speed_keystone_l2", "crit_guarantee_l2"],
       "Effects": [{ "EffectId": "haste", "ValuePerPoint": 0.2 }], "GridX": -2, "GridY": 3
     },
     {
@@ -150,10 +150,10 @@
   "Connections": [
     { "FromNodeId": "archer_dmg_l0", "ToNodeId": "crit_chance_l1" },
     { "FromNodeId": "archer_dmg_l0", "ToNodeId": "Piercing_stance_l1" },
-    { "FromNodeId": "crit_chance_l1", "ToNodeId": "on_crit_speed_l2" },
-    { "FromNodeId": "Piercing_stance_l1", "ToNodeId": "flurry_l2" },
-    { "FromNodeId": "on_crit_speed_l2", "ToNodeId": "archer_haste_l3" },
-    { "FromNodeId": "flurry_l2", "ToNodeId": "archer_haste_l3" },
+    { "FromNodeId": "crit_chance_l1", "ToNodeId": "attack_speed_keystone_l2" },
+    { "FromNodeId": "Piercing_stance_l1", "ToNodeId": "crit_guarantee_l2" },
+    { "FromNodeId": "attack_speed_keystone_l2", "ToNodeId": "archer_haste_l3" },
+    { "FromNodeId": "crit_guarantee_l2", "ToNodeId": "archer_haste_l3" },
     { "FromNodeId": "archer_haste_l3", "ToNodeId": "arrow_storm_l4" },
 
     { "FromNodeId": "archer_spd_l0", "ToNodeId": "archer_hp_l1" },

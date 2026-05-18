@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
@@ -18,10 +19,11 @@ namespace Last_Hope.Classes.Weapon
         private float _damage;
         private float _critChance;
         private bool hasPiercingArrows;
+        private Action<BaseEnemy> _onHitEnemy;
 
         private HashSet<GameObject> _alreadyHit = new HashSet<GameObject>();
 
-        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage, float critChance, bool piercingArrows)
+        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage, float critChance, bool piercingArrows, Action<BaseEnemy> onHitEnemy = null)
         {
             _owner = owner;
             _position = origin;
@@ -29,6 +31,7 @@ namespace Last_Hope.Classes.Weapon
             _damage = damage;
             _critChance = critChance;
             hasPiercingArrows = piercingArrows;
+            _onHitEnemy = onHitEnemy;
             _collider = new RectangleCollider(new Rectangle(origin.ToPoint(), new Point(10, 10)));
             SetCollider(_collider);
         }
@@ -93,6 +96,7 @@ namespace Last_Hope.Classes.Weapon
                     if (other is BaseEnemy enemy)
                     {
                         enemy.Damage(damage);
+                        _onHitEnemy?.Invoke(enemy);
                         if (enemy.CurrentHealth <= 0)
                         {
                             GameManager.GetGameManager().RemoveGameObject(enemy);
