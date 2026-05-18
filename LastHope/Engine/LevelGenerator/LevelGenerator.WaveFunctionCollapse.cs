@@ -163,7 +163,7 @@ namespace Last_Hope.Engine.LevelGenerator
         }
         // Algorithm: minimum entropy cell selection (github.com/mxgmn/WaveFunctionCollapse)
         // Reimplemented using plain option count + reservoir sampling for ties;
-        // mxgmn uses Shannon entropy with per cell Gaussian noise instead.
+        // mxgmn uses Shannon entropy with per cell uniform noise instead.
         /// <summary>
         /// Scans the whole grid and returns the coordinates of the undecided cell that has the fewest
         /// tiles still possible. Cells already collapsed to one option are skipped. When multiple cells
