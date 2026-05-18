@@ -8,6 +8,7 @@ namespace Last_Hope;
 public class Bow : BaseWeapon
 {
     private float _speed;
+    public bool piercingArrows;
     private GameObject _owner;
 
     public Bow(string name, float speed, GameObject owner) : base(name)
@@ -20,7 +21,7 @@ public class Bow : BaseWeapon
     {
         if (_owner is BasePlayer)
         {
-            var arrow = new Arrow(origin, direction, _speed, _owner, damage, critChance);
+            var arrow = new Arrow(origin, direction, _speed, _owner, damage, critChance, piercingArrows);
             GameManager.GetGameManager().AddGameObject(arrow);
         }
         else

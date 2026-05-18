@@ -45,26 +45,28 @@
       "Tags": ["Stance"], "Dependencies": ["archer_dmg_l0"],
       "Effects": [{ "EffectId": "unlock_piercing_arrows", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 1
     },
+
     {
-      "Id": "armor_pen_l1", "Name": "Piercing Shot", "Description": "Increases Armor Penetration.",
-      "MaxPoints": 3, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_piercing_shot",
-      "Tags": ["Damage"], "Dependencies": ["archer_spd_l0"],
-      "Effects": [{ "EffectId": "armor_pen", "ValuePerPoint": 1.0 }], "GridX": -0.5, "GridY": 1
+      "Id": "archer_hp_l1", "Name": "Armor Upgrade", "Description": "Increases HitPoints.",
+      "MaxPoints": 1, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_armor_upgrade",
+      "Tags": ["Health"], "Dependencies": ["archer_spd_l0"],
+      "Effects": [{ "EffectId": "hp", "ValuePerPoint": 10.0 }], "GridX": -0.5, "GridY": 1
     },
     {
-      "Id": "longbow_stance_l1", "Name": "Longbow", "Description": "Equips a Longbow. Lowers attack speed, but massively increases base damage and range.",
-      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_longbow",
+      "Id": "poison_arrow_stance_l1", "Name": "Poison Arrows", "Description": "Equips arrows with poison tips. Deals damage over time to enemies.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_poison_arrows",
       "Tags": ["Stance"], "Dependencies": ["archer_spd_l0"],
-      "Effects": [{ "EffectId": "unlock_longbow_stance", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 1
+      "Effects": [{ "EffectId": "unlock_poison_arrows", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 1
     },
+
     {
-      "Id": "crossbow_stance_l1", "Name": "Crossbow", "Description": "Equips a Crossbow. Grants flat damage reduction and a damage bonus, at the cost of mobility.",
+      "Id": "explosive_radius_l1", "Name": "Bigger BOOM", "Description": "Increases the radius of explosive attacks.",
       "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_crossbow",
-      "Tags": ["Stance"], "Dependencies": ["archer_hst_l0"],
+      "Tags": ["Stance"], "Dependencies": ["archer_hst_l0", "explosive_arrow_stance_l1"],
       "Effects": [{ "EffectId": "unlock_crossbow_stance", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 1
     },
     {
-      "Id": "dodge_l1", "Name": "Fleet Foot", "Description": "Increases Dodge Chance.",
+      "Id": "explosive_arrow_stance_l1", "Name": "Fleet Foot", "Description": "Increases Dodge Chance.",
       "MaxPoints": 3, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_fleet_foot",
       "Tags": ["Defense"], "Dependencies": ["archer_hst_l0"],
       "Effects": [{ "EffectId": "dodge_chance", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 1
@@ -85,33 +87,33 @@
     {
       "Id": "on_hit_poison_l2", "Name": "Venomous Tips", "Description": "Your attacks have a chance to apply a stacking poison that deals damage over time.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_dmg",
-      "Tags": ["Proc"], "Dependencies": ["armor_pen_l1"],
+      "Tags": ["Proc"], "Dependencies": ["archer_hp_l1"],
       "Effects": [{ "EffectId": "proc_venomous_tips", "ValuePerPoint": 1.0 }], "GridX": -0.5, "GridY": 2
     },
     {
       "Id": "deadeye_l2", "Name": "Deadeye", "Description": "10% chance on attack to deal a massive guaranteed Critical Strike.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_dmg",
-      "Tags": ["Proc"], "Dependencies": ["longbow_stance_l1"],
+      "Tags": ["Proc"], "Dependencies": ["poison_arrow_stance_l1"],
       "Effects": [{ "EffectId": "proc_deadeye", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 2
     },
     {
       "Id": "fortify_l2", "Name": "Fortify", "Description": "100% chance on hit taken to briefly increase your own damage reduction.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
-      "Tags": ["Proc"], "Dependencies": ["crossbow_stance_l1"],
+      "Tags": ["Proc"], "Dependencies": ["explosive_radius_l1"],
       "Effects": [{ "EffectId": "proc_fortify", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 2
     },
     {
       "Id": "on_dodge_counter_l2", "Name": "Counter Shot", "Description": "Successfully dodging an attack instantly triggers a free counter-attack.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
-      "Tags": ["Proc"], "Dependencies": ["dodge_l1"],
+      "Tags": ["Proc"], "Dependencies": ["explosive_arrow_stance_l1"],
       "Effects": [{ "EffectId": "proc_counter_shot", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 2
     },
 
     {
-      "Id": "archer_haste_l3", "Name": "Lightning Reflexes", "Description": "Further increases Attack Speed.",
-      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_swift_draw",
-      "Tags": ["Speed"], "Dependencies": [],
-      "Effects": [{ "EffectId": "haste_percent", "ValuePerPoint": 1.0 }], "GridX": -2, "GridY": 3
+      "Id": "archer_haste_l3", "Name": "Lightning Draw", "Description": "Increases Attack Speed.",
+      "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_lightning_draw",
+      "Tags": ["Haste"], "Dependencies": ["on_crit_speed_l2", "flurry_l2"],
+      "Effects": [{ "EffectId": "haste", "ValuePerPoint": 0.2 }], "GridX": -2, "GridY": 3
     },
     {
       "Id": "archer_dmg_l3", "Name": "Deadly Aim", "Description": "Further increases Ranged Damage.",
@@ -154,18 +156,18 @@
     { "FromNodeId": "flurry_l2", "ToNodeId": "archer_haste_l3" },
     { "FromNodeId": "archer_haste_l3", "ToNodeId": "arrow_storm_l4" },
 
-    { "FromNodeId": "archer_spd_l0", "ToNodeId": "armor_pen_l1" },
-    { "FromNodeId": "archer_spd_l0", "ToNodeId": "longbow_stance_l1" },
-    { "FromNodeId": "armor_pen_l1", "ToNodeId": "on_hit_poison_l2" },
-    { "FromNodeId": "longbow_stance_l1", "ToNodeId": "deadeye_l2" },
+    { "FromNodeId": "archer_spd_l0", "ToNodeId": "archer_hp_l1" },
+    { "FromNodeId": "archer_spd_l0", "ToNodeId": "poison_arrow_stance_l1" },
+    { "FromNodeId": "archer_hp_l1", "ToNodeId": "on_hit_poison_l2" },
+    { "FromNodeId": "poison_arrow_stance_l1", "ToNodeId": "deadeye_l2" },
     { "FromNodeId": "on_hit_poison_l2", "ToNodeId": "archer_dmg_l3" },
     { "FromNodeId": "deadeye_l2", "ToNodeId": "archer_dmg_l3" },
     { "FromNodeId": "archer_dmg_l3", "ToNodeId": "snipe_l4" },
 
-    { "FromNodeId": "archer_hst_l0", "ToNodeId": "crossbow_stance_l1" },
-    { "FromNodeId": "archer_hst_l0", "ToNodeId": "dodge_l1" },
-    { "FromNodeId": "crossbow_stance_l1", "ToNodeId": "fortify_l2" },
-    { "FromNodeId": "dodge_l1", "ToNodeId": "on_dodge_counter_l2" },
+    { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_radius_l1" },
+    { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_arrow_stance_l1" },
+    { "FromNodeId": "explosive_radius_l1", "ToNodeId": "fortify_l2" },
+    { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "on_dodge_counter_l2" },
     { "FromNodeId": "fortify_l2", "ToNodeId": "archer_hp_l3" },
     { "FromNodeId": "on_dodge_counter_l2", "ToNodeId": "archer_hp_l3" },
     { "FromNodeId": "archer_hp_l3", "ToNodeId": "concussive_shot_l4" }

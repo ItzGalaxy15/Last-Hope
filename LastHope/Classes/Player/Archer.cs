@@ -61,6 +61,9 @@ public class Archer : BasePlayer
     public override float CurrentHaste { get; protected set; }
     public override float CurrentSpeed { get; protected set; }
 
+    // Skill tree related
+    public bool hasPiercingArrows { get; private set; }
+
     public Archer(Vector2 startPosition)
         : base(position: startPosition, weapon: new Bow("Bow", speed: ArrowSpeed, owner: null), level: 0, experience: 0, dashDistance: 140f)
     {
@@ -291,6 +294,14 @@ public class Archer : BasePlayer
                 break;
             case "crit_chance":
                 CurrentCritChance = Math.Min(CurrentCritChance + effect.ValuePerPoint, 1f);
+                break;
+            case "hp":
+                CurrentMaxHp += effect.ValuePerPoint;
+                Heal(effect.ValuePerPoint);
+                break;
+            case "unlock_piercing_arrows":
+                hasPiercingArrows = true;
+                ((Bow)_Weapon).piercingArrows = true;
                 break;
         }
         UpdateStats();
