@@ -48,11 +48,17 @@ public static class ItemSystem
 
         Vector2 spawnPosition = player.GetPosition() + new Vector2(player._bodyWidth * 0.5f);
 
-        Vector2 mouseWorld = gm.GetWorldMousePosition();
-        Vector2 direction = mouseWorld - spawnPosition;
-
-        if (direction == Vector2.Zero)
-            return;
+        Vector2 direction;
+        if (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && player.AimInput != Vector2.Zero)
+        {
+            direction = player.AimInput;
+        }
+        else
+        {
+            direction = gm.GetWorldMousePosition() - spawnPosition;
+            if (direction == Vector2.Zero)
+                return;
+        }
 
         direction.Normalize();
 
