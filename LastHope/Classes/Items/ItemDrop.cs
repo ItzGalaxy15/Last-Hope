@@ -75,11 +75,6 @@ public class ItemDrop : GameObject
         if (player is null || inv is null)
             return;
 
-        // Prevent rare items from being sucked in and destroyed for XP if inventory is full
-        bool isInventoryFull = inv[0] != ItemType.None && inv[1] != ItemType.None;
-        if (isInventoryFull && (Type == ItemType.OneUp || Type == ItemType.HealingPotion))
-            return;
-
         Vector2 playerPos = player.GetPosition();
         float distance = Vector2.Distance(_position, playerPos);
 
@@ -95,8 +90,18 @@ public class ItemDrop : GameObject
 
             if (distance < 25f)
             {
-                if (!PlayerInventoryHelper.TryPickup(player, Type))
-                    player.AddExperience(10);
+                // 1-Up is used instantly on pickup and does not take an inventory slot.
+                if (Type == ItemType.OneUp)
+                {
+                    player.AddLife(1);
+                    // TODO: Consider adding a visual/sound effect here for pickup feedback.
+                }
+                else
+                {
+                    // For other items, try to add to inventory. If full, grant fallback XP.
+                    if (!PlayerInventoryHelper.TryPickup(player, Type))
+                        player.AddExperience(10);
+                }
                 gm.RemoveGameObject(this);
             }
         }
