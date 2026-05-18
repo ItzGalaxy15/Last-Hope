@@ -29,6 +29,7 @@ public abstract class BasePlayer : GameObject
     protected Vector2 _moveInput;
     protected Vector2 _aimInput;
     public Vector2 AimInput => _aimInput;
+    protected Vector2 _lastMoveDirection;
 
     // Aim arrow parameters
     private const float AimArrowDistance = 70f;
@@ -233,7 +234,10 @@ public abstract class BasePlayer : GameObject
     {
 
     }
-    
+
+    public override bool IsYSorted => true;
+    public override float GetSortY() => GetPosition().Y + _bodyWidth;
+
     public Vector2 GetPosition()
     {
         return _position;
@@ -257,6 +261,13 @@ public abstract class BasePlayer : GameObject
             _aimInput = rawAim;
         else if (_moveInput != Vector2.Zero)
             _aimInput = _moveInput;
+
+        if (_moveInput != Vector2.Zero)
+        {
+            Vector2 normalized = _moveInput;
+            normalized.Normalize();
+            _lastMoveDirection = normalized;
+        }
     }
 
     public void Move(Vector2 direction, GameTime gameTime)

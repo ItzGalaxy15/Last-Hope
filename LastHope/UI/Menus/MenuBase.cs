@@ -663,6 +663,7 @@ public abstract class MenuBase
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, effect: effect, transformMatrix: transformMatrix);
         foreach (GameObject gameObject in _gameObjects)
         {
+            if (gameObject.IsYSorted) continue;
             gameObject.Draw(gameTime, spriteBatch);
         }
         spriteBatch.End();

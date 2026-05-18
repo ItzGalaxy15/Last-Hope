@@ -42,22 +42,30 @@ namespace Last_Hope.Engine.LevelGenerator
         /// 2 row by 3 column grid with a main street running between the two rows, then calls
         /// ApplyVillageWalkways to paint the stone paths connecting everything together.
         /// </summary>
+        // How far from the left edge the village sits, as a fraction of map width.
+        // 0.75 = 3/4 from the left, leaving the left quarter for the forest.
+        private const float VillageXFraction = 0.75f;
+
+        public Point VillageCenterTile { get; private set; }
+
         private void GenerateVillage()
         {
-            Vector2 playerPosition = new Vector2(
-                MapWidthInTiles * TileSize / 2f,
-                MapHeightInTiles * TileSize / 2f
-            );
             if (_villageSheet == null || _map == null)
                 return;
-
-            _villageBuildings.Clear();
 
             int mapW = _map.GetLength(0);
             int mapH = _map.GetLength(1);
 
+            Vector2 playerPosition = new Vector2(
+                mapW * TileSize * VillageXFraction,
+                mapH * TileSize / 2f
+            );
+
+            _villageBuildings.Clear();
+
             int playerTileX = (int)(playerPosition.X / TileSize);
             int playerTileY = (int)(playerPosition.Y / TileSize);
+            VillageCenterTile = new Point(playerTileX, playerTileY);
 
             int houseW = HouseRenderTilesWide;
             int houseH = HouseRenderTilesTall;
@@ -238,7 +246,7 @@ namespace Last_Hope.Engine.LevelGenerator
         /// <summary>
         /// Returns the Y pixel offset and collision box height for a given house type. The Y offset
         /// pushes the box down past the roof graphic so the player can walk behind the top of the
-        /// building before hitting the actual wall — a simple way to fake depth without a Z axis.
+        /// building before hitting the actual wall, a simple way to fake depth without a Z axis.
         /// </summary>
         private (int offsetY, int heightPx) GetHouseCollisionData(int houseType)
         {

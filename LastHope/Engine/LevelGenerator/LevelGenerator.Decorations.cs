@@ -64,9 +64,13 @@ namespace Last_Hope.Engine.LevelGenerator
             {
                 for (int x = 0; x < width; x++)
                 {
-                    // Only place decorations on plain grass — flowers,
+                    // Only place decorations on plain grass. Flowers,
                     // stone walkways and anything else get skipped.
                     if (!grassSet.Contains(baseMap[x, y]))
+                        continue;
+
+                    // No decorations inside the forest, only trees there.
+                    if (_forestBounds.Width > 0 && _forestBounds.Contains(x, y))
                         continue;
 
                     // Enforce minimum spacing between decorations.
