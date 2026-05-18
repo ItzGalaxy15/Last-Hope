@@ -27,7 +27,6 @@ public sealed class SettingsMenu : MenuBase
     private GameInputBinding? _pendingNewBind;
     private OverrideConfirmLayout _overrideLayout;
 
-    private static Texture2D _keysTexture;
     private static Texture2D _lmbTexture;
 
     private SettingsChromeLayout _chrome;
@@ -214,7 +213,9 @@ public sealed class SettingsMenu : MenuBase
         if (layoutFont == null && gm.FontBitmap == null)
             return;
 
-        if (_keysTexture == null) _keysTexture = _content.Load<Texture2D>("menu/keys");
+        if (_lettersTexture == null) _lettersTexture = _content.Load<Texture2D>("menu/letters");
+        if (_numbersTexture == null) _numbersTexture = _content.Load<Texture2D>("menu/numbers");
+        if (_specialTexture == null) _specialTexture = _content.Load<Texture2D>("menu/special");
         if (_lmbTexture == null) _lmbTexture = _content.Load<Texture2D>("menu/LeftMouseClick");
 
         Viewport vp = Game.GraphicsDevice.Viewport;
@@ -555,12 +556,18 @@ public sealed class SettingsMenu : MenuBase
         {
             case BindingKind.Keyboard:
             {
-                int? row = KeySpriteRow(bind.Key);
-                if (row.HasValue)
+                var info = KeySpriteInfoForBindings(bind.Key);
+                if (info.HasValue)
                 {
-                    Rectangle src = new Rectangle(frame * KeyFrameSize, row.Value * KeyFrameSize, KeyFrameSize, KeyFrameSize);
+                    Texture2D tex = info.Value.sheet switch
+                    {
+                        KeySheet.Letters => _lettersTexture,
+                        KeySheet.Numbers => _numbersTexture,
+                        _ => _specialTexture,
+                    };
+                    Rectangle src = new Rectangle(frame * KeyFrameSize, info.Value.row * KeyFrameSize, KeyFrameSize, KeyFrameSize);
                     float sc = chip / KeyFrameSize;
-                    spriteBatch.Draw(_keysTexture, new Vector2(rect.X + 4f, rect.Y + 6f + yo), src, Color.White, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
+                    spriteBatch.Draw(tex, new Vector2(rect.X + 4f, rect.Y + 6f + yo), src, Color.White, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
                 }
                 else
                 {
@@ -669,18 +676,6 @@ public sealed class SettingsMenu : MenuBase
         _controlsMaxScroll = Math.Max(0f, Math.Max(yL, yR) + _controlsScrollY - content.Bottom);
     }
 
-    private static int? KeySpriteRow(Keys k) => k switch
-    {
-        Keys.W => 0,
-        Keys.A => 1,
-        Keys.S => 2,
-        Keys.D => 3,
-        Keys.T => 4,
-        Keys.D1 or Keys.NumPad1 => 5,
-        Keys.D2 or Keys.NumPad2 => 6,
-        Keys.LeftShift or Keys.RightShift => 7,
-        _ => null,
-    };
 
     private void DrawPlaceholderInRect(SpriteBatch spriteBatch, SpriteFont menuFont, Rectangle content, string message, float textScale)
     {
