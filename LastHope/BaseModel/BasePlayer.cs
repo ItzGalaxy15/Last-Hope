@@ -28,6 +28,7 @@ public abstract class BasePlayer : GameObject
     // Shared input state
     protected Vector2 _moveInput;
     protected Vector2 _aimInput;
+    public Vector2 AimInput => _aimInput;
 
     // Aim arrow parameters
     private const float AimArrowDistance = 70f;
