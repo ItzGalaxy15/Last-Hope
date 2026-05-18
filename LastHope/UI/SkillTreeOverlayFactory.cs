@@ -101,11 +101,11 @@ internal static class SkillTreeOverlayFactory
         SkillTreeState state = SkillTreeSaveManager.Load("Archer");
         BaseSkillTree tree = new BaseSkillTree(treeData, state);
 
-        // if (gm._player is Archer archer)
-        // {
-        //     tree.OnEffectApplied += archer.ApplyNodeEffect;
-        //     tree.OnTreeRespec += archer.RevertAllSkillStats;
-        // }
+        if (gm._player is Archer archer)
+        {
+            tree.OnEffectApplied += archer.ApplyNodeEffect;
+            tree.OnTreeRespec += archer.RevertAllSkillStats;
+        }
 
         var theme = new UIThemeData
         {

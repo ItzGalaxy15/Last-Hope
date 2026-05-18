@@ -19,11 +19,21 @@ public abstract class BasePlayer : GameObject
     protected const float HitboxFraction = 0.55f;
     public abstract float _bodyWidth { get; }
 
-    // Player stats
-    public float _maxHp { get; protected set; }
+    // Base Player stats
     public float _currentHp { get; protected set; }
+    public abstract float BaseMaxHp { get; }
+    public abstract int BaseDamage { get; }
+    public abstract float BaseCritChance { get; }
+    public abstract float BaseHaste { get; } // Attack cooldown
+    public abstract float BaseSpeed { get; }
     public BaseWeapon _Weapon { get; protected set; }
-    public float _Speed { get; protected set; }
+
+    // Current Player stats (after buffs/debuffs)
+    public abstract float CurrentMaxHp { get; protected set; }
+    public abstract int CurrentDamage { get; protected set; }
+    public abstract float CurrentCritChance { get; protected set; }
+    public abstract float CurrentHaste { get; protected set; }
+    public abstract float CurrentSpeed { get; protected set; }
 
     // Shared input state
     protected Vector2 _moveInput;
@@ -87,29 +97,28 @@ public abstract class BasePlayer : GameObject
     {
         get
         {
-            float HealthProgress = (_currentHp / _maxHp);
+            float HealthProgress = _currentHp / CurrentMaxHp;
             return MathHelper.Clamp(HealthProgress, 0f, 1f);
         }
     }
 
-    protected BasePlayer(Vector2 position, float maxHp, BaseWeapon weapon, float speed, int level, int experience, float dashDistance)
+    protected BasePlayer(Vector2 position, BaseWeapon weapon, int level, int experience, float dashDistance)
     {
         _position = position;
-        _maxHp = maxHp;
-        _currentHp = maxHp;
         _Weapon = weapon;
-        _Speed = speed;
         _Level = level;
         _Experience = experience;
         _DashDistance = dashDistance;
+        MakeStats();
+        _currentHp = CurrentMaxHp;
     }
 
     public void Heal(float amount)
     {
         _currentHp += amount;
-        if (_currentHp > _maxHp)
+        if (_currentHp > CurrentMaxHp)
         {
-            _currentHp = _maxHp;
+            _currentHp = CurrentMaxHp;
         }
     }
 
@@ -268,7 +277,7 @@ public abstract class BasePlayer : GameObject
         direction.Normalize();
 
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Vector2 velocity = direction * _Speed * dt;
+        Vector2 velocity = direction * CurrentSpeed * dt;
 
         // --- X movement ---
         Vector2 newPosX = new Vector2(_position.X + velocity.X, _position.Y);
@@ -320,7 +329,7 @@ public abstract class BasePlayer : GameObject
     protected void Revive()
     {
         ExtraLives--;
-        _currentHp = _maxHp; // Prevent death
+        _currentHp = CurrentMaxHp; // Prevent death
 
         _greenGlowTimer = 1.5f;
         _hurtCooldown = 1.5f; // Grant 1.5 seconds of invincibility to escape
@@ -383,4 +392,9 @@ public abstract class BasePlayer : GameObject
     public abstract void Damage(float amount);
 
     protected abstract void ApplyTeleportPosition(Vector2 newPosition);
+
+    protected virtual void MakeStats()
+    {
+        
+    }
 }

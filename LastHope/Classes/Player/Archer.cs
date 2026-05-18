@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework.Audio;
 using Last_Hope.Classes.Items;
 using Last_Hope.Helpers;
 using Last_Hope.Systems.ItemSystem;
+using Last_Hope.SkillTree;
 
 namespace Last_Hope;
 
@@ -31,7 +32,6 @@ public class Archer : BasePlayer
     private float _bowPixelSize => FrameSize * BowDrawScale;
     private float BowOffsetY => (_bodyWidth - _bowPixelSize) * 0.5f;
 
-    private const float AttackCooldown = 0.7f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = true;
@@ -47,14 +47,37 @@ public class Archer : BasePlayer
     private Vector2 _bowAimDirection;
     private const float ArrowSpeed = 600f;
 
+    //Base Warrior Stats
+    public override float BaseMaxHp { get; } = 80f;
+    public override int BaseDamage { get; } = 25;
+    public override float BaseCritChance { get; } = 0.1f;
+    public override float BaseHaste { get; } = 0.7f;// Attack cooldown
+    public override float BaseSpeed { get; } = 200f;
+
+    //Current Warrior Stats
+    public override float CurrentMaxHp { get; protected set; }
+    public override int CurrentDamage { get; protected set; }
+    public override float CurrentCritChance { get; protected set; }
+    public override float CurrentHaste { get; protected set; }
+    public override float CurrentSpeed { get; protected set; }
+
     public Archer(Vector2 startPosition)
-        : base(position: startPosition, maxHp: 100f, weapon: new Bow("Bow", damage: 20, critChance: 1.0f, speed: 600f, owner: null), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(position: startPosition, weapon: new Bow("Bow", speed: ArrowSpeed, owner: null), level: 0, experience: 0, dashDistance: 140f)
     {
         _position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
         _collider = new RectangleCollider(new Rectangle(origin, Point.Zero));
         SetCollider(_collider);
         Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
+    }
+
+    protected override void MakeStats()
+    {
+        CurrentMaxHp = BaseMaxHp;
+        CurrentDamage = BaseDamage;
+        CurrentCritChance = BaseCritChance;
+        CurrentHaste = BaseHaste;
+        CurrentSpeed = BaseSpeed;
     }
 
     public override void Load(ContentManager content)
@@ -123,7 +146,7 @@ public class Archer : BasePlayer
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
             bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
                 || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
-            if (attackPressed && timeSinceLastAttack >= AttackCooldown && !_isDrawingBow)
+            if (attackPressed && timeSinceLastAttack >= CurrentHaste && !_isDrawingBow)
             {
                 StartBowDraw();
                 timeSinceLastAttack = 0;
@@ -194,7 +217,7 @@ public class Archer : BasePlayer
     private void FireArrow()
     {
         Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        _Weapon.Attack(_bowAimDirection, center);
+        _Weapon.Attack(_bowAimDirection, center, CurrentDamage, CurrentCritChance);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -250,6 +273,43 @@ public class Archer : BasePlayer
         _currentHp -= amount;
         TriggerHurtFlash();
         CheckDeath();
+    }
+
+    // --- SKILL TREE INTEGRATION ---
+    public void ApplyNodeEffect(NodeEffect effect)
+    {
+        switch (effect.EffectId)
+        {
+            case "damage":
+                CurrentDamage += (int)effect.ValuePerPoint;
+                break;
+            case "speed":
+                CurrentSpeed += effect.ValuePerPoint;
+                break;
+            case "haste":
+                CurrentHaste = Math.Max(0.1f, CurrentHaste - effect.ValuePerPoint);  
+                break;
+            case "crit_chance":
+                CurrentCritChance = Math.Min(CurrentCritChance + effect.ValuePerPoint, 1f);
+                break;
+        }
+        UpdateStats();
+    }
+
+    public void RevertAllSkillStats()
+    {
+        CurrentMaxHp = BaseMaxHp;
+        CurrentDamage = BaseDamage;
+        CurrentCritChance = BaseCritChance;
+        CurrentHaste = BaseHaste;
+        CurrentSpeed = BaseSpeed;
+
+        UpdateStats();
+    }
+
+    public void UpdateStats()
+    {
+        
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)
