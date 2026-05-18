@@ -83,6 +83,9 @@ public abstract class BaseEnemy : GameObject
         base.Draw(gameTime, spriteBatch);
     }
 
+    public override bool IsYSorted => true;
+    public override float GetSortY() => GetCollider()?.GetBoundingBox().Bottom ?? GetPosition().Y;
+
     // Sealed to enforce that ALL enemies use the central stun check below.
     public sealed override void Update(GameTime gameTime)
     {
@@ -94,7 +97,7 @@ public abstract class BaseEnemy : GameObject
             if (StunTimer < 0f) StunTimer = 0f;
             
             // 1 Clean Place: Centralized Stun Freeze. Skips all enemy logic while stunned.
-            return; 
+            return;
         }
         else if (!EnableStuns)
         {

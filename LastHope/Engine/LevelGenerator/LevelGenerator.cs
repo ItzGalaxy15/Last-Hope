@@ -124,21 +124,46 @@ namespace Last_Hope.Engine.LevelGenerator
                 }
             }
 
-            // WFC only places grass tiles — stone is reserved for walkways.
+            // WFC only places grass tiles, stone is reserved for walkways.
             List<int> grassTiles = GetTerrainTileIndicesForRows(0, 2);
             HashSet<int> grassSet = new HashSet<int>(grassTiles);
 
-            if (!TryGenerateWfc(_map, grassSet))
+            // Dark grass tiles (rows 6-7) fill the forest. Row 6 col 0-2 are blendable transition
+            // tiles restricted to the 1-tile-wide boundary strip where forest meets open grass.
+            int approxVillageCenter = (int)(widthInTiles * VillageXFraction);
+            int approxClusterHalf = (BuildingsPerRow * HouseRenderTilesWide + (BuildingsPerRow - 1) * BuildingGapTiles) / 2;
+            int approxForestRight = Math.Max(0, approxVillageCenter - approxClusterHalf - ForestBufferTiles);
+
+            // Blendable tiles: first 3 columns of row 6.
+            var blendableTiles = new HashSet<int>();
+            for (int col = 0; col < 3 && col < _terrainColumns; col++)
+                blendableTiles.Add(6 * _terrainColumns + col);
+            var blendableList = new List<int>(blendableTiles);
+
+            // Interior dark grass: all of rows 6-7 except the blendable tiles.
+            var interiorDarkSet = new HashSet<int>(GetTerrainTileIndicesForRows(6, 7));
+            foreach (int t in blendableTiles) interiorDarkSet.Remove(t);
+            var interiorDarkList = new List<int>(interiorDarkSet);
+
+            // Interior occupies the forest minus the rightmost column.
+            // Boundary is exactly the rightmost 1 tile column of the forest.
+            int interiorRight = Math.Max(0, approxForestRight - 1);
+            Rectangle wfcForestBounds   = new Rectangle(0, 0, interiorRight, heightInTiles);
+            Rectangle wfcBoundaryBounds = new Rectangle(interiorRight, 0, 1, heightInTiles);
+
+            if (!TryGenerateWfc(_map, grassSet, wfcForestBounds, interiorDarkSet, wfcBoundaryBounds, blendableTiles))
             {
-                FillRandomFallback(_map, grassTiles);
+                FillRandomFallback(_map, grassTiles, wfcForestBounds, interiorDarkList, wfcBoundaryBounds, blendableList);
             }
 
             _animatedDecorations.Clear();
+            _treePlacements.Clear();
             _villageBounds = Rectangle.Empty;
             if (_villageSheet != null)
             {
                 GenerateVillage();
             }
+            GenerateForest();
             ApplyFlowerField(_map);
             ApplyDecorations(_map, _overlayMap);
         }
