@@ -205,12 +205,11 @@ public class Warrior : BasePlayer
 
             if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
             {
-                Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
-                Vector2 towardMouse = mousePosition - _position;
-                if (towardMouse != Vector2.Zero)
+                Vector2 dashDirection = _moveInput != Vector2.Zero ? _moveInput : _lastMoveDirection;
+                if (dashDirection != Vector2.Zero)
                 {
-                    Dash(towardMouse, _DashDistance);
-                    SetWalkRowFromDirection(towardMouse);
+                    Dash(dashDirection, _DashDistance);
+                    SetWalkRowFromDirection(dashDirection);
                     _dashCooldown = DashCooldown;
                 }
             }
