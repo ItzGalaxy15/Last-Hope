@@ -17,7 +17,6 @@ public class ArrowStormAbility : BaseAbility
     private int _arrowsFired = 0;
     private bool _isFiring = false;
     private Vector2 _firingDirection;
-    private Archer _archer;
 
     public ArrowStormAbility() : base(15.0f) { }
 
@@ -71,6 +70,7 @@ public class ArrowStormAbility : BaseAbility
         Vector2 center = archer._position + new Vector2(archer._bodyWidth * 0.5f, archer._bodyWidth * 0.5f);
         var bow = (Bow)archer._Weapon;
 
+        // https://stackoverflow.com/questions/14607640/rotating-a-vector-in-3d-space resource used for vector rotation
         float angleOffset = (float)(GameManager.GetGameManager().RNG.NextDouble() * MathHelper.ToRadians(30) - MathHelper.ToRadians(15));
         float cos = (float)Math.Cos(angleOffset);
         float sin = (float)Math.Sin(angleOffset);
@@ -79,10 +79,7 @@ public class ArrowStormAbility : BaseAbility
             _firingDirection.X * sin + _firingDirection.Y * cos
         );
 
-        var arrow = new Arrow(center, spreadDirection, ArrowSpeed, archer,
-            archer.CurrentDamage, archer.CurrentCritChance,
-            bow.piercingArrows, bow.poisonArrows, bow.spreadPoison, bow.increasedPoisonDamage, bow.OnHitCallBack);
-
+        var arrow = new Arrow(center, spreadDirection, ArrowSpeed, archer, archer.CurrentDamage, archer.CurrentCritChance, bow.piercingArrows, bow.poisonArrows, bow.spreadPoison, bow.increasedPoisonDamage, bow.OnHitCallBack);
         GameManager.GetGameManager().AddGameObject(arrow);
     }
 }
