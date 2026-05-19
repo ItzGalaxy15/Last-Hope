@@ -43,10 +43,10 @@ public class ItemSlotsBar : UIElement
 
 		const int sideMargin = 48;
 		const int bottomMargin = 28;
-		const int slotSize = 48;
-		const int gap = 12;
-		const int panelPadding = 10;
-		const int itemInset = 8;
+		const int slotSize = 64;      // Enlarged from 48 for better visibility
+		const int gap = 16;           // Increased from 12 to match new scale
+		const int panelPadding = 12;  // Increased from 10 for better proportions
+		const int itemInset = 8;      // Kept at 8, which makes the inner icon rect 48x48 (64 - 2*8)
 
 		int totalSlotsWidth = (slotSize * 2) + gap;
 		int slotsX = viewport.Width - sideMargin - totalSlotsWidth;
@@ -146,7 +146,7 @@ public class ItemSlotsBar : UIElement
 			if (selectedItem != ItemType.None)
 			{
 				string label = GetItemLabel(selectedItem);
-				const float labelScale = 0.45f;
+				const float labelScale = 0.55f; // Increased from 0.45f for readability with larger slots
 				Vector2 labelSize = gm.MeasureUiString(gm._font, label, labelScale);
 
 				Rectangle selectedRect = _slotFrameRects[_selectedSlot];

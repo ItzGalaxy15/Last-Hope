@@ -19,8 +19,12 @@ public abstract class MenuBase
     private const int FrameSize = 32;
     private const int FrameCount = 3;
     private const double FrameDuration = 0.15;
-    private static Texture2D _lmbTexture;
-    private static Texture2D _keysTexture;
+    protected static Texture2D _lmbTexture;
+    protected static Texture2D _lettersTexture;
+    protected static Texture2D _numbersTexture;
+    protected static Texture2D _specialTexture;
+
+    protected enum KeySheet { Letters, Numbers, Special }
 
     /// <summary>Labels for the shared restart/quit pair on <see cref="GameOverMenu"/> and <see cref="WinnerMenu"/>.</summary>
     protected static class EndGameMenuLabels
@@ -348,7 +352,9 @@ public abstract class MenuBase
             return;
 
         if (_lmbTexture == null) _lmbTexture = _content.Load<Texture2D>("menu/LeftMouseClick");
-        if (_keysTexture == null) _keysTexture = _content.Load<Texture2D>("menu/keys");
+        if (_lettersTexture == null) _lettersTexture = _content.Load<Texture2D>("menu/letters");
+        if (_numbersTexture == null) _numbersTexture = _content.Load<Texture2D>("menu/numbers");
+        if (_specialTexture == null) _specialTexture = _content.Load<Texture2D>("menu/special");
 
         SpriteFont textFont = MenuUiFont;
         var (bodyFont, bodyMul) = BodyFontForMenuText(textFont);
@@ -400,11 +406,17 @@ public abstract class MenuBase
         {
             case BindingKind.Keyboard:
             {
-                int? row = KeySpriteRowForBindings(b.Key);
-                if (row.HasValue)
+                var info = KeySpriteInfoForBindings(b.Key);
+                if (info.HasValue)
                 {
-                    Rectangle src = new Rectangle(frame * FrameSize, row.Value * FrameSize, FrameSize, FrameSize);
-                    spriteBatch.Draw(_keysTexture, new Vector2(x, y + spriteYOffset), src, Color.White, 0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0f);
+                    Texture2D tex = info.Value.sheet switch
+                    {
+                        KeySheet.Letters => _lettersTexture,
+                        KeySheet.Numbers => _numbersTexture,
+                        _ => _specialTexture,
+                    };
+                    Rectangle src = new Rectangle(frame * FrameSize, info.Value.row * FrameSize, FrameSize, FrameSize);
+                    spriteBatch.Draw(tex, new Vector2(x, y + spriteYOffset), src, Color.White, 0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0f);
                 }
                 else
                 {
@@ -442,18 +454,37 @@ public abstract class MenuBase
         }
     }
 
-    private static int? KeySpriteRowForBindings(Keys k) => k switch
+    protected static (KeySheet sheet, int row)? KeySpriteInfoForBindings(Keys k)
     {
-        Keys.W => 0,
-        Keys.A => 1,
-        Keys.S => 2,
-        Keys.D => 3,
-        Keys.T => 4,
-        Keys.D1 or Keys.NumPad1 => 5,
-        Keys.D2 or Keys.NumPad2 => 6,
-        Keys.LeftShift or Keys.RightShift => 7,
-        _ => null,
-    };
+        if (k >= Keys.A && k <= Keys.Z)
+            return (KeySheet.Letters, k - Keys.A);
+
+        if (k >= Keys.D1 && k <= Keys.D9)
+            return (KeySheet.Numbers, k - Keys.D1);
+        if (k == Keys.D0)
+            return (KeySheet.Numbers, 9);
+        if (k >= Keys.NumPad1 && k <= Keys.NumPad9)
+            return (KeySheet.Numbers, k - Keys.NumPad1);
+        if (k == Keys.NumPad0)
+            return (KeySheet.Numbers, 9);
+
+        return k switch
+        {
+            Keys.Up                             => (KeySheet.Special, 0),
+            Keys.Down                           => (KeySheet.Special, 1),
+            Keys.Left                           => (KeySheet.Special, 2),
+            Keys.Right                          => (KeySheet.Special, 3),
+            Keys.OemPeriod                      => (KeySheet.Special, 4),
+            Keys.OemComma                       => (KeySheet.Special, 5),
+            Keys.LeftShift or Keys.RightShift   => (KeySheet.Special, 6),
+            Keys.Space                          => (KeySheet.Special, 7),
+            Keys.LeftAlt or Keys.RightAlt       => (KeySheet.Special, 8),
+            Keys.Tab                            => (KeySheet.Special, 9),
+            Keys.Enter                          => (KeySheet.Special, 10),
+            Keys.Back                           => (KeySheet.Special, 11),
+            _                                   => null,
+        };
+    }
 
     /// <summary>
     /// Item reference list (icons + descriptions). Used by <see cref="PausedMenu.Draw"/> and <see cref="ItemsIndexMenu.Draw"/>.
@@ -632,6 +663,7 @@ public abstract class MenuBase
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, effect: effect, transformMatrix: transformMatrix);
         foreach (GameObject gameObject in _gameObjects)
         {
+            if (gameObject.IsYSorted) continue;
             gameObject.Draw(gameTime, spriteBatch);
         }
         spriteBatch.End();

@@ -125,10 +125,16 @@ public abstract class GameObject
     /// </remarks>
     /// <param name="gameTime"> The amount of time that has elapsed since the last draw call. </param>
     /// <param name="spriteBatch"> The MonoGame SpriteBatch used to render 2D textures. </param>
-    public virtual void Draw(GameTime gameTime, SpriteBatch spriteBatch) 
+    public virtual void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
 
     }
+
+    // Override to true on entities (player, enemies) that should be Y-sorted with forest trees.
+    public virtual bool IsYSorted => false;
+
+    // Returns the world-space Y used as the depth anchor for Y-sorting.
+    public virtual float GetSortY() => 0f;
 
     /// <summary>
     /// Lifecycle hook called just before the GameObject is permanently removed from the engine simulation.

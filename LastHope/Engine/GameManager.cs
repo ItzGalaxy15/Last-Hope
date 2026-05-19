@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using Last_Hope;
 using Last_Hope.BaseModel;
@@ -77,6 +78,10 @@ public class GameManager
     /// Tile grid for enemy pathfinding; set after level generation. Mark cells non-walkable when adding blocking collision.
     /// </summary>
     public NavigationGrid NavigationGrid { get; set; }
+    public Point PlayerSpawnSearchCenter { get; set; } = new Point(-1, -1);
+
+    public IEnumerable<GameObject> GetYSortedObjects() =>
+        _gameObjects.Where(g => g.IsYSorted);
 
     public Effect DeathFade { get; private set; }
     public Effect? CooldownIcon { get; private set; }
@@ -511,8 +516,8 @@ public class GameManager
         float mapH = NavigationGrid.HeightInTiles * ts;
         float body = SpawnBodyWidthPx;
 
-        int cx = NavigationGrid.WidthInTiles / 2;
-        int cy = NavigationGrid.HeightInTiles / 2;
+        int cx = PlayerSpawnSearchCenter.X >= 0 ? PlayerSpawnSearchCenter.X : NavigationGrid.WidthInTiles / 2;
+        int cy = PlayerSpawnSearchCenter.Y >= 0 ? PlayerSpawnSearchCenter.Y : NavigationGrid.HeightInTiles / 2;
         int maxD = Math.Max(NavigationGrid.WidthInTiles, NavigationGrid.HeightInTiles);
 
         for (int d = 0; d <= maxD; d++)
