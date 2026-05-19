@@ -86,9 +86,9 @@ public class Boss : BaseEnemy
 
         _texture = content.Load<Texture2D>("demon");
 
-        _walkAnimation = CreateWalkAnimation(_isFacingLeft);
-        _chargeAnimation = CreateChargeAnimation(_isFacingLeft);
-        _launchAnimation = CreateLaunchAnimation(_isFacingLeft);
+        ResetWalkAnimation(_isFacingLeft);
+        ResetChargeAnimation(_isFacingLeft);
+        ResetLaunchAnimation(_isFacingLeft);
 
         _collider.shape.Size = new Point((int)(FrameSize * SpriteScale), (int)(FrameSize * SpriteScale));
         _precisePosition = _collider.shape.Location.ToVector2();
@@ -126,7 +126,7 @@ public class Boss : BaseEnemy
         if (_isFacingLeft != _lastFacingLeft && !_isCharging && !_isLaunching)
         {
             _lastFacingLeft = _isFacingLeft;
-            _walkAnimation = CreateWalkAnimation(_isFacingLeft);
+            ResetWalkAnimation(_isFacingLeft);
         }
 
         if (_isLaunching)
@@ -136,7 +136,7 @@ public class Boss : BaseEnemy
             {
                 _isLaunching = false;
                 _attackCooldownTimer = CurrentHaste;
-                _walkAnimation = CreateWalkAnimation(_isFacingLeft);
+                ResetWalkAnimation(_isFacingLeft);
                 _lastFacingLeft = _isFacingLeft;
             }
         }
@@ -147,7 +147,7 @@ public class Boss : BaseEnemy
             {
                 _isCharging = false;
                 _isLaunching = true;
-                _launchAnimation = CreateLaunchAnimation(_attackFacingLeft);
+                ResetLaunchAnimation(_attackFacingLeft);
 
                 Vector2 dir = toTarget;
                 if (dir != Vector2.Zero) dir.Normalize();
@@ -160,7 +160,7 @@ public class Boss : BaseEnemy
             {
                 _isCharging = true;
                 _attackFacingLeft = _isFacingLeft;
-                _chargeAnimation = CreateChargeAnimation(_attackFacingLeft);
+                ResetChargeAnimation(_attackFacingLeft);
             }
             else
             {
@@ -253,37 +253,27 @@ public class Boss : BaseEnemy
     /// </summary>
     /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
     /// <returns>An AnimationManager for the walking state.</returns>
-    private AnimationManager CreateWalkAnimation(bool facingLeft) => new AnimationManager(
-        WalkFrameCount, SheetColumns,
-        new Vector2(FrameSize, FrameSize),
-        10, true,
-        (facingLeft ? LeftWalkStart : RightWalkStart) * FrameSize,
-        (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
-    );
+    private void ResetWalkAnimation(bool facingLeft) =>
+        _walkAnimation = new AnimationManager(
+            WalkFrameCount, SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10, true,
+            (facingLeft ? LeftWalkStart : RightWalkStart) * FrameSize,
+            (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize);
 
-    /// <summary>
-    /// Creates and configures the charging/wind-up animation for the boss attack.
-    /// </summary>
-    /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
-    /// <returns>An AnimationManager for the charging state.</returns>
-    private AnimationManager CreateChargeAnimation(bool facingLeft) => new AnimationManager(
-        ChargeFrameCount, SheetColumns,
-        new Vector2(FrameSize, FrameSize),
-        6, false,
-        (facingLeft ? LeftChargeStart : RightChargeStart) * FrameSize,
-        (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
-    );
+    private void ResetChargeAnimation(bool facingLeft) =>
+        _chargeAnimation = new AnimationManager(
+            ChargeFrameCount, SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            6, false,
+            (facingLeft ? LeftChargeStart : RightChargeStart) * FrameSize,
+            (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize);
 
-    /// <summary>
-    /// Creates and configures the attack launch animation for the boss.
-    /// </summary>
-    /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
-    /// <returns>An AnimationManager for the attack launch state.</returns>
-    private AnimationManager CreateLaunchAnimation(bool facingLeft) => new AnimationManager(
-        LaunchFrameCount, SheetColumns,
-        new Vector2(FrameSize, FrameSize),
-        20, false,
-        (facingLeft ? LeftLaunch : RightLaunch) * FrameSize,
-        (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
-    );
+    private void ResetLaunchAnimation(bool facingLeft) =>
+        _launchAnimation = new AnimationManager(
+            LaunchFrameCount, SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            20, false,
+            (facingLeft ? LeftLaunch : RightLaunch) * FrameSize,
+            (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize);
 }

@@ -84,7 +84,10 @@ public class GiantArrow : GameObject
             _alreadyHit.Add(other);
             enemy.Damage(_damage);
             if (enemy._currentHp <= 0)
+            {
                 GameManager.GetGameManager().RemoveGameObject(enemy);
+                GameManager.GetGameManager()._player?.AddExperience(enemy.ExperienceValue);
+            }
         }
     }
 }

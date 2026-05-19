@@ -29,6 +29,7 @@ namespace Last_Hope.Engine.LevelGenerator
         private Texture2D[]? _treeTextures;
         private readonly List<TreePlacement> _treePlacements = new();
         private Rectangle _forestBounds;
+        public Rectangle ForestBoundsInTiles => _forestBounds;
 
         public void LoadForestSprites(Texture2D[] trees)
         {

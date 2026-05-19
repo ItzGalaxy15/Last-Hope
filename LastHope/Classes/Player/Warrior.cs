@@ -456,11 +456,10 @@ public class Warrior : BasePlayer
         HasDeepWounds = false;
         HasBulwark = false;
 
-        CurrentMaxHp = BaseMaxHp;
-        CurrentDamage = BaseDamage;
-        CurrentCritChance = BaseCritChance;
-        CurrentHaste = BaseHaste;
-        CurrentSpeed = BaseSpeed;
+        CurrentMaxHp = BaseMaxHp + _levelHpBonus;
+        CurrentCritChance = BaseCritChance + _levelCritBonus;
+        CurrentSpeed = BaseSpeed + _levelSpeedBonus;
+        // Damage and Haste restored via UpdateStats below
 
         UpdateStats();
     }
@@ -468,12 +467,12 @@ public class Warrior : BasePlayer
     public void UpdateStats()
     {
         // Damage Calculations
-        CurrentDamage = BaseDamage + DmgLevel * 5;
+        CurrentDamage = (int)(BaseDamage + _levelDamageBonus) + DmgLevel * 5;
         if (IsSwordActive)
         {
             CurrentDamage = (int)(CurrentDamage * 0.8f);
-        } 
-        else if (IsAxeActive) 
+        }
+        else if (IsAxeActive)
         {
             CurrentDamage = (int)(CurrentDamage * 1.5f);
         }
@@ -482,25 +481,21 @@ public class Warrior : BasePlayer
             CurrentDamage = (int)(CurrentDamage * 1.5f); // 50% damage boost from bloodlust buff
         }
 
-        // Haste Calculations
-        if (IsAxeActive) 
-        {
-            CurrentHaste = 1.2f;
-        }
-        else if (IsSwordActive)
-        {
-            CurrentHaste = 0.5f;
-        } 
-        else
-        {
-            CurrentHaste = BaseHaste;
-        }
-        CurrentHaste -= HasteLevel * 0.1f;
+        // Haste Calculations (lower = faster attacks; level bonus reduces cooldown)
+        float baseHasteForStance = IsAxeActive ? 1.2f : IsSwordActive ? 0.5f : BaseHaste;
+        CurrentHaste = baseHasteForStance - _levelHasteBonus - HasteLevel * 0.1f;
         if (_speedBuffTimer > 0f)
-        {
-            CurrentHaste *= 0.5f; // Double attack speed from flowing strikes buff
-        }  
-        CurrentHaste = Math.Max(0.1f, CurrentHaste); // Cap haste to avoid zero or negative values
+            CurrentHaste *= 0.5f;
+        CurrentHaste = Math.Max(0.1f, CurrentHaste);
+    }
+
+    protected override void OnLevelUp()
+    {
+        base.OnLevelUp();
+        CurrentMaxHp += LevelStatBonus;
+        CurrentCritChance = Math.Min(1f, CurrentCritChance + LevelStatBonus);
+        CurrentSpeed += LevelStatBonus;
+        UpdateStats(); // picks up _levelDamageBonus and _levelHasteBonus
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

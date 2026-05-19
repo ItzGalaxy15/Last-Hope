@@ -108,6 +108,7 @@ namespace Last_Hope.Classes.Weapon
                         _onHitEnemy?.Invoke(enemy);
                         if (enemy._currentHp <= 0)
                         {
+                            GameManager.GetGameManager()._player?.AddExperience(enemy.ExperienceValue);
                             GameManager.GetGameManager().RemoveGameObject(enemy);
                         }
                         if (hasPoisonArrows)
