@@ -294,7 +294,7 @@ public class Warrior : BasePlayer
         }
 
         Vector2 slashOrigin = castAnchor + direction * SlashDistance;
-        _Weapon.Attack(direction, slashOrigin, BaseDamage, BaseCritChance);
+        _Weapon.Attack(direction, slashOrigin, CurrentDamage, CurrentCritChance);
 
         // --- ON ATTACK PROCS ---
         GameManager gm = GameManager.GetGameManager();
