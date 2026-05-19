@@ -149,7 +149,10 @@ public class EnemySpawner
             spawnTimer = 0f;
 
             Point spawnPosition = GetValidSpawnPoint();
-            if (gm.RNG.NextDouble() < 0.5)
+            double roll = gm.RNG.NextDouble();
+            if (roll < 0.33)
+                gm.AddGameObject(new Wolf(spawnPosition));
+            else if (roll < 0.66)
                 gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
             else
                 gm.AddGameObject(new Orc(spawnPosition));

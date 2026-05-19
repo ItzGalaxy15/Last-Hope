@@ -45,6 +45,11 @@ public class Warrior : BasePlayer
     private float _dmgBuffTimer = 0f;
     private float _defBuffTimer = 0f;
 
+    // --- BLEEDING (applied by Wolf lunge) ---
+    private float _bleedTimer = 0f;
+    private float _bleedDps = 0f;
+    private float _bleedTickTimer = 0f;
+
     // --- STATE & PHYSICS ---
     private bool _facingLeft;
     private RectangleCollider _collider;
@@ -148,6 +153,25 @@ public class Warrior : BasePlayer
         }
 
         if (buffsChanged) UpdateStats();
+
+        // Bleeding tick — bypasses dodge/block, guaranteed DoT from Wolf lunge
+        if (_bleedTimer > 0f)
+        {
+            _bleedTimer -= dt;
+            _bleedTickTimer -= dt;
+            if (_bleedTickTimer <= 0f)
+            {
+                _bleedTickTimer = 1f;
+                _currentHp -= _bleedDps;
+                TriggerHurtFlash();
+                CheckDeath();
+            }
+            if (_bleedTimer <= 0f)
+            {
+                _bleedTimer = 0f;
+                _bleedTickTimer = 0f;
+            }
+        }
 
         bool moving = _moveInput != Vector2.Zero;
         if (moving)
@@ -341,6 +365,14 @@ public class Warrior : BasePlayer
         return _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
     }
 
+    public void ApplyBleeding(float dps, float duration)
+    {
+        _bleedDps = dps;
+        // Refresh duration if a longer bleed would still be running
+        if (duration > _bleedTimer) _bleedTimer = duration;
+        _bleedTickTimer = 1f; // First tick 1 second after application
+    }
+
     public void ResetAttackTimer()
     {
         _timeSinceLastAttack = 0;
@@ -475,9 +507,9 @@ public class Warrior : BasePlayer
         
         Color drawColor = DrawTint;
         if (_greenGlowTimer > 0f)
-        {
             drawColor = Color.Lerp(drawColor, Color.LimeGreen, 0.5f);
-        }
+        else if (_bleedTimer > 0f)
+            drawColor = Color.Lerp(drawColor, Color.Red, 0.25f);
         
         Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         Vector2 weaponOrigin = new Vector2(FrameSize * 0.5f, FrameSize * 0.5f);
