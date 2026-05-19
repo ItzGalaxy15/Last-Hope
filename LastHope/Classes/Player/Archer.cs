@@ -11,6 +11,7 @@ using Last_Hope.Classes.Items;
 using Last_Hope.Helpers;
 using Last_Hope.Systems.ItemSystem;
 using Last_Hope.SkillTree;
+using Last_Hope.Classes.Abilities;
 
 namespace Last_Hope;
 
@@ -47,14 +48,16 @@ public class Archer : BasePlayer
     private Vector2 _bowAimDirection;
     private const float ArrowSpeed = 600f;
 
-    //Base Warrior Stats
+    public BaseAbility ActiveAbility { get; set; }
+
+    //Base Archer Stats
     public override float BaseMaxHp { get; } = 80f;
     public override int BaseDamage { get; } = 25;
     public override float BaseCritChance { get; } = 0.1f;
     public override float BaseHaste { get; } = 0.9f;// Attack cooldown
     public override float BaseSpeed { get; } = 200f;
 
-    //Current Warrior Stats
+    //Current Archer Stats
     public override float CurrentMaxHp { get; protected set; }
     public override int CurrentDamage { get; protected set; }
     public override float CurrentCritChance { get; protected set; }
@@ -74,6 +77,7 @@ public class Archer : BasePlayer
     private const float AttackSpeedBoostDuration = 5f;
     private const float CritGuaranteeDuration = 2f;
     private const float AttackSpeedBoostAmount = 0.3f;
+    
 
     public Archer(Vector2 startPosition)
         : base(position: startPosition, weapon: new Bow("Bow", speed: ArrowSpeed, owner: null), level: 0, experience: 0, dashDistance: 140f)
@@ -155,6 +159,17 @@ public class Archer : BasePlayer
                 _isDrawingBow = false;
                 _bowDrawTimer = 0f;
                 FireArrow();
+            }
+        }
+
+        // --- MAJOR ACTIVE ABILITIES LOGIC ---
+        ActiveAbility?.Update(this, gameTime);
+
+        if (_inputManager is not null && ActiveAbility != null && ActiveAbility.CanExecute())
+        {
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
+            {
+                ActiveAbility.Execute(this);
             }
         }
 
@@ -329,6 +344,9 @@ public class Archer : BasePlayer
             case "unlock_rapid_fire":
                 hasRapidFire = true;
                 ((Bow)_Weapon).OnHitCallBack = OnArrowHit;
+                break;
+            case "unlock_giant_arrow":
+                ActiveAbility = new GiantArrowAbility();
                 break;
         }
         UpdateStats();

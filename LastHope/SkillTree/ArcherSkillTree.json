@@ -129,10 +129,10 @@
     },
 
     {
-      "Id": "arrow_storm_l4", "Name": "Arrow Storm", "Description": "Active: Unleashes a volley of arrows that blankets a wide area in rapid-fire damage.",
-      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_arrow_storm",
-      "Tags": ["Active", "AoE"], "Dependencies": [],
-      "Effects": [{ "EffectId": "unlock_arrow_storm", "ValuePerPoint": 1.0 }], "GridX": -2, "GridY": 4
+      "Id": "giant_arrow_l4", "Name": "Giant Arrow", "Description": "Shoot a massive arrow that deals massive damage.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_giant_arrow",
+      "Tags": ["Active"], "Dependencies": [],
+      "Effects": [{ "EffectId": "unlock_giant_arrow", "ValuePerPoint": 1.0 }], "GridX": -2, "GridY": 4
     },
     {
       "Id": "snipe_l4", "Name": "Snipe", "Description": "Active: Charge and release a single devastating shot dealing massive single-target damage.",
@@ -154,7 +154,7 @@
     { "FromNodeId": "Piercing_stance_l1", "ToNodeId": "crit_guarantee_l2" },
     { "FromNodeId": "attack_speed_keystone_l2", "ToNodeId": "archer_haste_l3" },
     { "FromNodeId": "crit_guarantee_l2", "ToNodeId": "archer_haste_l3" },
-    { "FromNodeId": "archer_haste_l3", "ToNodeId": "arrow_storm_l4" },
+    { "FromNodeId": "archer_haste_l3", "ToNodeId": "giant_arrow_l4" },
 
     { "FromNodeId": "archer_spd_l0", "ToNodeId": "archer_hp_l1" },
     { "FromNodeId": "archer_spd_l0", "ToNodeId": "poison_arrow_stance_l1" },
