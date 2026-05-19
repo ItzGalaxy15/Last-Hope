@@ -50,7 +50,7 @@
       "Id": "archer_hp_l1", "Name": "Armor Upgrade", "Description": "Increases HitPoints.",
       "MaxPoints": 1, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_armor_upgrade",
       "Tags": ["Health"], "Dependencies": ["archer_spd_l0"],
-      "Effects": [{ "EffectId": "hp", "ValuePerPoint": 10.0 }], "GridX": -0.5, "GridY": 1
+      "Effects": [{ "EffectId": "hp", "ValuePerPoint": 20.0 }], "GridX": -0.5, "GridY": 1
     },
     {
       "Id": "poison_arrow_stance_l1", "Name": "Poison Arrows", "Description": "Equips arrows with poison tips. Deals damage over time to enemies.",
@@ -85,16 +85,16 @@
       "Effects": [{ "EffectId": "unlock_crit_guarantee", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 2
     },
     {
-      "Id": "on_hit_poison_l2", "Name": "Venomous Tips", "Description": "Your attacks have a chance to apply a stacking poison that deals damage over time.",
-      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_dmg",
-      "Tags": ["Proc"], "Dependencies": ["archer_hp_l1"],
-      "Effects": [{ "EffectId": "proc_venomous_tips", "ValuePerPoint": 1.0 }], "GridX": -0.5, "GridY": 2
+      "Id": "spread_poison_l2", "Name": "Infectious Poison", "Description": "Enemies spread poison to nearby enemies.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_Infectious_poison",
+      "Tags": ["Proc"], "Dependencies": ["archer_hp_l1", "poison_arrow_stance_l1"],
+      "Effects": [{ "EffectId": "unlock_poison_spread", "ValuePerPoint": 1.0 }], "GridX": -0.5, "GridY": 2
     },
     {
-      "Id": "deadeye_l2", "Name": "Deadeye", "Description": "10% chance on attack to deal a massive guaranteed Critical Strike.",
+      "Id": "poison_touch_l2", "Name": "Poison Touch", "Description": "Enemies that touch you become poisoned.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_dmg",
       "Tags": ["Proc"], "Dependencies": ["poison_arrow_stance_l1"],
-      "Effects": [{ "EffectId": "proc_deadeye", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 2
+      "Effects": [{ "EffectId": "unlock_poison_touch", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 2
     },
     {
       "Id": "fortify_l2", "Name": "Fortify", "Description": "100% chance on hit taken to briefly increase your own damage reduction.",
@@ -116,10 +116,10 @@
       "Effects": [{ "EffectId": "haste", "ValuePerPoint": 0.2 }], "GridX": -2, "GridY": 3
     },
     {
-      "Id": "archer_dmg_l3", "Name": "Deadly Aim", "Description": "Further increases Ranged Damage.",
+      "Id": "increased_poison_damage_l3", "Name": "Deadlier Poison", "Description": "Doubles the damage of your poison.",
       "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_keen_eye",
       "Tags": ["Damage"], "Dependencies": [],
-      "Effects": [{ "EffectId": "base_damage", "ValuePerPoint": 5.0 }], "GridX": 0, "GridY": 3
+      "Effects": [{ "EffectId": "poison_damage", "ValuePerPoint": 5.0 }], "GridX": 0, "GridY": 3
     },
     {
       "Id": "archer_hp_l3", "Name": "Iron Will", "Description": "Further increases Maximum HP.",
@@ -135,10 +135,10 @@
       "Effects": [{ "EffectId": "unlock_giant_arrow", "ValuePerPoint": 1.0 }], "GridX": -2, "GridY": 4
     },
     {
-      "Id": "snipe_l4", "Name": "Snipe", "Description": "Active: Charge and release a single devastating shot dealing massive single-target damage.",
-      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_snipe",
+      "Id": "arrow_storm_l4", "Name": "Arrow Storm", "Description": "Fires a barrage of arrows.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_arrow_storm",
       "Tags": ["Active", "Burst"], "Dependencies": [],
-      "Effects": [{ "EffectId": "unlock_snipe", "ValuePerPoint": 1.0 }], "GridX": 0, "GridY": 4
+      "Effects": [{ "EffectId": "unlock_arrow_storm", "ValuePerPoint": 1.0 }], "GridX": 0, "GridY": 4
     },
     {
       "Id": "concussive_shot_l4", "Name": "Concussive Shot", "Description": "Active: Fires a blunt-tipped bolt that deals moderate damage and applies a Stun effect.",
@@ -158,11 +158,11 @@
 
     { "FromNodeId": "archer_spd_l0", "ToNodeId": "archer_hp_l1" },
     { "FromNodeId": "archer_spd_l0", "ToNodeId": "poison_arrow_stance_l1" },
-    { "FromNodeId": "archer_hp_l1", "ToNodeId": "on_hit_poison_l2" },
-    { "FromNodeId": "poison_arrow_stance_l1", "ToNodeId": "deadeye_l2" },
-    { "FromNodeId": "on_hit_poison_l2", "ToNodeId": "archer_dmg_l3" },
-    { "FromNodeId": "deadeye_l2", "ToNodeId": "archer_dmg_l3" },
-    { "FromNodeId": "archer_dmg_l3", "ToNodeId": "snipe_l4" },
+    { "FromNodeId": "poison_arrow_stance_l1", "ToNodeId": "spread_poison_l2" },
+    { "FromNodeId": "poison_arrow_stance_l1", "ToNodeId": "poison_touch_l2" },
+    { "FromNodeId": "spread_poison_l2", "ToNodeId": "increased_poison_damage_l3" },
+    { "FromNodeId": "poison_touch_l2", "ToNodeId": "increased_poison_damage_l3" },
+    { "FromNodeId": "increased_poison_damage_l3", "ToNodeId": "arrow_storm_l4" },
 
     { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_radius_l1" },
     { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_arrow_stance_l1" },
