@@ -9,7 +9,7 @@ namespace Last_Hope.Engine;
 /// Manages the procedural generation of enemy waves, spawning logic, and wave progression.
 /// </summary>
 /// <remarks>
-/// Based on standard wave-based survival game mechanics. Utilizes an exponential scaling curve for enemy counts 
+/// Based on standard wave based survival game mechanics. Utilizes an exponential scaling curve for enemy counts 
 /// and incorporates safe spawn placement by checking against the game's static collision geometry.
 /// </remarks>
 public class EnemySpawner
@@ -50,7 +50,7 @@ public class EnemySpawner
     public bool BossSpawned => bossSpawned;
 
     /// <summary>
-    /// Calculates the total number of enemies remaining in the current wave, including both alive and yet-to-spawn enemies.
+    /// Calculates the total number of enemies remaining in the current wave, including both alive and yet to spawn enemies.
     /// </summary>
     /// <returns>The number of remaining enemies.</returns>
     public int GetEnemiesLeftCount()
@@ -85,7 +85,7 @@ public class EnemySpawner
     /// </summary>
     /// <param name="gameTime">The current game time, used for timer progression.</param>
     /// <remarks>
-    /// Operates conceptually as a finite state machine (FSM), transitioning between active spawning, waiting for wave clearance, and inter-wave pauses.
+    /// Operates conceptually as a finite state machine (FSM), transitioning between active spawning, waiting for wave clearance, and inter wave pauses.
     /// </remarks>
     public void Update(GameTime gameTime)
     {
@@ -159,7 +159,7 @@ public class EnemySpawner
     }
 
     /// <summary>
-    /// Attempts to find a safe, off-screen location to spawn an enemy that does not overlap with static map geometry.
+    /// Attempts to find a safe, off screen location to spawn an enemy that does not overlap with static map geometry.
     /// </summary>
     /// <param name="radius">The distance from the player to search for a spawn point.</param>
     /// <returns>A valid world coordinate for spawning, or a fallback location if no valid spot is found within the allowed attempts.</returns>
@@ -201,10 +201,16 @@ public class EnemySpawner
 
         float angle = (float)(gm.RNG.NextDouble() * Math.PI * 2);
 
-        return playerPos + new Vector2(
+        Vector2 pos = playerPos + new Vector2(
             (float)Math.Cos(angle),
             (float)Math.Sin(angle)
         ) * distance;
+
+        // Keep enemies in the village zone never spawn in the locked forest
+        if (gm.ForestBoundaryX > 0f)
+            pos.X = Math.Max(pos.X, gm.ForestBoundaryX);
+
+        return pos;
     }
 
     /// <summary>
@@ -245,8 +251,9 @@ public class EnemySpawner
             (float)Math.Sin(angle) * distance
         );
 
-        // Keep enemies inside world boundaries
-        spawnPos.X = MathHelper.Clamp(spawnPos.X, 0, GameManager.WorldWidth);
+        // Keep enemies inside world boundaries and in the village zone
+        float minX = MathHelper.Max(0, gm.ForestBoundaryX);
+        spawnPos.X = MathHelper.Clamp(spawnPos.X, minX, GameManager.WorldWidth);
         spawnPos.Y = MathHelper.Clamp(spawnPos.Y, 0, GameManager.WorldHeight);
 
         return spawnPos;

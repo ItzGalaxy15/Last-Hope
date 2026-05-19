@@ -30,7 +30,8 @@ public class Hud
 			new HealthBar(player, pixel),
 			new ItemSlotsBar(pixel, itemSpriteSheet),
 			new WaveIndicator(),
-			_bossWarningIndicator
+			_bossWarningIndicator,
+			new ToastNotification(pixel)
 		};
 
 		if (cooldownShader != null)

@@ -82,6 +82,22 @@ public abstract class BasePlayer : GameObject
     public int Level => _Level;
     public float LevelUpFlashProgress => MathHelper.Clamp(_levelUpFlashTimer / LevelUpFlashDuration, 0f, 1f);
 
+    // Accumulated stat bonuses from leveling (never reset)
+    protected float _levelHpBonus;
+    protected float _levelDamageBonus;
+    protected float _levelCritBonus;
+    protected float _levelHasteBonus;
+    protected float _levelSpeedBonus;
+    public float LevelHpBonus     => _levelHpBonus;
+    public float LevelDamageBonus => _levelDamageBonus;
+    public float LevelCritBonus   => _levelCritBonus;
+    public float LevelHasteBonus  => _levelHasteBonus;
+    public float LevelSpeedBonus  => _levelSpeedBonus;
+    protected const float LevelStatBonus = 0.01f;
+    private const int TalentPointInterval = 5;
+
+    public event Action OnTalentPointEarned;
+
     // UI bar properties
     public float DashCooldownProgress => MathHelper.Clamp(_dashCooldown / DashCooldown, 0f, 1f);
     public float TeleportCooldownProgress => MathHelper.Clamp(_teleportCooldown / TeleportCooldownDuration, 0f, 1f);
@@ -155,9 +171,9 @@ public abstract class BasePlayer : GameObject
     private void CheckLevelUp()
     {
         int newLevel = (int)(_Experience / XpPerLevel);
-        if (newLevel > _Level)
+        while (_Level < newLevel)
         {
-            _Level = newLevel;
+            _Level++;
             OnLevelUp();
         }
     }
@@ -165,7 +181,13 @@ public abstract class BasePlayer : GameObject
     protected virtual void OnLevelUp()
     {
         _levelUpFlashTimer = LevelUpFlashDuration;
-        // Override in subclasses to handle level up effects
+        _levelHpBonus     += LevelStatBonus;
+        _levelDamageBonus += LevelStatBonus;
+        _levelCritBonus   += LevelStatBonus;
+        _levelHasteBonus  += LevelStatBonus;
+        _levelSpeedBonus  += LevelStatBonus;
+        if (_Level % TalentPointInterval == 0)
+            OnTalentPointEarned?.Invoke();
     }
 
     protected void Dash(Vector2 direction, float distance)
@@ -306,6 +328,10 @@ public abstract class BasePlayer : GameObject
         }
 
         _position = MovementHelper.ClampToMapBounds(_position, _bodyWidth);
+
+        var gm = GameManager.GetGameManager();
+        if (gm.IsForestLocked && _position.X < gm.ForestBoundaryX)
+            _position = new Vector2(gm.ForestBoundaryX, _position.Y);
     }
 
     protected bool IsPositionSafe(Vector2 position)

@@ -351,13 +351,26 @@ public class Archer : BasePlayer
         UpdateStats();
     }
 
+    protected override void OnLevelUp()
+    {
+        float prevDamageBonus = _levelDamageBonus;
+        base.OnLevelUp();
+        CurrentMaxHp += LevelStatBonus;
+        // Damage is int; apply only when the float crosses the next integer
+        int dmgIncrease = (int)_levelDamageBonus - (int)prevDamageBonus;
+        if (dmgIncrease > 0) CurrentDamage += dmgIncrease;
+        CurrentCritChance = Math.Min(1f, CurrentCritChance + LevelStatBonus);
+        CurrentHaste = Math.Max(0.1f, CurrentHaste - LevelStatBonus);
+        CurrentSpeed += LevelStatBonus;
+    }
+
     public void RevertAllSkillStats()
     {
-        CurrentMaxHp = BaseMaxHp;
-        CurrentDamage = BaseDamage;
-        CurrentCritChance = BaseCritChance;
-        CurrentHaste = BaseHaste;
-        CurrentSpeed = BaseSpeed;
+        CurrentMaxHp = BaseMaxHp + _levelHpBonus;
+        CurrentDamage = BaseDamage + (int)_levelDamageBonus;
+        CurrentCritChance = BaseCritChance + _levelCritBonus;
+        CurrentHaste = Math.Max(0.1f, BaseHaste - _levelHasteBonus);
+        CurrentSpeed = BaseSpeed + _levelSpeedBonus;
 
         hasPiercingArrows = false;
         hasCritGuarantee = false;
