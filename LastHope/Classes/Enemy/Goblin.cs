@@ -52,6 +52,10 @@ public class Goblin : BaseEnemy
     private float HitboxSize => FullSize * 0.55f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
+    // Goblin stats
+    public int BaseDamage = 3;
+    public float BaseCritChance = 0f;
+
     public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100f, experienceValue: 2f)
     {
         _weapon = weapon;
@@ -170,7 +174,7 @@ public class Goblin : BaseEnemy
 
         if (distanceToTarget <= _attackRange && _attackTimer <= 0f)
         {
-            _weapon.Attack(aimDirection, GetPosition());
+            _weapon.Attack(aimDirection, GetPosition(), BaseDamage, BaseCritChance);
             _attackTimer = _attackCooldown;
 
             int attackOffsetX = _isFacingLeft

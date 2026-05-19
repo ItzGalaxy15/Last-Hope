@@ -89,7 +89,18 @@ public class Menu
                     ? gm.Game.GraphicsDevice.Viewport
                     : new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
 
-                _skillTreeCanvas = SkillTreeOverlayFactory.CreateWarriorOverlay(gm, vp);
+                switch (gm._player)
+                {
+                    case Warrior:
+                        _skillTreeCanvas = SkillTreeOverlayFactory.CreateWarriorOverlay(gm, vp);
+                        break;
+                    case Archer:
+                        _skillTreeCanvas = SkillTreeOverlayFactory.CreateArcherOverlay(gm, vp);
+                        break;
+                    default:
+                        _showSkillTree = false; // no overlay for other classes
+                        break;
+                }
             }
         }
 

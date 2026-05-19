@@ -150,7 +150,7 @@ public class EnemySpawner
 
             Point spawnPosition = GetValidSpawnPoint();
             if (gm.RNG.NextDouble() < 0.5)
-                gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", damage: 1, critChance: 0.05f, speed: 200f, owner: null)));
+                gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", speed: 200f, owner: null)));
             else
                 gm.AddGameObject(new Orc(spawnPosition));
 
