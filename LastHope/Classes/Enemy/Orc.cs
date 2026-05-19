@@ -21,7 +21,6 @@ public class Orc : BaseEnemy
     private bool _isAttacking = false;
     private bool _isFacingLeft = false;
     private float _attackCooldownTimer = 0f;
-    private const float AttackCooldownSeconds = 0.5f;
 
     private const int OrcFacingRightRow = 0;
     private const int WalkingStartColumn = 0;
@@ -35,11 +34,24 @@ public class Orc : BaseEnemy
     private float HitboxSize => FullSize * 0.55f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-    public Orc(Point position)
-        : base(maxHealth: 100, currentHealth: 100, speed: 50f, experienceValue: 4f)
+    // Base Orc stats
+    public override float BaseMaxHp { get; } = 100f;
+    public override int BaseDamage { get; } = 10;
+    public override float BaseCritChance { get; } = 0f;
+    public override float BaseHaste { get; } = 0.5f; // Attack cooldown
+    public override float BaseSpeed { get; } = 50f;
+    public override float ExperienceValue { get; protected set; } = 4f;
+
+    // Current Orc Stats
+    public override float CurrentMaxHp { get; protected set; }
+    public override int CurrentDamage { get; protected set; }
+    public override float CurrentCritChance { get; protected set; }
+    public override float CurrentHaste { get; protected set; }
+    public override float CurrentSpeed { get; protected set; }
+
+    public Orc(Point position) : base()
     {
         int size = (int)(FrameSize * SpriteScale);
-
 
         _collider = new RectangleCollider(new Rectangle(position, new Point(size, size)));
         SetCollider(_collider);
@@ -85,6 +97,7 @@ public class Orc : BaseEnemy
         var player = gameManager._player;
         var decoy = gameManager.ActiveDecoy;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        UpdatePoison(dt);
 
         if (_attackCooldownTimer > 0f)
             _attackCooldownTimer = Math.Max(0f, _attackCooldownTimer - dt);
@@ -115,7 +128,11 @@ public class Orc : BaseEnemy
                 direction.Normalize();
         }
 
-        Vector2 movement = direction * Speed * dt;
+        Vector2 movement = direction * CurrentSpeed * dt;
+        if (_isPoisoned)
+        {
+            movement *= 0.75f; // Apply slow effect when poisoned
+        }
 
         // X axis
         Vector2 newPosX = new Vector2(_precisePosition.X + movement.X, _precisePosition.Y);
@@ -204,7 +221,7 @@ public class Orc : BaseEnemy
         }
 
         _isAttacking = true;
-        _attackCooldownTimer = AttackCooldownSeconds;
+        _attackCooldownTimer = CurrentHaste;
 
         _attackAnimation = new AnimationManager(
             AttackFrameCount,

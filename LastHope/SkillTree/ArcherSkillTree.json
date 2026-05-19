@@ -50,7 +50,7 @@
       "Id": "archer_hp_l1", "Name": "Armor Upgrade", "Description": "Increases HitPoints.",
       "MaxPoints": 1, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_armor_upgrade",
       "Tags": ["Health"], "Dependencies": ["archer_spd_l0"],
-      "Effects": [{ "EffectId": "hp", "ValuePerPoint": 10.0 }], "GridX": -0.5, "GridY": 1
+      "Effects": [{ "EffectId": "hp", "ValuePerPoint": 20.0 }], "GridX": -0.5, "GridY": 1
     },
     {
       "Id": "poison_arrow_stance_l1", "Name": "Poison Arrows", "Description": "Equips arrows with poison tips. Deals damage over time to enemies.",

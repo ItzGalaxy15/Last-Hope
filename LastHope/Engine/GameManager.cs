@@ -414,7 +414,7 @@ public class GameManager
         {
             _toBeRemoved.Add(gameObject);
 
-            if (gameObject is BaseEnemy enemy && enemy.CurrentHealth <= 0)
+            if (gameObject is BaseEnemy enemy && enemy._currentHp <= 0)
             {
                 double roll = RNG.NextDouble();
                 double cumulative = 0.0;

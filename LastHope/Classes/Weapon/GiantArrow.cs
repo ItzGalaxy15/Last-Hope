@@ -83,7 +83,7 @@ public class GiantArrow : GameObject
         {
             _alreadyHit.Add(other);
             enemy.Damage(_damage);
-            if (enemy.CurrentHealth <= 0)
+            if (enemy._currentHp <= 0)
                 GameManager.GetGameManager().RemoveGameObject(enemy);
         }
     }

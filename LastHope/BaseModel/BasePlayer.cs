@@ -115,6 +115,15 @@ public abstract class BasePlayer : GameObject
         _currentHp = CurrentMaxHp;
     }
 
+    protected void MakeStats()
+    {
+        CurrentMaxHp = BaseMaxHp;
+        CurrentDamage = BaseDamage;
+        CurrentCritChance = BaseCritChance;
+        CurrentHaste = BaseHaste;
+        CurrentSpeed = BaseSpeed;
+    }
+
     public void Heal(float amount)
     {
         _currentHp += amount;
@@ -404,9 +413,4 @@ public abstract class BasePlayer : GameObject
     public abstract void Damage(float amount);
 
     protected abstract void ApplyTeleportPosition(Vector2 newPosition);
-
-    protected virtual void MakeStats()
-    {
-        
-    }
 }

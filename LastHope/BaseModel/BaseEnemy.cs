@@ -1,3 +1,4 @@
+using System.Dynamic;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
@@ -9,15 +10,15 @@ namespace Last_Hope.BaseModel;
 public abstract class BaseEnemy : GameObject
 {
     public virtual RectangleCollider _collider { get; protected set; }
-
     public virtual Texture2D _texture { get; protected set; }
 
-    public virtual float MaxHealth { get; protected set; }
-
-    public virtual float CurrentHealth { get; protected set; }
-
-    public virtual float Speed { get; protected set; }
-    public virtual float ExperienceValue { get; protected set; }
+    //Poison variables
+    protected bool _isPoisoned;
+    private float _poisonTimer;
+    private float _poisonTickTimer;
+    private const float PoisonDuration = 3f;
+    private const float PoisonTickInterval = 0.5f;
+    private const float PoisonDamagePerTick = 5f;
 
     //public abstract BaseWeapon Weapon { get; protected set; }
 
@@ -25,10 +26,25 @@ public abstract class BaseEnemy : GameObject
     // Override per-enemy to tune without touching hitbox math.
     protected virtual float HitboxFraction => 0.5f;
 
+    // Base enemy stats
+    public float _currentHp { get; protected set; }
+    public abstract float BaseMaxHp { get; }
+    public abstract int BaseDamage { get; }
+    public abstract float BaseCritChance { get; }
+    public abstract float BaseHaste { get; } // Attack cooldown
+    public abstract float BaseSpeed { get; }
+    public virtual float ExperienceValue { get; protected set; }
+
+    // Current enemy stats (after buffs/debuffs)
+    public abstract float CurrentMaxHp { get; protected set; }
+    public abstract int CurrentDamage { get; protected set; }
+    public abstract float CurrentCritChance { get; protected set; }
+    public abstract float CurrentHaste { get; protected set; }
+    public abstract float CurrentSpeed { get; protected set; }
+
     // --- DEBUG TOGGLE ---
     // Set to false to completely disable all stun logic and visuals on enemies
     public bool EnableStuns = true;
-
     public float StunTimer { get; private set; }
     public bool IsStunned => EnableStuns && StunTimer > 0f;
 
@@ -48,16 +64,25 @@ public abstract class BaseEnemy : GameObject
         {
             Color baseTint = base.DrawTint;
             if (baseTint != Color.White) return baseTint; // Hurt flash takes priority
-            return IsStunned ? Color.Gold : Color.White;  // Golden tint to indicate Stunned
+            if (IsStunned) return Color.Gold; // Stunned enemies are gold-tinted
+            if (_isPoisoned) return Color.Purple; // Poisoned enemies are purple-tinted
+            return Color.White;
         }
     }
 
-    public BaseEnemy(float maxHealth, float currentHealth, float speed, float experienceValue)
+    public BaseEnemy()
     {
-        MaxHealth = maxHealth;
-        CurrentHealth = currentHealth;
-        Speed = speed;
-        ExperienceValue = experienceValue;
+        MakeStats();
+        _currentHp = CurrentMaxHp;
+    }
+
+    protected void MakeStats()
+    {
+        CurrentMaxHp = BaseMaxHp;
+        CurrentDamage = BaseDamage;
+        CurrentCritChance = BaseCritChance;
+        CurrentHaste = BaseHaste;
+        CurrentSpeed = BaseSpeed;
     }
 
     // Centers a square hitbox on `center`, sized as frameSize * spriteScale * HitboxFraction.
@@ -116,8 +141,50 @@ public abstract class BaseEnemy : GameObject
 
     public virtual void Damage(float amount)
     {
-        CurrentHealth -= amount;
+        _currentHp -= amount;
         TriggerHurtFlash();
+        if (_currentHp < 0f)
+        {
+            GameManager.GetGameManager().RemoveGameObject(this);
+        }
+    }
+
+    public virtual void isPoisoned(bool poisoned)
+{
+    if (poisoned && _isPoisoned)
+    {
+        _poisonTimer = PoisonDuration; // refresh timer without reapplying slow
+        return;
+    }
+
+    _isPoisoned = poisoned;
+    if (poisoned)
+    {
+        _poisonTimer = PoisonDuration;
+        _poisonTickTimer = PoisonTickInterval;
+    }
+}
+
+    // This method needs to be called inside update loops of all enemies to apply poison damage and handle poison duration.
+    protected void UpdatePoison(float dt)
+    {
+        if (!_isPoisoned)
+         return;
+
+        _poisonTimer -= dt;
+        _poisonTickTimer -= dt;
+
+        if (_poisonTickTimer <= 0f)
+        {
+            _poisonTickTimer = PoisonTickInterval;
+            Damage(PoisonDamagePerTick);
+        }
+
+        if (_poisonTimer <= 0f)
+        {
+            _isPoisoned = false;
+            CurrentSpeed = BaseSpeed;  // ← restore using abstract stats
+        }
     }
 
     public abstract Vector2 GetPosition();

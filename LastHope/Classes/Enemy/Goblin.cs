@@ -15,7 +15,6 @@ public class Goblin : BaseEnemy
 
     private Vector2 _precisePosition;
     private BaseWeapon _weapon;
-    private float _attackCooldown = 2f;
     private float _attackTimer = 0f;
     private float _attackRange = 300f;
 
@@ -52,11 +51,22 @@ public class Goblin : BaseEnemy
     private float HitboxSize => FullSize * 0.55f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-    // Goblin stats
-    public int BaseDamage = 3;
-    public float BaseCritChance = 0f;
+    // Base Goblin stats
+    public override float BaseMaxHp { get; } = 20f;
+    public override int BaseDamage { get; } = 5;
+    public override float BaseCritChance { get; } = 0f;
+    public override float BaseHaste { get; } = 2f; // Attack cooldown
+    public override float BaseSpeed { get; } = 100f;
+    public override float ExperienceValue { get; protected set; } = 2f;
 
-    public Goblin(Point position, BaseWeapon weapon) : base(maxHealth: 10, currentHealth: 10, speed: 100f, experienceValue: 2f)
+    // Current Goblin Stats
+    public override float CurrentMaxHp { get; protected set; }
+    public override int CurrentDamage { get; protected set; }
+    public override float CurrentCritChance { get; protected set; }
+    public override float CurrentHaste { get; protected set; }
+    public override float CurrentSpeed { get; protected set; }
+
+    public Goblin(Point position, BaseWeapon weapon) : base()
     {
         _weapon = weapon;
         _weapon.SetOwner(this);
@@ -115,6 +125,7 @@ public class Goblin : BaseEnemy
         var player = gameManager._player;
         var decoy = gameManager.ActiveDecoy;
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        UpdatePoison(dt);
 
         if (_attackTimer > 0f)
             _attackTimer = Math.Max(0f, _attackTimer - dt);
@@ -148,7 +159,11 @@ public class Goblin : BaseEnemy
                 moveDirection = pathDir;
             }
 
-            float moveAmount = Math.Min(Speed * dt, distanceToTarget - _attackRange);
+            float moveAmount = Math.Min(CurrentSpeed * dt, distanceToTarget - _attackRange);
+            if (_isPoisoned)
+            {
+                moveAmount *= 0.75f; // Apply slow effect when poisoned
+            }
             Vector2 velocity = moveDirection * moveAmount;
 
             Vector2 newPosX = new Vector2(_precisePosition.X + velocity.X, _precisePosition.Y);
@@ -174,8 +189,8 @@ public class Goblin : BaseEnemy
 
         if (distanceToTarget <= _attackRange && _attackTimer <= 0f)
         {
-            _weapon.Attack(aimDirection, GetPosition(), BaseDamage, BaseCritChance);
-            _attackTimer = _attackCooldown;
+            _weapon.Attack(aimDirection, GetPosition(), CurrentDamage, CurrentCritChance);
+            _attackTimer = CurrentHaste;
 
             int attackOffsetX = _isFacingLeft
                 ? AttackLeftStartColumn * FrameSize

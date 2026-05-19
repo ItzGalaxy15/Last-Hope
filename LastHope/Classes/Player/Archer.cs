@@ -65,15 +65,16 @@ public class Archer : BasePlayer
     public override float CurrentSpeed { get; protected set; }
 
     // Skill tree related
-    public bool hasPiercingArrows { get; private set; }
-    public bool hasCritGuarantee { get; private set; }
-    public bool hasRapidFire { get; private set; }
+    public bool hasPiercingArrows;
+    public bool hasCritGuarantee;
+    public bool hasRapidFire;
     private int _hitCounterAttackSpeed = 0;
     private int _hitCounterCritGuarantee = 0;
     private const int HitsForAttackSpeed = 1;
     private const int HitsForCritGuarentee = 1;
     private float _attackSpeedBoostTimer = 0f;
     private float _critGuaranteeTimer = 0f;
+    private bool hasPoisonArrows;
     private const float AttackSpeedBoostDuration = 5f;
     private const float CritGuaranteeDuration = 2f;
     private const float AttackSpeedBoostAmount = 0.3f;
@@ -87,15 +88,6 @@ public class Archer : BasePlayer
         _collider = new RectangleCollider(new Rectangle(origin, Point.Zero));
         SetCollider(_collider);
         Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
-    }
-
-    protected override void MakeStats()
-    {
-        CurrentMaxHp = BaseMaxHp;
-        CurrentDamage = BaseDamage;
-        CurrentCritChance = BaseCritChance;
-        CurrentHaste = BaseHaste;
-        CurrentSpeed = BaseSpeed;
     }
 
     public override void Load(ContentManager content)
@@ -347,6 +339,10 @@ public class Archer : BasePlayer
             case "unlock_giant_arrow":
                 ActiveAbility = new GiantArrowAbility();
                 break;
+            case "unlock_poison_arrows":
+                hasPoisonArrows = true;
+                ((Bow)_Weapon).poisonArrows = true;
+                break;
         }
         UpdateStats();
     }
@@ -364,6 +360,8 @@ public class Archer : BasePlayer
         hasRapidFire = false;
         ((Bow)_Weapon).OnHitCallBack = null;
         ((Bow)_Weapon).piercingArrows = false;
+        ((Bow)_Weapon).poisonArrows = false;
+        ActiveAbility = null;
 
         UpdateStats();
     }
