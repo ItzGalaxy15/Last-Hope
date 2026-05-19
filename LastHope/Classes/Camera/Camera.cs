@@ -32,7 +32,7 @@ namespace Last_Hope.Classes.Camera
 
             float maxX = MathF.Max(0f, _worldSize.X - (_viewportSize.X / Zoom));
             float maxY = MathF.Max(0f, _worldSize.Y - (_viewportSize.Y / Zoom));
-
+            // https://gamedev.net/forums/topic/631952-2d-camera-limiting-bounds-and-zoom/
             Position = Vector2.Clamp(cameraPosition, new Vector2(MinX, 0f), new Vector2(maxX, maxY));
             ViewMatrix = Matrix.CreateTranslation(-Position.X, -Position.Y, 0f) * Matrix.CreateScale(Zoom, Zoom, 1f);
         }
