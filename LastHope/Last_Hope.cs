@@ -88,6 +88,7 @@ public class Last_Hope : Game
             _levelGenerator.MapHeightInTiles,
             _levelGenerator.TileSize);
         _gameManager.PlayerSpawnSearchCenter = _levelGenerator.VillageCenterTile;
+        _gameManager.ForestBoundaryX = _levelGenerator.ForestBoundsInTiles.Right * _levelGenerator.TileSize;
 
         // Register building colliders and block them in the navigation grid
         CollisionWorld.ClearStatic();
@@ -155,7 +156,10 @@ public class Last_Hope : Game
         _gameManager.Update(gameTime);
         GumService.Default.Update(gameTime);
         if (_gameManager.playerAlive && _gameManager._player != null)
+        {
+            _camera.MinX = _gameManager.IsForestLocked ? _gameManager.ForestBoundaryX : 0f;
             _camera.Update(_gameManager._player.GetPosition());
+        }
 
         if (ShouldShowHud(_gameManager._state))
             _hud?.Update(gameTime, GraphicsDevice.Viewport);
