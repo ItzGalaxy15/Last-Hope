@@ -110,15 +110,6 @@ public class Warrior : BasePlayer
         Inventory = new ItemType[2] { ItemType.Bomb, ItemType.Decoy };
     }
 
-    protected override void MakeStats()
-    {
-        CurrentMaxHp = BaseMaxHp;
-        CurrentDamage = BaseDamage;
-        CurrentCritChance = BaseCritChance;
-        CurrentHaste = BaseHaste;
-        CurrentSpeed = BaseSpeed;
-    }
-
     public override void Load(ContentManager content)
     {
         base.Load(content);

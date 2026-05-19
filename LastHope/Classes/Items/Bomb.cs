@@ -100,7 +100,7 @@ public class Bomb : GameObject
                 continue;
 
             enemy.Damage(ExplosionDamage);
-            if (enemy.CurrentHealth <= 0f)
+            if (enemy._currentHp <= 0f)
             {
                 gm._player?.AddExperience(enemy.ExperienceValue);
                 gm.RemoveGameObject(enemy);
