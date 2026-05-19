@@ -74,10 +74,13 @@ public class Archer : BasePlayer
     private const int HitsForCritGuarentee = 1;
     private float _attackSpeedBoostTimer = 0f;
     private float _critGuaranteeTimer = 0f;
-    private bool hasPoisonArrows;
+    private bool _hasPoisonTouch;
+    private bool _hasPoisonSpread;
+    private bool _hasIncreasedPoisonDamage;
     private const float AttackSpeedBoostDuration = 5f;
     private const float CritGuaranteeDuration = 2f;
     private const float AttackSpeedBoostAmount = 0.3f;
+    private const float PoisonDamagePerTick = 5f;
     
 
     public Archer(Vector2 startPosition)
@@ -294,6 +297,22 @@ public class Archer : BasePlayer
             damageToTake *= 2;
 
         Damage(damageToTake);
+
+        if (_hasPoisonTouch)
+        {
+            if (_hasIncreasedPoisonDamage)
+            {
+                enemy.isPoisoned(true, PoisonDamagePerTick * 2);
+            }
+            else
+            {
+                enemy.isPoisoned(true, PoisonDamagePerTick);
+            }
+            if (_hasPoisonSpread)
+            {
+                enemy.EnablePoisonSpreading();
+            }
+        }
     }
 
     public override void Damage(float amount)
@@ -340,8 +359,21 @@ public class Archer : BasePlayer
                 ActiveAbility = new GiantArrowAbility();
                 break;
             case "unlock_poison_arrows":
-                hasPoisonArrows = true;
                 ((Bow)_Weapon).poisonArrows = true;
+                break;
+            case "unlock_poison_spread":
+                _hasPoisonSpread = true;
+                ((Bow)_Weapon).spreadPoison = true;
+                break;
+            case "poison_damage":
+                _hasIncreasedPoisonDamage = true;
+                ((Bow)_Weapon).increasedPoisonDamage = true;
+                break;
+            case "unlock_poison_touch":
+                _hasPoisonTouch = true;
+                break;
+            case "unlock_arrow_storm":
+                ActiveAbility = new ArrowStormAbility();
                 break;
         }
         UpdateStats();

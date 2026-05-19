@@ -11,6 +11,8 @@ public class Bow : BaseWeapon
     private float _speed;
     public bool piercingArrows;
     public bool poisonArrows;
+    public bool spreadPoison;
+    public bool increasedPoisonDamage;
     public Action<BaseEnemy> OnHitCallBack { get; set; }
     private GameObject _owner;
 
@@ -24,7 +26,7 @@ public class Bow : BaseWeapon
     {
         if (_owner is BasePlayer)
         {
-            var arrow = new Arrow(origin, direction, _speed, _owner, damage, critChance, piercingArrows, poisonArrows, OnHitCallBack);
+            var arrow = new Arrow(origin, direction, _speed, _owner, damage, critChance, piercingArrows, poisonArrows, spreadPoison, increasedPoisonDamage, OnHitCallBack);
             GameManager.GetGameManager().AddGameObject(arrow);
         }
         else

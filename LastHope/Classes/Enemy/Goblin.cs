@@ -308,7 +308,14 @@ public class Goblin : BaseEnemy
         );
     }
 
-    public override void OnCollision(GameObject other) { }
+    public override void OnCollision(GameObject other)
+    {
+        if (_isPoisoned && _poisonSpreads && other is BaseEnemy otherEnemy && !otherEnemy._isPoisoned)
+        {
+            otherEnemy.isPoisoned(true, PoisonDamagePerTick);
+            otherEnemy.EnablePoisonSpreading();
+        }
+    }
 
     public override Vector2 GetPosition()
     {

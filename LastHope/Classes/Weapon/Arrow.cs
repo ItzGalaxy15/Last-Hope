@@ -20,11 +20,15 @@ namespace Last_Hope.Classes.Weapon
         private float _critChance;
         private bool hasPiercingArrows;
         private bool hasPoisonArrows;
+        private bool hasSpreadPoison;
+        private bool hasIncreasedPoisonDamage;
         private Action<BaseEnemy> _onHitEnemy;
+
+        private const float PoisonDamagePerTick = 5f;
 
         private HashSet<GameObject> _alreadyHit = new HashSet<GameObject>();
 
-        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage, float critChance, bool piercingArrows, bool poisonArrows, Action<BaseEnemy> onHitEnemy = null)
+        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage, float critChance, bool piercingArrows, bool poisonArrows, bool spreadPoison, bool increasedPoisonDamage, Action<BaseEnemy> onHitEnemy = null)
         {
             _owner = owner;
             _position = origin;
@@ -33,6 +37,8 @@ namespace Last_Hope.Classes.Weapon
             _critChance = critChance;
             hasPiercingArrows = piercingArrows;
             hasPoisonArrows = poisonArrows;
+            hasSpreadPoison = spreadPoison;
+            hasIncreasedPoisonDamage = increasedPoisonDamage;
             _onHitEnemy = onHitEnemy;
             _collider = new RectangleCollider(new Rectangle(origin.ToPoint(), new Point(10, 10)));
             SetCollider(_collider);
@@ -113,7 +119,18 @@ namespace Last_Hope.Classes.Weapon
                         }
                         if (hasPoisonArrows)
                         {
-                            enemy.isPoisoned(true);
+                            if (hasIncreasedPoisonDamage)
+                            {
+                                enemy.isPoisoned(true, PoisonDamagePerTick * 2);
+                            }
+                            else
+                            {
+                                enemy.isPoisoned(true, PoisonDamagePerTick);
+                            }
+                        }
+                        if (hasSpreadPoison)
+                        {
+                            enemy.EnablePoisonSpreading();
                         }
                         if (hasPiercingArrows)
                         {

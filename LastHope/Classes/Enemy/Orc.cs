@@ -212,6 +212,11 @@ public class Orc : BaseEnemy
 
     public override void OnCollision(GameObject other)
     {
+        if (_isPoisoned && _poisonSpreads && other is BaseEnemy otherEnemy && !otherEnemy._isPoisoned)
+        {
+            otherEnemy.isPoisoned(true, PoisonDamagePerTick);
+            otherEnemy.EnablePoisonSpreading();
+        }
         if ((other is not BasePlayer && other is not Decoy) || _isAttacking || _attackCooldownTimer > 0f)
             return;
 

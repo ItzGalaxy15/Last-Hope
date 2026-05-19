@@ -240,7 +240,14 @@ public class Boss : BaseEnemy
     /// Called when the boss collides with another game object.
     /// </summary>
     /// <param name="other">The other GameObject involved in the collision.</param>
-    public override void OnCollision(GameObject other) { }
+    public override void OnCollision(GameObject other)
+    {
+        if (_isPoisoned && _poisonSpreads && other is BaseEnemy otherEnemy && !otherEnemy._isPoisoned)
+        {
+            otherEnemy.isPoisoned(true, PoisonDamagePerTick);
+            otherEnemy.EnablePoisonSpreading();
+        }
+    }
 
     /// <summary>
     /// Gets the current position of the boss based on its collision box.

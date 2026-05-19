@@ -1,6 +1,7 @@
 using System.Dynamic;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -13,12 +14,15 @@ public abstract class BaseEnemy : GameObject
     public virtual Texture2D _texture { get; protected set; }
 
     //Poison variables
-    protected bool _isPoisoned;
+    public bool _isPoisoned;
     private float _poisonTimer;
     private float _poisonTickTimer;
     private const float PoisonDuration = 3f;
     private const float PoisonTickInterval = 0.5f;
-    private const float PoisonDamagePerTick = 5f;
+    protected float PoisonDamagePerTick;
+    protected bool _poisonSpreads;
+    private float _poisonSpreadTimer;
+    private const float PoisonSpreadDuration = 1f;
 
     //public abstract BaseWeapon Weapon { get; protected set; }
 
@@ -149,7 +153,7 @@ public abstract class BaseEnemy : GameObject
         }
     }
 
-    public virtual void isPoisoned(bool poisoned)
+    public virtual void isPoisoned(bool poisoned, float poisonDamage)
 {
     if (poisoned && _isPoisoned)
     {
@@ -160,6 +164,7 @@ public abstract class BaseEnemy : GameObject
     _isPoisoned = poisoned;
     if (poisoned)
     {
+        PoisonDamagePerTick = poisonDamage;
         _poisonTimer = PoisonDuration;
         _poisonTickTimer = PoisonTickInterval;
     }
@@ -168,11 +173,14 @@ public abstract class BaseEnemy : GameObject
     // This method needs to be called inside update loops of all enemies to apply poison damage and handle poison duration.
     protected void UpdatePoison(float dt)
     {
-        if (!_isPoisoned)
-         return;
+        if (!_isPoisoned) return;
 
-        _poisonTimer -= dt;
-        _poisonTickTimer -= dt;
+        _poisonTimer = TimerHelper.DecreaseTimer(_poisonTimer, dt);
+        _poisonTickTimer = TimerHelper.DecreaseTimer(_poisonTickTimer, dt);
+        _poisonSpreadTimer = TimerHelper.DecreaseTimer(_poisonSpreadTimer, dt);
+
+        if (_poisonSpreadTimer <= 0f)
+            _poisonSpreads = false;
 
         if (_poisonTickTimer <= 0f)
         {
@@ -183,8 +191,15 @@ public abstract class BaseEnemy : GameObject
         if (_poisonTimer <= 0f)
         {
             _isPoisoned = false;
-            CurrentSpeed = BaseSpeed;  // ← restore using abstract stats
+            _poisonSpreads = false;
+            CurrentSpeed = BaseSpeed;
         }
+    }
+
+    public void EnablePoisonSpreading()
+    {
+        _poisonSpreads = true;
+        _poisonSpreadTimer = PoisonSpreadDuration;
     }
 
     public abstract Vector2 GetPosition();
