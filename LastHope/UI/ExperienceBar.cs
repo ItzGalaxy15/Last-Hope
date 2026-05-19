@@ -3,7 +3,7 @@ using Last_Hope.BaseModel;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
+// http://www.xnadevelopment.com/tutorials/notsohealthy/NotSoHealthy.shtml took inspiration but made my own.
 namespace Last_Hope.UI;
 
 public class ExperienceBar : UIElement

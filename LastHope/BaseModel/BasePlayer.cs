@@ -225,7 +225,7 @@ public abstract class BasePlayer : GameObject
 
         ApplyDashOffset(current - start);
     }
-
+    // read this about teleport and had similar issues: https://community.monogame.net/t/finding-spawn-points/8100/4
     protected bool Teleport()
     {
         var gm = GameManager.GetGameManager();
