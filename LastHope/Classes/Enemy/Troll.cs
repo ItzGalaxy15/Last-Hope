@@ -35,6 +35,8 @@ public class Troll : BaseEnemy
 
     private static readonly Vector2 ClubOffsetRight = new Vector2(14f, -20f);
     private static readonly Vector2 ClubOffsetLeft = new Vector2(-17f, -20f);
+    private static readonly Vector2 ClubAttackOffsetRight = new Vector2(20f, 8f);
+    private static readonly Vector2 ClubAttackOffsetLeft = new Vector2(-20f, 8f);
 
     private float FullSize => FrameSize * SpriteScale;
     private float HitboxSize => FullSize * 0.55f;
@@ -189,18 +191,14 @@ public class Troll : BaseEnemy
         }
 
         float swingProgress = _isAttacking ? _attackAnimation.FrameProgress : 0f;
-        float swingRotation = _isAttacking ? MathHelper.Lerp(-0.25f, 0.25f, swingProgress) : 0f;
-        if (_isFacingLeft)
-            swingRotation = -swingRotation;
+        Vector2 idleClubOffset = _isFacingLeft ? ClubOffsetLeft : ClubOffsetRight;
+        Vector2 attackClubOffset = _isFacingLeft ? ClubAttackOffsetLeft : ClubAttackOffsetRight;
+        Vector2 clubOffset = _isAttacking
+            ? Vector2.Lerp(idleClubOffset, attackClubOffset, swingProgress)
+            : idleClubOffset;
 
-        Vector2 baseOffset = (_isFacingLeft ? ClubOffsetLeft : ClubOffsetRight) * SpriteScale;
-        Vector2 swingOffset = new Vector2(4f * (swingProgress - 0.5f), -6f * (float)Math.Sin(swingProgress * MathHelper.Pi)) * SpriteScale;
-        if (_isFacingLeft)
-            swingOffset.X = -swingOffset.X;
-
-        Vector2 clubPosition = center + baseOffset + swingOffset;
+        Vector2 clubPosition = center + (clubOffset * SpriteScale);
         Vector2 clubOrigin = new Vector2(ClubSize / 2f, ClubSize);
-        SpriteEffects clubEffects = _isFacingLeft ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
 
         spriteBatch.Draw(
             _texture,
@@ -219,12 +217,24 @@ public class Troll : BaseEnemy
             clubPosition,
             null,
             DrawTint,
-            swingRotation,
+            0f,
             clubOrigin,
             1f,
-            clubEffects,
+            SpriteEffects.None,
             0f
         );
+
+        //spriteBatch.Draw(
+        //    _texture,
+        //    center,
+        //    sourceRect,
+        //    DrawTint,
+        //    0f,
+        //    new Vector2(FrameSize / 2f, FrameSize / 2f),
+        //    SpriteScale,
+        //    SpriteEffects.None,
+        //    0f
+        //);
 
         base.Draw(gameTime, spriteBatch);
     }
