@@ -36,11 +36,11 @@ public class Troll : BaseEnemy
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
     // Base Troll stats
-    public override float BaseMaxHp { get; } = 100f;
-    public override int BaseDamage { get; } = 10;
+    public override float BaseMaxHp { get; } = 140f;
+    public override int BaseDamage { get; } = 5;
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 0.5f; // Attack cooldown
-    public override float BaseSpeed { get; } = 50f;
+    public override float BaseSpeed { get; } = 30f;
     public override float ExperienceValue { get; protected set; } = 4f;
 
     // Current Troll Stats
@@ -79,7 +79,7 @@ public class Troll : BaseEnemy
             AttackFrameCount,
             SheetColumns,
             new Vector2(FrameSize, FrameSize),
-            8,
+            6,
             false,
             AttackStartColumn * FrameSize,
             TrollFacingRightRow * FrameSize
@@ -236,7 +236,7 @@ public class Troll : BaseEnemy
             AttackFrameCount,
             SheetColumns,
             new Vector2(FrameSize, FrameSize),
-            8,
+            6,
             false,
             AttackStartColumn * FrameSize,
             TrollFacingRightRow * FrameSize
