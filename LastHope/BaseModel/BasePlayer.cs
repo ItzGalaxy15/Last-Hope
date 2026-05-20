@@ -35,19 +35,16 @@ public abstract class BasePlayer : GameObject
     public abstract float CurrentHaste { get; protected set; }
     public abstract float CurrentSpeed { get; protected set; }
 
-    //public bool EnableStuns = true;
-    //public float StunTimer { get; private set; }
-    //public bool IsStunned => EnableStuns && StunTimer > 0f;
+    private float _stunTimer;
+    public bool IsStunned => _stunTimer > 0f;
 
-    //public void ApplyStun(float duration)
-    //{
-    //    if (!EnableStuns) return;
+    public void ApplyStun(float duration)
+    {
+        if (duration <= 0f)
+            return;
 
-    //    if (StunTimer <= 0f)
-    //    {
-    //        StunTimer = duration;
-    //    }
-    //}
+        _stunTimer = Math.Max(_stunTimer, duration);
+    }
 
     // Shared input state
     protected Vector2 _moveInput;
@@ -278,21 +275,13 @@ public abstract class BasePlayer : GameObject
 
     public override void Update(GameTime gameTime)
     {
-        //float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (_levelUpFlashTimer > 0f)
-            _levelUpFlashTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-        //    _levelUpFlashTimer -= dt;
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        //if (EnableStuns && StunTimer > 0f)
-        //{
-        //    StunTimer -= dt;
-        //    if (StunTimer < 0f)
-        //        StunTimer = 0f;
-        //}
-        //else if (!EnableStuns)
-        //{
-        //    StunTimer = 0f;
-        //}
+        if (_levelUpFlashTimer > 0f)
+            _levelUpFlashTimer = TimerHelper.DecreaseTimer(_levelUpFlashTimer, dt);
+
+        if (_stunTimer > 0f)
+            _stunTimer = TimerHelper.DecreaseTimer(_stunTimer, dt);
 
         base.Update(gameTime);
     }
@@ -314,8 +303,8 @@ public abstract class BasePlayer : GameObject
     {
         _moveInput = Vector2.Zero;
 
-        //if (IsStunned)
-        //    return;
+        if (IsStunned)
+            return;
 
         if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp))    _moveInput.Y -= 1f;
         if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown))  _moveInput.Y += 1f;
@@ -343,7 +332,7 @@ public abstract class BasePlayer : GameObject
 
     public void Move(Vector2 direction, GameTime gameTime)
     {
-        if (direction == Vector2.Zero)
+        if (IsStunned || direction == Vector2.Zero)
         {
             return;
         }
