@@ -224,17 +224,6 @@ public class Troll : BaseEnemy
             0f
         );
 
-        //spriteBatch.Draw(
-        //    _texture,
-        //    center,
-        //    sourceRect,
-        //    DrawTint,
-        //    0f,
-        //    new Vector2(FrameSize / 2f, FrameSize / 2f),
-        //    SpriteScale,
-        //    SpriteEffects.None,
-        //    0f
-        //);
 
         base.Draw(gameTime, spriteBatch);
     }
