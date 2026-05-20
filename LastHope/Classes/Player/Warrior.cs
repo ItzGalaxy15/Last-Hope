@@ -134,14 +134,6 @@ public class Warrior : BasePlayer
         if (!GameManager.GetGameManager().playerAlive || _currentHp <= 0f)
             return;
 
-        //if (IsStunned)
-        //{
-        //    float stunDt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        //    _hurtCooldown = TimerHelper.DecreaseTimer(_hurtCooldown, stunDt);
-        //    base.Update(gameTime);
-        //    return;
-        //}
-
         Move(_moveInput, gameTime);
         SyncColliderToPosition();
 
