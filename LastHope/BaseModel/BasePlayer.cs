@@ -37,6 +37,9 @@ public abstract class BasePlayer : GameObject
 
     private float _stunTimer;
     private float _stunVisualTotalDuration;
+    private float _stunCooldownTimer;
+    private const float StunCooldownDuration = 3f;
+
     public bool IsStunned => _stunTimer > 0f;
     public float StunVisualProgress => _stunVisualTotalDuration > 0f
         ? MathHelper.Clamp(_stunTimer / _stunVisualTotalDuration, 0f, 1f)
@@ -47,11 +50,15 @@ public abstract class BasePlayer : GameObject
         if (duration <= 0f)
             return;
 
+        if (_stunCooldownTimer > 0f)
+            return;
+
         float newTimer = Math.Max(_stunTimer, duration);
         if (newTimer > _stunTimer)
             _stunVisualTotalDuration = newTimer;
 
         _stunTimer = newTimer;
+        _stunCooldownTimer = StunCooldownDuration;
     }
 
     // Shared input state
@@ -297,6 +304,9 @@ public abstract class BasePlayer : GameObject
                 _stunVisualTotalDuration = 0f;
             }
         }
+
+        if (_stunCooldownTimer > 0f)
+            _stunCooldownTimer = TimerHelper.DecreaseTimer(_stunCooldownTimer, dt);
 
         base.Update(gameTime);
     }

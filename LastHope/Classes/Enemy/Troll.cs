@@ -14,7 +14,7 @@ public class Troll : BaseEnemy
 {
     private const float SpriteScale = 1.5f;
     private const bool DebugDrawHitbox = false;
-    private const float StunDurationSeconds = 0.4f;
+    private const float StunDurationSeconds = 0.5f;
 
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
