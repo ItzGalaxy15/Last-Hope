@@ -46,7 +46,7 @@ public class Troll : BaseEnemy
     public override float BaseMaxHp { get; } = 140f;
     public override int BaseDamage { get; } = 5;
     public override float BaseCritChance { get; } = 0f;
-    public override float BaseHaste { get; } = 0.5f; // Attack cooldown
+    public override float BaseHaste { get; } = 0.7f; // Attack cooldown
     public override float BaseSpeed { get; } = 30f;
     public override float ExperienceValue { get; protected set; } = 4f;
 
