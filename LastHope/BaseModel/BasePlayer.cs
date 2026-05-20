@@ -36,14 +36,22 @@ public abstract class BasePlayer : GameObject
     public abstract float CurrentSpeed { get; protected set; }
 
     private float _stunTimer;
+    private float _stunVisualTotalDuration;
     public bool IsStunned => _stunTimer > 0f;
+    public float StunVisualProgress => _stunVisualTotalDuration > 0f
+        ? MathHelper.Clamp(_stunTimer / _stunVisualTotalDuration, 0f, 1f)
+        : 0f;
 
     public void ApplyStun(float duration)
     {
         if (duration <= 0f)
             return;
 
-        _stunTimer = Math.Max(_stunTimer, duration);
+        float newTimer = Math.Max(_stunTimer, duration);
+        if (newTimer > _stunTimer)
+            _stunVisualTotalDuration = newTimer;
+
+        _stunTimer = newTimer;
     }
 
     // Shared input state
@@ -281,7 +289,14 @@ public abstract class BasePlayer : GameObject
             _levelUpFlashTimer = TimerHelper.DecreaseTimer(_levelUpFlashTimer, dt);
 
         if (_stunTimer > 0f)
+        {
             _stunTimer = TimerHelper.DecreaseTimer(_stunTimer, dt);
+            if (_stunTimer <= 0f)
+            {
+                _stunTimer = 0f;
+                _stunVisualTotalDuration = 0f;
+            }
+        }
 
         base.Update(gameTime);
     }
