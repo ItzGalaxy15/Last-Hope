@@ -22,6 +22,7 @@ public class Troll : BaseEnemy
     private bool _isAttacking = false;
     private bool _isFacingLeft = false;
     private float _attackCooldownTimer = 0f;
+    private Texture2D _clubTexture;
 
     private const int TrollFacingRightRow = 0;
     private const int WalkingStartColumn = 0;
@@ -30,6 +31,10 @@ public class Troll : BaseEnemy
     private const int AttackFrameCount = 1;
     private const int SheetColumns = 8;
     private const int FrameSize = 64;
+    private const float ClubSize = 32f;
+
+    private static readonly Vector2 ClubOffsetRight = new Vector2(14f, -20f);
+    private static readonly Vector2 ClubOffsetLeft = new Vector2(-17f, -20f);
 
     private float FullSize => FrameSize * SpriteScale;
     private float HitboxSize => FullSize * 0.55f;
@@ -64,6 +69,7 @@ public class Troll : BaseEnemy
     {
         base.Load(content);
         _texture = content.Load<Texture2D>("Troll");
+        _clubTexture = content.Load<Texture2D>("Club");
 
         _walkingAnimation = new AnimationManager(
             WalkingFrameCount,
@@ -182,6 +188,20 @@ public class Troll : BaseEnemy
             sourceRect.Y = row * FrameSize;
         }
 
+        float swingProgress = _isAttacking ? _attackAnimation.FrameProgress : 0f;
+        float swingRotation = _isAttacking ? MathHelper.Lerp(-0.25f, 0.25f, swingProgress) : 0f;
+        if (_isFacingLeft)
+            swingRotation = -swingRotation;
+
+        Vector2 baseOffset = (_isFacingLeft ? ClubOffsetLeft : ClubOffsetRight) * SpriteScale;
+        Vector2 swingOffset = new Vector2(4f * (swingProgress - 0.5f), -6f * (float)Math.Sin(swingProgress * MathHelper.Pi)) * SpriteScale;
+        if (_isFacingLeft)
+            swingOffset.X = -swingOffset.X;
+
+        Vector2 clubPosition = center + baseOffset + swingOffset;
+        Vector2 clubOrigin = new Vector2(ClubSize / 2f, ClubSize);
+        SpriteEffects clubEffects = _isFacingLeft ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+
         spriteBatch.Draw(
             _texture,
             center,
@@ -191,6 +211,18 @@ public class Troll : BaseEnemy
             new Vector2(FrameSize / 2f, FrameSize / 2f),
             SpriteScale,
             SpriteEffects.None,
+            0f
+        );
+
+        spriteBatch.Draw(
+            _clubTexture,
+            clubPosition,
+            null,
+            DrawTint,
+            swingRotation,
+            clubOrigin,
+            1f,
+            clubEffects,
             0f
         );
 
