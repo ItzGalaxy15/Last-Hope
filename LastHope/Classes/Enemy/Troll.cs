@@ -14,6 +14,7 @@ public class Troll : BaseEnemy
 {
     private const float SpriteScale = 1.5f;
     private const bool DebugDrawHitbox = false;
+    // private const float StunDurationSeconds = 0.5f;
 
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
@@ -223,6 +224,10 @@ public class Troll : BaseEnemy
         {
             decoy.Damage(10f);
         }
+        //else if (other is BasePlayer player)
+        //{
+        //    player.ApplyStun(StunDurationSeconds);
+        //}
 
         _isAttacking = true;
         _attackCooldownTimer = CurrentHaste;

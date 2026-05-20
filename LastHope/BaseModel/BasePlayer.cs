@@ -35,6 +35,20 @@ public abstract class BasePlayer : GameObject
     public abstract float CurrentHaste { get; protected set; }
     public abstract float CurrentSpeed { get; protected set; }
 
+    //public bool EnableStuns = true;
+    //public float StunTimer { get; private set; }
+    //public bool IsStunned => EnableStuns && StunTimer > 0f;
+
+    //public void ApplyStun(float duration)
+    //{
+    //    if (!EnableStuns) return;
+
+    //    if (StunTimer <= 0f)
+    //    {
+    //        StunTimer = duration;
+    //    }
+    //}
+
     // Shared input state
     protected Vector2 _moveInput;
     protected Vector2 _aimInput;
@@ -264,8 +278,21 @@ public abstract class BasePlayer : GameObject
 
     public override void Update(GameTime gameTime)
     {
+        //float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         if (_levelUpFlashTimer > 0f)
             _levelUpFlashTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        //    _levelUpFlashTimer -= dt;
+
+        //if (EnableStuns && StunTimer > 0f)
+        //{
+        //    StunTimer -= dt;
+        //    if (StunTimer < 0f)
+        //        StunTimer = 0f;
+        //}
+        //else if (!EnableStuns)
+        //{
+        //    StunTimer = 0f;
+        //}
 
         base.Update(gameTime);
     }
@@ -286,6 +313,10 @@ public abstract class BasePlayer : GameObject
     public override void HandleInput(InputManager inputManager)
     {
         _moveInput = Vector2.Zero;
+
+        //if (IsStunned)
+        //    return;
+
         if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp))    _moveInput.Y -= 1f;
         if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown))  _moveInput.Y += 1f;
         if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft))  _moveInput.X -= 1f;
