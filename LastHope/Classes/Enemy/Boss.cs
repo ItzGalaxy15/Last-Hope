@@ -27,7 +27,6 @@ public class Boss : BaseEnemy
     private bool _attackFacingLeft = false; // direction locked at charge start
 
     private float _attackCooldownTimer = 0f;
-    private const float AttackCooldownSeconds = 3f;
     private const float AttackRange = 300f;
 
     // Sprite sheet: 64x64 per frame, 8 columns, 2 rows
@@ -49,13 +48,27 @@ public class Boss : BaseEnemy
     private const int WalkFrameCount = 2;
     private const int ChargeFrameCount = 4;
     private const int LaunchFrameCount = 1;
+
+    // Base Orc stats
+    public override float BaseMaxHp { get; } = 400f;
+    public override int BaseDamage { get; } = 25;
+    public override float BaseCritChance { get; } = 0f;
+    public override float BaseHaste { get; } = 3f; // Attack cooldown
+    public override float BaseSpeed { get; } = 60f;
+    public override float ExperienceValue { get; protected set; } = 100f;
+
+    // Current Orc Stats
+    public override float CurrentMaxHp { get; protected set; }
+    public override int CurrentDamage { get; protected set; }
+    public override float CurrentCritChance { get; protected set; }
+    public override float CurrentHaste { get; protected set; }
+    public override float CurrentSpeed { get; protected set; }
     
     private float FullSize => FrameSize * SpriteScale;
     private float HitboxSize => FullSize * 0.55f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-    public Boss(Point position)
-        : base(maxHealth: 400, currentHealth: 400, speed: 60f, experienceValue: 100f)
+    public Boss(Point position) : base()
     {
         int size = (int)(FrameSize * SpriteScale);
         _collider = new RectangleCollider(new Rectangle(position, new Point(size, size)));
@@ -73,9 +86,9 @@ public class Boss : BaseEnemy
 
         _texture = content.Load<Texture2D>("demon");
 
-        _walkAnimation = CreateWalkAnimation(_isFacingLeft);
-        _chargeAnimation = CreateChargeAnimation(_isFacingLeft);
-        _launchAnimation = CreateLaunchAnimation(_isFacingLeft);
+        ResetWalkAnimation(_isFacingLeft);
+        ResetChargeAnimation(_isFacingLeft);
+        ResetLaunchAnimation(_isFacingLeft);
 
         _collider.shape.Size = new Point((int)(FrameSize * SpriteScale), (int)(FrameSize * SpriteScale));
         _precisePosition = _collider.shape.Location.ToVector2();
@@ -91,6 +104,7 @@ public class Boss : BaseEnemy
         var player = gm._player;
         var decoy = gm.ActiveDecoy;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        UpdatePoison(dt);
 
         if (_attackCooldownTimer > 0f)
             _attackCooldownTimer = Math.Max(0f, _attackCooldownTimer - dt);
@@ -112,7 +126,7 @@ public class Boss : BaseEnemy
         if (_isFacingLeft != _lastFacingLeft && !_isCharging && !_isLaunching)
         {
             _lastFacingLeft = _isFacingLeft;
-            _walkAnimation = CreateWalkAnimation(_isFacingLeft);
+            ResetWalkAnimation(_isFacingLeft);
         }
 
         if (_isLaunching)
@@ -121,8 +135,8 @@ public class Boss : BaseEnemy
             if (_launchAnimation.isFinished)
             {
                 _isLaunching = false;
-                _attackCooldownTimer = AttackCooldownSeconds;
-                _walkAnimation = CreateWalkAnimation(_isFacingLeft);
+                _attackCooldownTimer = CurrentHaste;
+                ResetWalkAnimation(_isFacingLeft);
                 _lastFacingLeft = _isFacingLeft;
             }
         }
@@ -133,11 +147,11 @@ public class Boss : BaseEnemy
             {
                 _isCharging = false;
                 _isLaunching = true;
-                _launchAnimation = CreateLaunchAnimation(_attackFacingLeft);
+                ResetLaunchAnimation(_attackFacingLeft);
 
                 Vector2 dir = toTarget;
                 if (dir != Vector2.Zero) dir.Normalize();
-                gm.AddGameObject(new Fireball(GetPosition(), dir, this));
+                gm.AddGameObject(new Fireball(GetPosition(), dir, this, CurrentDamage));
             }
         }
         else
@@ -146,7 +160,7 @@ public class Boss : BaseEnemy
             {
                 _isCharging = true;
                 _attackFacingLeft = _isFacingLeft;
-                _chargeAnimation = CreateChargeAnimation(_attackFacingLeft);
+                ResetChargeAnimation(_attackFacingLeft);
             }
             else
             {
@@ -162,7 +176,11 @@ public class Boss : BaseEnemy
                     if (direction != Vector2.Zero) direction.Normalize();
                 }
 
-                Vector2 movement = direction * Speed * dt;
+                Vector2 movement = direction * CurrentSpeed * dt;
+                if (_isPoisoned)
+                {
+                    movement *= 0.75f; // Apply slow effect when poisoned
+                }
 
                 Vector2 newPosX = new Vector2(_precisePosition.X + movement.X, _precisePosition.Y);
                 if (!WouldCollideAt(newPosX, HitboxSize, HitboxOffset))
@@ -222,7 +240,14 @@ public class Boss : BaseEnemy
     /// Called when the boss collides with another game object.
     /// </summary>
     /// <param name="other">The other GameObject involved in the collision.</param>
-    public override void OnCollision(GameObject other) { }
+    public override void OnCollision(GameObject other)
+    {
+        if (_isPoisoned && _poisonSpreads && other is BaseEnemy otherEnemy && !otherEnemy._isPoisoned)
+        {
+            otherEnemy.isPoisoned(true, PoisonDamagePerTick);
+            otherEnemy.EnablePoisonSpreading();
+        }
+    }
 
     /// <summary>
     /// Gets the current position of the boss based on its collision box.
@@ -235,37 +260,27 @@ public class Boss : BaseEnemy
     /// </summary>
     /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
     /// <returns>An AnimationManager for the walking state.</returns>
-    private AnimationManager CreateWalkAnimation(bool facingLeft) => new AnimationManager(
-        WalkFrameCount, SheetColumns,
-        new Vector2(FrameSize, FrameSize),
-        10, true,
-        (facingLeft ? LeftWalkStart : RightWalkStart) * FrameSize,
-        (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
-    );
+    private void ResetWalkAnimation(bool facingLeft) =>
+        _walkAnimation = new AnimationManager(
+            WalkFrameCount, SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            10, true,
+            (facingLeft ? LeftWalkStart : RightWalkStart) * FrameSize,
+            (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize);
 
-    /// <summary>
-    /// Creates and configures the charging/wind-up animation for the boss attack.
-    /// </summary>
-    /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
-    /// <returns>An AnimationManager for the charging state.</returns>
-    private AnimationManager CreateChargeAnimation(bool facingLeft) => new AnimationManager(
-        ChargeFrameCount, SheetColumns,
-        new Vector2(FrameSize, FrameSize),
-        6, false,
-        (facingLeft ? LeftChargeStart : RightChargeStart) * FrameSize,
-        (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
-    );
+    private void ResetChargeAnimation(bool facingLeft) =>
+        _chargeAnimation = new AnimationManager(
+            ChargeFrameCount, SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            6, false,
+            (facingLeft ? LeftChargeStart : RightChargeStart) * FrameSize,
+            (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize);
 
-    /// <summary>
-    /// Creates and configures the attack launch animation for the boss.
-    /// </summary>
-    /// <param name="facingLeft">True if the boss should be facing left; otherwise, false.</param>
-    /// <returns>An AnimationManager for the attack launch state.</returns>
-    private AnimationManager CreateLaunchAnimation(bool facingLeft) => new AnimationManager(
-        LaunchFrameCount, SheetColumns,
-        new Vector2(FrameSize, FrameSize),
-        20, false,
-        (facingLeft ? LeftLaunch : RightLaunch) * FrameSize,
-        (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize
-    );
+    private void ResetLaunchAnimation(bool facingLeft) =>
+        _launchAnimation = new AnimationManager(
+            LaunchFrameCount, SheetColumns,
+            new Vector2(FrameSize, FrameSize),
+            20, false,
+            (facingLeft ? LeftLaunch : RightLaunch) * FrameSize,
+            (facingLeft ? FacingLeftRow : FacingRightRow) * FrameSize);
 }

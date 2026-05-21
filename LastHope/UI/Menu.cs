@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
 using Last_Hope.UI.Menus;
+using Last_Hope.SkillTree;
 
 namespace Last_Hope.UI;
 
@@ -26,6 +27,15 @@ public class Menu
 
     private SkillTreeMenuCanvas _skillTreeCanvas;
     private bool _showSkillTree;
+
+    private StatScreenOverlay _statScreen;
+    private bool _showStatScreen;
+
+    private void EnsureStatScreen()
+    {
+        if (_statScreen == null)
+            _statScreen = new StatScreenOverlay(GameManager.GetGameManager().Pixel);
+    }
 
     public void UpdateMainMenu(GameTime gameTime) => _mainMenu.Update(gameTime);
 
@@ -79,6 +89,15 @@ public class Menu
         GameManager gm = GameManager.GetGameManager();
         InputManager input = gm.InputManager;
 
+        if (input.IsKeyPress(Keys.C))
+        {
+            EnsureStatScreen();
+            _showStatScreen = !_showStatScreen;
+        }
+
+        if (_showStatScreen && _statScreen != null)
+            _statScreen.Update(gameTime);
+
         if (input.IsKeyPress(Keys.N))
         {
             _showSkillTree = !_showSkillTree;
@@ -89,7 +108,18 @@ public class Menu
                     ? gm.Game.GraphicsDevice.Viewport
                     : new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
 
-                _skillTreeCanvas = SkillTreeOverlayFactory.CreateWarriorOverlay(gm, vp);
+                switch (gm._player)
+                {
+                    case Warrior:
+                        _skillTreeCanvas = SkillTreeOverlayFactory.CreateWarriorOverlay(gm, vp);
+                        break;
+                    case Archer:
+                        _skillTreeCanvas = SkillTreeOverlayFactory.CreateArcherOverlay(gm, vp);
+                        break;
+                    default:
+                        _showSkillTree = false; // no overlay for other classes
+                        break;
+                }
             }
         }
 
@@ -109,6 +139,38 @@ public class Menu
         }
     }
 
+    public void AwardTalentPoint()
+    {
+        if (_skillTreeCanvas != null)
+        {
+            _skillTreeCanvas.AddTalentPoint();
+        }
+        else
+        {
+            // Canvas not yet opened this run, write directly to the save file so the
+            // point is there when the player opens the skill tree later.
+            GameManager gm = GameManager.GetGameManager();
+            string classId = gm._player switch
+            {
+                Warrior => "Warrior",
+                Archer  => "Archer",
+                _       => null
+            };
+            if (classId == null) return;
+            SkillTreeState state = SkillTreeSaveManager.Load(classId);
+            state.UnspentSkillPoints++;
+            SkillTreeSaveManager.Save(state);
+        }
+
+        GameManager.GetGameManager().RequestToast("Talent Point Earned!");
+    }
+
+    public void ResetSkillTree()
+    {
+        _skillTreeCanvas = null;
+        _showSkillTree = false;
+    }
+
     /// <summary>World draw plus optional full-screen skill tree overlay on top.</summary>
     public void DrawRunningMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
@@ -123,6 +185,13 @@ public class Menu
             spriteBatch.Draw(gm.Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(10, 12, 15, 235));
             _skillTreeCanvas.Draw(gameTime, spriteBatch);
 
+            spriteBatch.End();
+        }
+
+        if (_showStatScreen && _statScreen != null)
+        {
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+            _statScreen.Draw(gameTime, spriteBatch);
             spriteBatch.End();
         }
     }

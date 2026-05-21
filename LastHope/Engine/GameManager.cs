@@ -74,6 +74,14 @@ public class GameManager
     public Menu Menu { get; private set; }
     public EnemySpawner EnemySpawner { get; private set; }
 
+    private string _pendingToast;
+    public void RequestToast(string message) => _pendingToast = message;
+    public string ConsumeToast() { var t = _pendingToast; _pendingToast = null; return t; }
+
+    public const int ForestUnlockLevel = 10;
+    public float ForestBoundaryX { get; set; } = 0f;
+    public bool IsForestLocked => (_player?.Level ?? 0) < ForestUnlockLevel && ForestBoundaryX > 0f;
+
     /// <summary>
     /// Tile grid for enemy pathfinding; set after level generation. Mark cells non-walkable when adding blocking collision.
     /// </summary>
@@ -414,7 +422,7 @@ public class GameManager
         {
             _toBeRemoved.Add(gameObject);
 
-            if (gameObject is BaseEnemy enemy && enemy.CurrentHealth <= 0)
+            if (gameObject is BaseEnemy enemy && enemy._currentHp <= 0)
             {
                 double roll = RNG.NextDouble();
                 double cumulative = 0.0;
@@ -477,8 +485,11 @@ public class GameManager
 
         EnemySpawner.Reset();
 
+        Menu.ResetSkillTree();
+
         Vector2 spawn = GetDefaultPlayerSpawn();
         _player = CreatePlayerFromSelection(spawn);
+        _player.OnTalentPointEarned += Menu.AwardTalentPoint;
         AddGameObject(_player);
     }
 

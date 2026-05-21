@@ -21,7 +21,7 @@ public class Fireball : GameObject
     private const float Speed = 320f;
     private const float MaxLifetime = 5f;
 
-    public Fireball(Vector2 origin, Vector2 direction, GameObject owner, float damage = 25f)
+    public Fireball(Vector2 origin, Vector2 direction, GameObject owner, float damage)
     {
         _owner = owner;
         _damage = damage;

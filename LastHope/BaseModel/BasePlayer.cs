@@ -19,11 +19,21 @@ public abstract class BasePlayer : GameObject
     protected const float HitboxFraction = 0.55f;
     public abstract float _bodyWidth { get; }
 
-    // Player stats
-    public float _maxHp { get; protected set; }
+    // Base Player stats
     public float _currentHp { get; protected set; }
+    public abstract float BaseMaxHp { get; }
+    public abstract int BaseDamage { get; }
+    public abstract float BaseCritChance { get; }
+    public abstract float BaseHaste { get; } // Attack cooldown
+    public abstract float BaseSpeed { get; }
     public BaseWeapon _Weapon { get; protected set; }
-    public float _Speed { get; protected set; }
+
+    // Current Player stats (after buffs/debuffs)
+    public abstract float CurrentMaxHp { get; protected set; }
+    public abstract int CurrentDamage { get; protected set; }
+    public abstract float CurrentCritChance { get; protected set; }
+    public abstract float CurrentHaste { get; protected set; }
+    public abstract float CurrentSpeed { get; protected set; }
 
     // Shared input state
     protected Vector2 _moveInput;
@@ -72,6 +82,22 @@ public abstract class BasePlayer : GameObject
     public int Level => _Level;
     public float LevelUpFlashProgress => MathHelper.Clamp(_levelUpFlashTimer / LevelUpFlashDuration, 0f, 1f);
 
+    // Accumulated stat bonuses from leveling (never reset)
+    protected float _levelHpBonus;
+    protected float _levelDamageBonus;
+    protected float _levelCritBonus;
+    protected float _levelHasteBonus;
+    protected float _levelSpeedBonus;
+    public float LevelHpBonus     => _levelHpBonus;
+    public float LevelDamageBonus => _levelDamageBonus;
+    public float LevelCritBonus   => _levelCritBonus;
+    public float LevelHasteBonus  => _levelHasteBonus;
+    public float LevelSpeedBonus  => _levelSpeedBonus;
+    protected const float LevelStatBonus = 0.01f;
+    private const int TalentPointInterval = 5;
+
+    public event Action OnTalentPointEarned;
+
     // UI bar properties
     public float DashCooldownProgress => MathHelper.Clamp(_dashCooldown / DashCooldown, 0f, 1f);
     public float TeleportCooldownProgress => MathHelper.Clamp(_teleportCooldown / TeleportCooldownDuration, 0f, 1f);
@@ -89,29 +115,37 @@ public abstract class BasePlayer : GameObject
     {
         get
         {
-            float HealthProgress = (_currentHp / _maxHp);
+            float HealthProgress = _currentHp / CurrentMaxHp;
             return MathHelper.Clamp(HealthProgress, 0f, 1f);
         }
     }
 
-    protected BasePlayer(Vector2 position, float maxHp, BaseWeapon weapon, float speed, int level, int experience, float dashDistance)
+    protected BasePlayer(Vector2 position, BaseWeapon weapon, int level, int experience, float dashDistance)
     {
         _position = position;
-        _maxHp = maxHp;
-        _currentHp = maxHp;
         _Weapon = weapon;
-        _Speed = speed;
         _Level = level;
         _Experience = experience;
         _DashDistance = dashDistance;
+        MakeStats();
+        _currentHp = CurrentMaxHp;
+    }
+
+    protected void MakeStats()
+    {
+        CurrentMaxHp = BaseMaxHp;
+        CurrentDamage = BaseDamage;
+        CurrentCritChance = BaseCritChance;
+        CurrentHaste = BaseHaste;
+        CurrentSpeed = BaseSpeed;
     }
 
     public void Heal(float amount)
     {
         _currentHp += amount;
-        if (_currentHp > _maxHp)
+        if (_currentHp > CurrentMaxHp)
         {
-            _currentHp = _maxHp;
+            _currentHp = CurrentMaxHp;
         }
     }
 
@@ -146,9 +180,9 @@ public abstract class BasePlayer : GameObject
     private void CheckLevelUp()
     {
         int newLevel = (int)(_Experience / XpPerLevel);
-        if (newLevel > _Level)
+        while (_Level < newLevel)
         {
-            _Level = newLevel;
+            _Level++;
             OnLevelUp();
         }
     }
@@ -156,7 +190,13 @@ public abstract class BasePlayer : GameObject
     protected virtual void OnLevelUp()
     {
         _levelUpFlashTimer = LevelUpFlashDuration;
-        // Override in subclasses to handle level up effects
+        _levelHpBonus     += LevelStatBonus;
+        _levelDamageBonus += LevelStatBonus;
+        _levelCritBonus   += LevelStatBonus;
+        _levelHasteBonus  += LevelStatBonus;
+        _levelSpeedBonus  += LevelStatBonus;
+        if (_Level % TalentPointInterval == 0)
+            OnTalentPointEarned?.Invoke();
     }
 
     protected void Dash(Vector2 direction, float distance)
@@ -185,7 +225,7 @@ public abstract class BasePlayer : GameObject
 
         ApplyDashOffset(current - start);
     }
-
+    // read this about teleport and had similar issues: https://community.monogame.net/t/finding-spawn-points/8100/4
     protected bool Teleport()
     {
         var gm = GameManager.GetGameManager();
@@ -280,7 +320,7 @@ public abstract class BasePlayer : GameObject
         direction.Normalize();
 
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Vector2 velocity = direction * _Speed * dt;
+        Vector2 velocity = direction * CurrentSpeed * dt;
 
         // --- X movement ---
         Vector2 newPosX = new Vector2(_position.X + velocity.X, _position.Y);
@@ -297,6 +337,10 @@ public abstract class BasePlayer : GameObject
         }
 
         _position = MovementHelper.ClampToMapBounds(_position, _bodyWidth);
+
+        var gm = GameManager.GetGameManager();
+        if (gm.IsForestLocked && _position.X < gm.ForestBoundaryX)
+            _position = new Vector2(gm.ForestBoundaryX, _position.Y);
     }
 
     protected bool IsPositionSafe(Vector2 position)
@@ -332,7 +376,7 @@ public abstract class BasePlayer : GameObject
     protected void Revive()
     {
         ExtraLives--;
-        _currentHp = _maxHp; // Prevent death
+        _currentHp = CurrentMaxHp; // Prevent death
 
         _greenGlowTimer = 1.5f;
         _hurtCooldown = 1.5f; // Grant 1.5 seconds of invincibility to escape

@@ -373,6 +373,12 @@ namespace Last_Hope.SkillTree
         }
         
         public ClassSkillTreeData GetData() => _data;
+
+        public void AddUnspentPoint()
+        {
+            _state.UnspentSkillPoints++;
+            SkillTreeSaveManager.Save(_state);
+        }
     }
 
     /// <summary>

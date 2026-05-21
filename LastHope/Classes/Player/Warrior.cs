@@ -40,7 +40,6 @@ public class Warrior : BasePlayer
 
     // --- TIMERS & COOLDOWNS ---
     private double _timeSinceLastAttack = 0;
-    private float _currentAttackCooldown = 0.7f;
     private float _speedBuffTimer = 0f;
     private float _dmgBuffTimer = 0f;
     private float _defBuffTimer = 0f;
@@ -92,8 +91,22 @@ public class Warrior : BasePlayer
 
     public BaseAbility ActiveAbility { get; set; }
 
+    //Base Warrior Stats
+    public override float BaseMaxHp { get; } = 100f;
+    public override int BaseDamage { get; } = 20;
+    public override float BaseCritChance { get; } = 0.1f;
+    public override float BaseHaste { get; } = 0.9f;// Attack cooldown
+    public override float BaseSpeed { get; } = 150f;
+
+    //Current Warrior Stats
+    public override float CurrentMaxHp { get; protected set; }
+    public override int CurrentDamage { get; protected set; }
+    public override float CurrentCritChance { get; protected set; }
+    public override float CurrentHaste { get; protected set; }
+    public override float CurrentSpeed { get; protected set; }
+
     public Warrior(Vector2 startPosition)
-        : base(position: startPosition, maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 0.1f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(position: startPosition, weapon: new Weapon("Sword"), level: 0, experience: 0, dashDistance: 140f)
     {
         _position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
@@ -206,7 +219,7 @@ public class Warrior : BasePlayer
             _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
             bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
                 || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
-            if (attackPressed && _timeSinceLastAttack >= _currentAttackCooldown)
+            if (attackPressed && _timeSinceLastAttack >= CurrentHaste)
             {
                 UseWeapon();
                 AudioManager.PlaySfx(_attackSound);
@@ -296,7 +309,7 @@ public class Warrior : BasePlayer
         }
 
         Vector2 slashOrigin = castAnchor + direction * SlashDistance;
-        _Weapon.Attack(direction, slashOrigin);
+        _Weapon.Attack(direction, slashOrigin, CurrentDamage, CurrentCritChance);
 
         // --- ON ATTACK PROCS ---
         GameManager gm = GameManager.GetGameManager();
@@ -328,7 +341,7 @@ public class Warrior : BasePlayer
             float angle = i * MathHelper.TwoPi / 8f;
             Vector2 dir = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
             Vector2 slashOrigin = castAnchor + dir * SlashDistance;
-            _Weapon.Attack(dir, slashOrigin);
+            _Weapon.Attack(dir, slashOrigin, BaseDamage, BaseCritChance);
         }
     }
 
@@ -475,30 +488,46 @@ public class Warrior : BasePlayer
         HasDeepWounds = false;
         HasBulwark = false;
 
-        _Speed = 220f; // Revert to base speed
+        CurrentMaxHp = BaseMaxHp + _levelHpBonus;
+        CurrentCritChance = BaseCritChance + _levelCritBonus;
+        CurrentSpeed = BaseSpeed + _levelSpeedBonus;
+        // Damage and Haste restored via UpdateStats below
+
         UpdateStats();
     }
 
     public void UpdateStats()
     {
-        float newCrit = 0.1f;
-        int newDmg = 20 + (DmgLevel * 5); // Up to 35
-        
-        if (IsSwordActive) newDmg = (int)(newDmg * 0.8f);
-        else if (IsAxeActive) newDmg = (int)(newDmg * 1.5f);
+        // Damage Calculations
+        CurrentDamage = (int)(BaseDamage + _levelDamageBonus) + DmgLevel * 5;
+        if (IsSwordActive)
+        {
+            CurrentDamage = (int)(CurrentDamage * 0.8f);
+        }
+        else if (IsAxeActive)
+        {
+            CurrentDamage = (int)(CurrentDamage * 1.5f);
+        }
+        if (_dmgBuffTimer > 0f)
+        {
+            CurrentDamage = (int)(CurrentDamage * 1.5f); // 50% damage boost from bloodlust buff
+        }
 
-        if (_dmgBuffTimer > 0f) newDmg = (int)(newDmg * 1.5f); // 50% damage boost from bloodlust buff
-        
-        _Weapon = new Weapon("Primary", damage: newDmg, critChance: newCrit);
+        // Haste Calculations (lower = faster attacks; level bonus reduces cooldown)
+        float baseHasteForStance = IsAxeActive ? 1.2f : IsSwordActive ? 0.5f : BaseHaste;
+        CurrentHaste = baseHasteForStance - _levelHasteBonus - HasteLevel * 0.1f;
+        if (_speedBuffTimer > 0f)
+            CurrentHaste *= 0.5f;
+        CurrentHaste = Math.Max(0.1f, CurrentHaste);
+    }
 
-        float baseCooldown = 0.7f;
-        if (IsAxeActive) baseCooldown = 1.2f;
-        else if (IsSwordActive) baseCooldown = 0.5f;
-
-        baseCooldown -= (HasteLevel * 0.1f);
-        if (_speedBuffTimer > 0f) baseCooldown *= 0.5f; // Double attack speed from flowing strikes buff
-
-        _currentAttackCooldown = Math.Max(0.1f, baseCooldown);
+    protected override void OnLevelUp()
+    {
+        base.OnLevelUp();
+        CurrentMaxHp += LevelStatBonus;
+        CurrentCritChance = Math.Min(1f, CurrentCritChance + LevelStatBonus);
+        CurrentSpeed += LevelStatBonus;
+        UpdateStats(); // picks up _levelDamageBonus and _levelHasteBonus
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

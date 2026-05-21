@@ -89,7 +89,7 @@ namespace Last_Hope.Classes.Weapon
                 
                 hitEnemies.Add(other);
                 enemy.Damage(damage);
-                if (enemy.CurrentHealth <= 0)
+                if (enemy._currentHp <= 0)
                 {
                     GameManager.GetGameManager()._player.AddExperience(enemy.ExperienceValue);
                     GameManager.GetGameManager().RemoveGameObject(enemy);

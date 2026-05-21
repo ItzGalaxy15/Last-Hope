@@ -267,6 +267,8 @@ namespace Last_Hope.UI
         private Rectangle _btnCancel;
         public bool IsClosed { get; private set; }
 
+        public void AddTalentPoint() => _tree.AddUnspentPoint();
+
         // Animations
         private float _entranceProgress = 0f;
         private float _btnConfirmHover = 0f;

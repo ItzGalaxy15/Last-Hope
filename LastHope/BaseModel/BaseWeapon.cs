@@ -9,14 +9,12 @@ public abstract class BaseWeapon : GameObject
     public int Damage { get; set; }
     public float CritChance { get; set; }
 
-    protected BaseWeapon(string name, int damage, float critChance)
+    protected BaseWeapon(string name)
     {
         Name = name;
-        Damage = damage;
-        CritChance = critChance;
     }
 
-    public abstract void Attack(Vector2 direction, Vector2 origin);
+    public abstract void Attack(Vector2 direction, Vector2 origin, int damage, float critChance);
 
     public override void Update(GameTime gameTime)
     {

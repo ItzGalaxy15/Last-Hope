@@ -1,3 +1,5 @@
+// Radial sweep technique based on: https://bgolus.medium.com/progressing-in-circles-13452434fdb9
+
 #if OPENGL
 	#define SV_POSITION POSITION
 	#define VS_SHADERMODEL vs_3_0

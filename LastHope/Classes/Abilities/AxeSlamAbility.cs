@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework;
 using Last_Hope.BaseModel;
 using Last_Hope.Engine;
-using Last_Hope;
 
 namespace Last_Hope.Classes.Abilities;
 
@@ -25,7 +24,7 @@ public class AxeSlamAbility : BaseAbility
 
             warrior.PlayAttackSound();
             warrior.ResetAttackTimer();
-            warrior._Weapon.Attack(aimDir, warrior.GetCastAnchor());
+            warrior._Weapon.Attack(aimDir, warrior.GetCastAnchor(), warrior.CurrentDamage, warrior.CurrentCritChance);
         }
     }
 }

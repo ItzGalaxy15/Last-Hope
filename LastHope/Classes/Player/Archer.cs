@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework.Audio;
 using Last_Hope.Classes.Items;
 using Last_Hope.Helpers;
 using Last_Hope.Systems.ItemSystem;
+using Last_Hope.SkillTree;
+using Last_Hope.Classes.Abilities;
 
 namespace Last_Hope;
 
@@ -31,7 +33,6 @@ public class Archer : BasePlayer
     private float _bowPixelSize => FrameSize * BowDrawScale;
     private float BowOffsetY => (_bodyWidth - _bowPixelSize) * 0.5f;
 
-    private const float AttackCooldown = 0.7f;
     private const float EnemyContactDamage = 10f;
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = true;
@@ -47,8 +48,43 @@ public class Archer : BasePlayer
     private Vector2 _bowAimDirection;
     private const float ArrowSpeed = 600f;
 
+    public BaseAbility ActiveAbility { get; set; }
+
+    //Base Archer Stats
+    public override float BaseMaxHp { get; } = 80f;
+    public override int BaseDamage { get; } = 25;
+    public override float BaseCritChance { get; } = 0.1f;
+    public override float BaseHaste { get; } = 0.9f;// Attack cooldown
+    public override float BaseSpeed { get; } = 200f;
+
+    //Current Archer Stats
+    public override float CurrentMaxHp { get; protected set; }
+    public override int CurrentDamage { get; protected set; }
+    public override float CurrentCritChance { get; protected set; }
+    public override float CurrentHaste { get; protected set; }
+    public override float CurrentSpeed { get; protected set; }
+
+    // Skill tree related
+    public bool hasPiercingArrows;
+    public bool hasCritGuarantee;
+    public bool hasRapidFire;
+    private int _hitCounterAttackSpeed = 0;
+    private int _hitCounterCritGuarantee = 0;
+    private const int HitsForAttackSpeed = 1;
+    private const int HitsForCritGuarentee = 1;
+    private float _attackSpeedBoostTimer = 0f;
+    private float _critGuaranteeTimer = 0f;
+    private bool _hasPoisonTouch;
+    private bool _hasPoisonSpread;
+    private bool _hasIncreasedPoisonDamage;
+    private const float AttackSpeedBoostDuration = 5f;
+    private const float CritGuaranteeDuration = 2f;
+    private const float AttackSpeedBoostAmount = 0.3f;
+    private const float PoisonDamagePerTick = 5f;
+    
+
     public Archer(Vector2 startPosition)
-        : base(position: startPosition, maxHp: 100f, weapon: new Bow("Bow", damage: 20, critChance: 1.0f, speed: 600f, owner: null), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
+        : base(position: startPosition, weapon: new Bow("Bow", speed: ArrowSpeed, owner: null), level: 0, experience: 0, dashDistance: 140f)
     {
         _position = startPosition;
         var origin = new Point((int)startPosition.X, (int)startPosition.Y);
@@ -88,6 +124,9 @@ public class Archer : BasePlayer
         _dashCooldown = TimerHelper.DecreaseTimer(_dashCooldown, dt);
         _teleportCooldown = TimerHelper.DecreaseTimer(_teleportCooldown, dt);
 
+        _attackSpeedBoostTimer = TimerHelper.DecreaseTimer(_attackSpeedBoostTimer, dt);
+        _critGuaranteeTimer = TimerHelper.DecreaseTimer(_critGuaranteeTimer, dt);
+
         bool moving = _moveInput != Vector2.Zero;
         if (moving)
         {
@@ -118,12 +157,26 @@ public class Archer : BasePlayer
             }
         }
 
+        // --- MAJOR ACTIVE ABILITIES LOGIC ---
+        ActiveAbility?.Update(this, gameTime);
+
+        if (_inputManager is not null && ActiveAbility != null && ActiveAbility.CanExecute())
+        {
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
+            {
+                ActiveAbility.Execute(this);
+            }
+        }
+
         if (_inputManager is not null)
         {
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
             bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
                 || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
-            if (attackPressed && timeSinceLastAttack >= AttackCooldown && !_isDrawingBow)
+
+            float effectiveHaste = _attackSpeedBoostTimer > 0f ? Math.Max(0.1f, CurrentHaste - AttackSpeedBoostAmount) : CurrentHaste;
+
+            if (attackPressed && timeSinceLastAttack >= effectiveHaste && !_isDrawingBow)
             {
                 StartBowDraw();
                 timeSinceLastAttack = 0;
@@ -193,7 +246,9 @@ public class Archer : BasePlayer
     private void FireArrow()
     {
         Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
-        _Weapon.Attack(_bowAimDirection, center);
+        float effectiveCrit = _critGuaranteeTimer > 0f ? 1f : CurrentCritChance;
+
+        _Weapon.Attack(_bowAimDirection, center, CurrentDamage, effectiveCrit);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -242,6 +297,22 @@ public class Archer : BasePlayer
             damageToTake *= 2;
 
         Damage(damageToTake);
+
+        if (_hasPoisonTouch)
+        {
+            if (_hasIncreasedPoisonDamage)
+            {
+                enemy.isPoisoned(true, PoisonDamagePerTick * 2);
+            }
+            else
+            {
+                enemy.isPoisoned(true, PoisonDamagePerTick);
+            }
+            if (_hasPoisonSpread)
+            {
+                enemy.EnablePoisonSpreading();
+            }
+        }
     }
 
     public override void Damage(float amount)
@@ -249,6 +320,137 @@ public class Archer : BasePlayer
         _currentHp -= amount;
         TriggerHurtFlash();
         CheckDeath();
+    }
+
+    // --- SKILL TREE INTEGRATION ---
+    public void ApplyNodeEffect(NodeEffect effect)
+    {
+        switch (effect.EffectId)
+        {
+            case "damage":
+                CurrentDamage += (int)effect.ValuePerPoint;
+                break;
+            case "speed":
+                CurrentSpeed += effect.ValuePerPoint;
+                break;
+            case "haste":
+                CurrentHaste = Math.Max(0.1f, CurrentHaste - effect.ValuePerPoint);  
+                break;
+            case "crit_chance":
+                CurrentCritChance = Math.Min(CurrentCritChance + effect.ValuePerPoint, 1f);
+                break;
+            case "hp":
+                CurrentMaxHp += effect.ValuePerPoint;
+                Heal(effect.ValuePerPoint);
+                break;
+            case "unlock_piercing_arrows":
+                hasPiercingArrows = true;
+                ((Bow)_Weapon).piercingArrows = true;
+                break;
+            case "unlock_crit_guarantee":
+                hasCritGuarantee = true;
+                ((Bow)_Weapon).OnHitCallBack = OnArrowHit;
+                break;
+            case "unlock_rapid_fire":
+                hasRapidFire = true;
+                ((Bow)_Weapon).OnHitCallBack = OnArrowHit;
+                break;
+            case "unlock_giant_arrow":
+                ActiveAbility = new GiantArrowAbility();
+                break;
+            case "unlock_poison_arrows":
+                ((Bow)_Weapon).poisonArrows = true;
+                break;
+            case "unlock_poison_spread":
+                _hasPoisonSpread = true;
+                ((Bow)_Weapon).spreadPoison = true;
+                break;
+            case "poison_damage":
+                _hasIncreasedPoisonDamage = true;
+                ((Bow)_Weapon).increasedPoisonDamage = true;
+                break;
+            case "unlock_poison_touch":
+                _hasPoisonTouch = true;
+                break;
+            case "unlock_arrow_storm":
+                ActiveAbility = new ArrowStormAbility();
+                break;
+        }
+        UpdateStats();
+    }
+
+    protected override void OnLevelUp()
+    {
+        float prevDamageBonus = _levelDamageBonus;
+        base.OnLevelUp();
+        CurrentMaxHp += LevelStatBonus;
+        // Damage is int; apply only when the float crosses the next integer
+        int dmgIncrease = (int)_levelDamageBonus - (int)prevDamageBonus;
+        if (dmgIncrease > 0) CurrentDamage += dmgIncrease;
+        CurrentCritChance = Math.Min(1f, CurrentCritChance + LevelStatBonus);
+        CurrentHaste = Math.Max(0.1f, CurrentHaste - LevelStatBonus);
+        CurrentSpeed += LevelStatBonus;
+    }
+
+    public void RevertAllSkillStats()
+    {
+        CurrentMaxHp = BaseMaxHp + _levelHpBonus;
+        CurrentDamage = BaseDamage + (int)_levelDamageBonus;
+        CurrentCritChance = BaseCritChance + _levelCritBonus;
+        CurrentHaste = Math.Max(0.1f, BaseHaste - _levelHasteBonus);
+        CurrentSpeed = BaseSpeed + _levelSpeedBonus;
+
+        hasPiercingArrows = false;
+        hasCritGuarantee = false;
+        hasRapidFire = false;
+        ((Bow)_Weapon).OnHitCallBack = null;
+        ((Bow)_Weapon).piercingArrows = false;
+        ((Bow)_Weapon).poisonArrows = false;
+        ActiveAbility = null;
+
+        UpdateStats();
+    }
+
+    public void UpdateStats()
+    {
+        
+    }
+
+    private void OnArrowHit(BaseEnemy enemy)
+    {
+        if (hasRapidFire)
+            OnArrowHitAttackSpeed(enemy);
+        if (hasCritGuarantee)
+            OnArrowHitCritChance(enemy);
+    }
+    private void OnArrowHitAttackSpeed(BaseEnemy enemy)
+    {
+        _hitCounterAttackSpeed++;
+        if (_hitCounterAttackSpeed >= HitsForAttackSpeed)
+        {
+            _hitCounterAttackSpeed = 0;
+            AttackSpeedKeystone();
+        }
+    }
+
+    private void OnArrowHitCritChance(BaseEnemy enemy)
+    {
+        _hitCounterCritGuarantee++;
+        if (_hitCounterCritGuarantee >= HitsForCritGuarentee)
+        {
+            _hitCounterCritGuarantee = 0;
+            CritChanceKeystone();
+        }
+    }
+
+    private void AttackSpeedKeystone()
+    {
+        _attackSpeedBoostTimer = AttackSpeedBoostDuration;
+    }
+
+    private void CritChanceKeystone()
+    {
+        _critGuaranteeTimer = CritGuaranteeDuration;
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)
