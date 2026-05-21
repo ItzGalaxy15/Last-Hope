@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Last_Hope;
+using Last_Hope.Engine;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Last_Hope.Engine;
-using LastHope.Audio;
-
 namespace Last_Hope.UI.Menus;
 
 public sealed class SettingsMenu : MenuBase
@@ -30,8 +30,10 @@ public sealed class SettingsMenu : MenuBase
     private static Texture2D _lmbTexture;
 
     private SettingsChromeLayout _chrome;
-    private List<(Rectangle rect, KeybindId id)> _bindTargets = new();
+    private readonly List<(Rectangle rect, KeybindId id)> _bindTargets = new();
     private Rectangle _schemeToggleRect;
+    private Rectangle _fullscreenToggleRect;
+
     private float _controlsScrollY;
     private float _controlsMaxScroll;
     private static readonly RasterizerState ScissorRasterizer = new RasterizerState { ScissorTestEnable = true, CullMode = CullMode.None };
@@ -113,7 +115,9 @@ public sealed class SettingsMenu : MenuBase
                 GameInputBinding bind = nb.Value;
                 KeybindId? owner = KeybindStore.FindBindingOwner(bind, _awaitingRebind.Value);
                 if (!owner.HasValue)
+                {
                     KeybindStore.ApplyRebind(_awaitingRebind.Value, bind);
+                }
                 else
                 {
                     _pendingConflict = owner;
@@ -182,6 +186,14 @@ public sealed class SettingsMenu : MenuBase
                         _awaitingRebind = id;
                         return;
                     }
+                }
+            }
+            if (_tab == SettingsTab.Display)
+            {
+                if (_fullscreenToggleRect.Contains(mouse))
+                {
+                    ((Last_Hope)Game).Graphics.ToggleFullScreen();
+                    return;
                 }
             }
         }
@@ -266,17 +278,20 @@ public sealed class SettingsMenu : MenuBase
             DrawControlsRebindable(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
             spriteBatch.End();
         }
-        else
+        else if (_tab == SettingsTab.Sound)
         {
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-            if (_tab == SettingsTab.Sound)
-                DrawSoundSettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
-            else
-                DrawPlaceholderInRect(spriteBatch, layoutFont, chrome.ContentRect, "Coming soon.", 0.62f * ui);
+            DrawSoundSettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
+            spriteBatch.End();
+        }
+        if (_tab == SettingsTab.Display)
+        {
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            DrawDisplaySettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
             spriteBatch.End();
         }
 
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         if (_tab == SettingsTab.Controls && _controlsMaxScroll > 0)
         {
             int sbW = Math.Max(4, (int)(5f * ui));
@@ -546,6 +561,31 @@ public sealed class SettingsMenu : MenuBase
             SpriteEffects.None,
             0f
         );
+    }
+
+    private void DrawDisplaySettings(SpriteBatch spriteBatch, GameTime gameTime, SpriteFont font, Rectangle content, float textScale, float ui)
+    {
+        var (labelFont, labelMul) = BodyFontForMenuText(font);
+        float toggleH = 36f * ui;
+        float toggleW = 400f * ui;
+        int toggleX = (int)(content.X + (content.Width / 2f) - (toggleW / 2f));
+        int toggleY = (int)(content.Y + (8f * ui));
+        bool isFullscreen = ((Last_Hope)Game).Graphics.IsFullScreen;
+
+        _fullscreenToggleRect = new Rectangle(toggleX, toggleY, (int)toggleW, (int)toggleH);
+
+
+        spriteBatch.Draw(Pixel, _fullscreenToggleRect, isFullscreen ? new Color(60, 100, 160, 220) : new Color(40, 48, 62, 200));
+        DrawPanelOutline(spriteBatch, _fullscreenToggleRect, isFullscreen ? new Color(140, 185, 255, 200) : new Color(120, 140, 170, 120));
+
+        string schemeLabel = isFullscreen ? "Fullscreen: ON" : "Fullscreen: OFF";
+
+        float labelScale = textScale * 0.82f * labelMul;
+        Vector2 labelSz = gm.MeasureUiString(labelFont, schemeLabel, labelScale);
+        gm.DrawUiString(spriteBatch, labelFont, schemeLabel,
+            new Vector2(_fullscreenToggleRect.Center.X - (labelSz.X / 2f), _fullscreenToggleRect.Center.Y - (labelSz.Y / 2f)),
+            Color.White, 0f, Vector2.Zero, labelScale, SpriteEffects.None, 0f);
+
     }
 
     private void DrawBoundKey(SpriteBatch spriteBatch, SpriteFont font, int frame, Rectangle rect, GameInputBinding bind, float chip)
