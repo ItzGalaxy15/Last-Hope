@@ -1,7 +1,7 @@
 using System;
 using Last_Hope.BaseModel;
-using Last_Hope.Collision;
 using Last_Hope.Classes.Items;
+using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
@@ -48,13 +48,27 @@ public class Wolf : BaseEnemy
     private float HitboxSize => FullSize * 0.55f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
+        // Base Goblin stats
+    public override float BaseMaxHp { get; } = 20f;
+    public override int BaseDamage { get; } = 5;
+    public override float BaseCritChance { get; } = 0f;
+    public override float BaseHaste { get; } = 2f; // Attack cooldown
+    public override float BaseSpeed { get; } = 100f;
+    public override float ExperienceValue { get; protected set; } = 2f;
+
+    // Current Goblin Stats
+    public override float CurrentMaxHp { get; protected set; }
+    public override int CurrentDamage { get; protected set; }
+    public override float CurrentCritChance { get; protected set; }
+    public override float CurrentHaste { get; protected set; }
+    public override float CurrentSpeed { get; protected set; }
+
     // Brownish-gray tint distinguishes the wolf from the orc on the placeholder sprite
     private static readonly Color WolfBaseTint = new Color(110, 95, 75);
 
     public Wolf(Point position)
-        : base(maxHealth: 60, currentHealth: 60, speed: 115f, experienceValue: 3f)
     {
-        int size = (int)(FrameSize * SpriteScale);
+        const int size = (int)(FrameSize * SpriteScale);
         _collider = new RectangleCollider(new Rectangle(position, new Point(size, size)));
         SetCollider(_collider);
         _precisePosition = position.ToVector2();
@@ -89,6 +103,7 @@ public class Wolf : BaseEnemy
         var decoy = gm.ActiveDecoy;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+        UpdatePoison(dt);
         if (_meleeCooldownTimer > 0f)
             _meleeCooldownTimer = Math.Max(0f, _meleeCooldownTimer - dt);
         if (_lungeCooldownTimer > 0f)
@@ -149,6 +164,7 @@ public class Wolf : BaseEnemy
         }
 
         Vector2 movement = _lungeDirection * LungeSpeed * dt;
+        if (_isPoisoned) movement *= 0.75f;
 
         // Slide along walls rather than hard-stopping mid-lunge
         Vector2 newPosX = new Vector2(_precisePosition.X + movement.X, _precisePosition.Y);
@@ -187,7 +203,7 @@ public class Wolf : BaseEnemy
             if (direction != Vector2.Zero) direction.Normalize();
         }
 
-        Vector2 movement = direction * Speed * dt;
+        Vector2 movement = direction * BaseSpeed * dt;
 
         Vector2 newPosX = new Vector2(_precisePosition.X + movement.X, _precisePosition.Y);
         if (!WouldCollideAt(newPosX, HitboxSize, HitboxOffset))
@@ -206,6 +222,12 @@ public class Wolf : BaseEnemy
 
     public override void OnCollision(GameObject other)
     {
+        if (_isPoisoned && _poisonSpreads && other is BaseEnemy otherEnemy && !otherEnemy._isPoisoned)
+        {
+            otherEnemy.isPoisoned(true, PoisonDamagePerTick);
+            otherEnemy.EnablePoisonSpreading();
+        }
+
         if (other is Decoy decoy)
         {
             if (_meleeCooldownTimer > 0f) return;

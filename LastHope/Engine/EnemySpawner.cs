@@ -16,19 +16,19 @@ public class EnemySpawner
 {
     /// <summary>The total number of waves required to complete a run.</summary>
     public int TotalWaves { get; set; } = 1;
-    
+
     /// <summary>The exponential multiplier applied to the base enemy count per wave.</summary>
     public float EnemyMultiplierPerWave { get; set; } = 1.5f;
-    
+
     /// <summary>The base number of enemies that will spawn on the first wave.</summary>
     public int StartingEnemies { get; set; } = 20;
-    
+
     /// <summary>Whether a Boss enemy should be spawned at the end of the final wave.</summary>
     public bool BossAppearsOnLastWave { get; set; } = true;
-    
+
     /// <summary>Whether to cap the maximum number of enemies spawned per wave.</summary>
     public bool UseMaxEnemyLimit { get; set; } = true;
-    
+
     /// <summary>The absolute maximum number of enemies allowed per wave, if <see cref="UseMaxEnemyLimit"/> is true.</summary>
     public int MaxEnemiesPerWave { get; set; } = 35;
 
@@ -36,16 +36,16 @@ public class EnemySpawner
     private float spawnInterval = 0.2f; // spawn an enemy every 0.2s
 
     private int currentWave = 1;
-    
+
     /// <summary>The current wave the player is on. Starts at 1.</summary>
     public int CurrentWave => currentWave;
-    
+
     private int spawnedThisWave = 0;
     private float waveWaitTimer = 0f;
     private bool waitingForNextWave = false;
-    private float wavePause = 3f; // pause between the waves
+    private readonly float wavePause = 3f; // pause between the waves
     private bool bossSpawned = false;
-    
+
     /// <summary>Indicates whether the final wave's boss has been spawned yet.</summary>
     public bool BossSpawned => bossSpawned;
 
@@ -152,6 +152,7 @@ public class EnemySpawner
             if (gm.RNG.NextDouble() < 0.5)
                 gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", speed: 200f, owner: null)));
             else
+                gm.AddGameObject(new Wolf(spawnPosition));
                 gm.AddGameObject(new Orc(spawnPosition));
 
             spawnedThisWave++;
@@ -173,7 +174,7 @@ public class EnemySpawner
         {
             Vector2 pos = RandomOffScreenLocation(radius);
 
-            int size = 160; // Increased to 160 to guarantee safe spawn for Bosses as well
+            const int size = 160; // Increased to 160 to guarantee safe spawn for Bosses as well
 
             var rect = new Rectangle((int)pos.X, (int)pos.Y, size, size);
             var collider = new RectangleCollider(rect);
@@ -201,15 +202,14 @@ public class EnemySpawner
 
         float angle = (float)(gm.RNG.NextDouble() * Math.PI * 2);
 
-        Vector2 pos = playerPos + new Vector2(
+        Vector2 pos = playerPos + (new Vector2(
             (float)Math.Cos(angle),
             (float)Math.Sin(angle)
-        ) * distance;
+        ) * distance);
 
         // Keep enemies in the village zone never spawn in the locked forest
         if (gm.ForestBoundaryX > 0f)
             pos.X = Math.Max(pos.X, gm.ForestBoundaryX);
-
         return pos;
     }
 
@@ -234,7 +234,7 @@ public class EnemySpawner
     /// <summary>
     /// Gets a random location off the screen relative to the player position, within World bounds.
     /// </summary>
-    public Vector2 RandomOffScreenLocation()
+    public static Vector2 RandomOffScreenLocation()
     {
         var gm = GameManager.GetGameManager();
         if (gm._player == null) return gm.RandomScreenLocation();
