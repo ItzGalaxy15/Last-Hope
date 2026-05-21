@@ -149,11 +149,19 @@ public class EnemySpawner
             spawnTimer = 0f;
 
             Point spawnPosition = GetValidSpawnPoint();
-            if (gm.RNG.NextDouble() < 0.5)
+            double enemyRoll = gm.RNG.NextDouble();
+            if (enemyRoll < (1.0 / 3.0))
+            {
                 gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", speed: 200f, owner: null)));
-            else
+            }
+            else if (enemyRoll < (2.0 / 3.0))
+            {
                 gm.AddGameObject(new Orc(spawnPosition));
-
+            }
+            else
+            {
+                gm.AddGameObject(new Troll(spawnPosition));
+            }
             spawnedThisWave++;
         }
     }

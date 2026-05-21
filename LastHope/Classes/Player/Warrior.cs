@@ -507,6 +507,18 @@ public class Warrior : BasePlayer
         {
             drawColor = Color.Lerp(drawColor, Color.LimeGreen, 0.5f);
         }
+
+        Color freezeTint = new Color(150, 220, 255);
+        float freezeIntensity = IsStunned ? (0.35f + 0.65f * StunVisualProgress) : 0f;
+        if (freezeIntensity > 0f)
+            drawColor = Color.Lerp(drawColor, freezeTint, freezeIntensity);
+
+        Color equipmentColor = freezeIntensity > 0f
+            ? Color.Lerp(Color.White, freezeTint, freezeIntensity)
+            : Color.White;
+        Color offHandColor = freezeIntensity > 0f
+            ? Color.Lerp(Color.LightGray, freezeTint, freezeIntensity)
+            : Color.LightGray;
         
         Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
         Vector2 weaponOrigin = new Vector2(FrameSize * 0.5f, FrameSize * 0.5f);
@@ -560,7 +572,7 @@ public class Warrior : BasePlayer
             // Draw shield behind the player for Up, Left, and Right
             if (_walkRow != 0)
             {
-                spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
+                spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, equipmentColor, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
             }
         }
 
@@ -569,7 +581,7 @@ public class Warrior : BasePlayer
         if (IsShieldActive && _walkRow == 0)
         {
             // Draw shield in front of the player for Down
-            spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, equipmentColor, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
         }
 
         if (IsSwordActive && DualWieldUnlocked)
@@ -580,25 +592,25 @@ public class Warrior : BasePlayer
                 Vector2 offsetPos = sidePos + new Vector2(_walkRow == 3 ? 8f : -8f, -4f);
                 SpriteEffects swordFlip = weaponFlip ^ SpriteEffects.FlipHorizontally;
 
-                spriteBatch.Draw(activeTexture, offsetPos, weaponSource, Color.LightGray, 0f, weaponOrigin, AxeDrawScale, swordFlip, 0f);
-                spriteBatch.Draw(activeTexture, sidePos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, swordFlip, 0f);
+                spriteBatch.Draw(activeTexture, offsetPos, weaponSource, offHandColor, 0f, weaponOrigin, AxeDrawScale, swordFlip, 0f);
+                spriteBatch.Draw(activeTexture, sidePos, weaponSource, equipmentColor, 0f, weaponOrigin, AxeDrawScale, swordFlip, 0f);
             }
             else // Up or Down
             {
                 Rectangle upDownSource = new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize);
-                spriteBatch.Draw(activeTexture, rightHand, upDownSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
-                spriteBatch.Draw(activeTexture, leftHand, upDownSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+                spriteBatch.Draw(activeTexture, rightHand, upDownSource, equipmentColor, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+                spriteBatch.Draw(activeTexture, leftHand, upDownSource, equipmentColor, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
             }
         }
         else if (IsShieldActive)
         {
-            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, Color.White, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
+            spriteBatch.Draw(activeTexture, weaponPos, weaponSource, equipmentColor, 0f, weaponOrigin, AxeDrawScale, weaponFlip, 0f);
         }
         else
         {
             Vector2 singleWeaponPos = _walkRow == 3 ? leftHand : rightHand;
             float drawScale = IsAxeActive ? AxeDrawScale * 1.3f : AxeDrawScale;
-            spriteBatch.Draw(activeTexture, singleWeaponPos, weaponSource, Color.White, 0f, weaponOrigin, drawScale, weaponFlip, 0f);
+            spriteBatch.Draw(activeTexture, singleWeaponPos, weaponSource, equipmentColor, 0f, weaponOrigin, drawScale, weaponFlip, 0f);
         }
 
         if (DebugDrawHitbox && _collider is not null)
@@ -635,6 +647,7 @@ public class Warrior : BasePlayer
             return;
 
         _hurtCooldown = EnemyContactHurtInterval;
+        //_hurtCooldown = enemy is Troll ? 1f : EnemyContactHurtInterval;
 
         float damageToTake = EnemyContactDamage;
         if (enemy is Boss) 
