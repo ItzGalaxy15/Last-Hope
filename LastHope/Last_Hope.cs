@@ -157,7 +157,16 @@ public class Last_Hope : Game
         GumService.Default.Update(gameTime);
         if (_gameManager.playerAlive && _gameManager._player != null)
         {
-            _camera.MinX = _gameManager.IsForestLocked ? _gameManager.ForestBoundaryX : 0f;
+            if (_gameManager.CurrentZone == Zone.Forest)
+            {
+                _camera.MinX = 0f;
+                _camera.MaxX = _gameManager.ForestBoundaryX;
+            }
+            else
+            {
+                _camera.MinX = _gameManager.IsForestLocked ? _gameManager.ForestBoundaryX : 0f;
+                _camera.MaxX = null;
+            }
             _camera.Update(_gameManager._player.GetPosition());
         }
 
