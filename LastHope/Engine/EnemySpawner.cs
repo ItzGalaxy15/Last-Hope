@@ -30,7 +30,7 @@ public class EnemySpawner
     public bool UseMaxEnemyLimit { get; set; } = true;
     
     /// <summary>The absolute maximum number of enemies allowed per wave, if <see cref="UseMaxEnemyLimit"/> is true.</summary>
-    public int MaxEnemiesPerWave { get; set; } = 35;
+    public int MaxEnemiesPerWave { get; set; } = 100;
 
     private float spawnTimer = 0f;
     private float spawnInterval = 0.2f; // spawn an enemy every 0.2s
