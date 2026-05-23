@@ -27,6 +27,12 @@ public class Warrior : BasePlayer
     private const float WarriorDrawScale = 3f;
     private const float AxeDrawScale = 1.8f;
     private const float WalkFrameDuration = 0.12f;
+    private const int AbilityFrames = 5;
+    private const int AbilityColumns = 5;
+    private const int AxeAbilityRow = 0;
+    private const int ShieldAbilityRow = 1;
+    private const float AbilityDrawScale = 3f;
+    private const float AxeAbilityOriginX = 4f;
 
     private int _walkRow;
     private int _walkFrameIndex;
@@ -87,6 +93,17 @@ public class Warrior : BasePlayer
     public int DmgLevel { get; set; }
 
     public BaseAbility ActiveAbility { get; set; }
+    
+    public Texture2D WarriorAbilitySprite { get; private set; }
+    private AnimationManager _abilityAnimation;
+    private bool _isCastingAbility;
+    private bool _abilityHitTriggered;
+    private BaseAbility _castingAbility;
+    private float _abilityRotation;
+    private Vector2 _abilityAimDir;
+    private Vector2 _abilityOrigin;
+    private Vector2 _abilityDrawPos;
+    private bool _abilityRotate;
 
     public Warrior(Vector2 startPosition)
         : base(position: startPosition, maxHp: 100f, weapon: new Weapon("Sword", damage: 20, critChance: 0.1f), speed: 220f, level: 0, experience: 0, dashDistance: 140f)
@@ -106,6 +123,7 @@ public class Warrior : BasePlayer
         try { ShieldSprite = content.Load<Texture2D>("ShieldSprite"); } catch { ShieldSprite = AxeSprite; } // Fallback to avoid crashes
         
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
+        try { WarriorAbilitySprite = content.Load<Texture2D>("WarriorAbilitySheet"); } catch { WarriorAbilitySprite = null; }
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
         _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
         _inputManager = GameManager.GetGameManager().InputManager;
@@ -134,8 +152,27 @@ public class Warrior : BasePlayer
         if (!GameManager.GetGameManager().playerAlive || _currentHp <= 0f)
             return;
 
-        Move(_moveInput, gameTime);
-        SyncColliderToPosition();
+        if (_isCastingAbility)
+        {
+            _abilityAnimation?.Update();
+
+            if (_abilityAnimation != null && _abilityAnimation.ActiveFrame == 3 && !_abilityHitTriggered)
+            {
+                _abilityHitTriggered = true;
+                _castingAbility?.PerformHit(this);
+            }
+
+            if (_abilityAnimation != null && _abilityAnimation.isFinished)
+            {
+                _isCastingAbility = false;
+                _castingAbility = null;
+            }
+        }
+        else
+        {
+            Move(_moveInput, gameTime);
+            SyncColliderToPosition();
+        }
 
         bool buffsChanged = false;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -162,7 +199,7 @@ public class Warrior : BasePlayer
 
         if (buffsChanged) UpdateStats();
 
-        bool moving = _moveInput != Vector2.Zero;
+        bool moving = _moveInput != Vector2.Zero && !_isCastingAbility;
         if (moving)
         {
             SetWalkRowFromDirection(_moveInput);
@@ -182,7 +219,7 @@ public class Warrior : BasePlayer
         // --- MAJOR ACTIVE ABILITIES LOGIC ---
         ActiveAbility?.Update(this, gameTime);
 
-        if (_inputManager is not null && ActiveAbility != null && ActiveAbility.CanExecute())
+        if (_inputManager is not null && ActiveAbility != null && ActiveAbility.CanExecute() && !_isCastingAbility)
         {
             if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
             {
@@ -193,7 +230,7 @@ public class Warrior : BasePlayer
         if (_inputManager is not null)
         {
             _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && _timeSinceLastAttack >= _currentAttackCooldown)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && _timeSinceLastAttack >= _currentAttackCooldown && !_isCastingAbility)
             {
                 UseWeapon();
                 AudioManager.PlaySfx(_attackSound);
@@ -201,20 +238,20 @@ public class Warrior : BasePlayer
             }
 
             // place item at feet
-            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _itemActionCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _itemActionCooldown <= 0f && !_isCastingAbility)
             {
                 ItemSystem.PlaceSelectedItem(this);
                 _itemActionCooldown = ItemActionCooldown;
             }
 
             // throw item toward mouse
-            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _itemActionCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _itemActionCooldown <= 0f && !_isCastingAbility)
             {
                 ItemSystem.ThrowSelectedItemTowardMouse(this);
                 _itemActionCooldown = ItemActionCooldown;
             }
 
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f && !_isCastingAbility)
             {
                 Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
                 Vector2 towardMouse = mousePosition - _position;
@@ -226,7 +263,7 @@ public class Warrior : BasePlayer
                 }
             }
 
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Teleport) && _teleportCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Teleport) && _teleportCooldown <= 0f && !_isCastingAbility)
             {
                 if (Teleport())
                     _teleportCooldown = TeleportCooldownDuration;
@@ -344,6 +381,11 @@ public class Warrior : BasePlayer
     public Vector2 GetCastAnchor()
     {
         return _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
+    }
+
+    private Vector2 GetAbilityCastAnchor()
+    {
+        return _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
     }
 
     public void ResetAttackTimer()
@@ -548,6 +590,13 @@ public class Warrior : BasePlayer
             spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, Color.White, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
         }
 
+        if (_isCastingAbility && _abilityAnimation != null && WarriorAbilitySprite != null)
+        {
+            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
+            float rotation = _abilityRotate ? _abilityRotation : 0f;
+            spriteBatch.Draw(WarriorAbilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, AbilityDrawScale, SpriteEffects.None, 0f);
+        }
+
         if (IsSwordActive && DualWieldUnlocked)
         {
             if (_walkRow == 3 || _walkRow == 2) // Left or Right
@@ -653,6 +702,44 @@ public class Warrior : BasePlayer
         TriggerHurtFlash();
         CheckDeath();
     }
+
+    public void StartAbilityAnimation(BaseAbility ability)
+    {
+        _isCastingAbility = true;
+        _abilityHitTriggered = false;
+        _castingAbility = ability;
+
+        int row = ability switch
+        {
+            AxeSlamAbility => AxeAbilityRow,
+            ShieldSlamAbility => ShieldAbilityRow,
+            _ => AxeAbilityRow
+        };
+
+        Vector2 castAnchor = GetAbilityCastAnchor();
+        Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
+        _abilityAimDir = mousePosition - castAnchor;
+        if (_abilityAimDir != Vector2.Zero) _abilityAimDir.Normalize();
+        else _abilityAimDir = new Vector2(1, 0);
+        _abilityRotation = (float)Math.Atan2(_abilityAimDir.Y, _abilityAimDir.X);
+        _abilityDrawPos = castAnchor;
+        _abilityRotate = row == AxeAbilityRow;
+        _abilityOrigin = _abilityRotate
+            ? new Vector2(AxeAbilityOriginX, FrameSize / 2f)
+            : new Vector2(FrameSize / 2f, FrameSize / 2f);
+
+        _abilityAnimation = new AnimationManager(
+            AbilityFrames,
+            AbilityColumns,
+            new Vector2(FrameSize, FrameSize),
+            8, // interval
+            false, // loop
+            0,
+            row * FrameSize
+        );
+    }
+
+    public Vector2 GetAbilityAimDirection() => _abilityAimDir;
 
     private void SetWalkRowFromDirection(Vector2 dir)
     {
