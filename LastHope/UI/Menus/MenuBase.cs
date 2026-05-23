@@ -5,75 +5,104 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
-using Last_Hope.BaseModel;
 using Last_Hope.Classes.Items;
 
 namespace Last_Hope.UI.Menus;
 
+/// <summary>
+/// Shared helpers for full-screen and hub menus: fonts, keybind/control reference drawing, item index text,
+/// hub backdrop, and end-game overlays. Concrete screens inherit this and implement their own
+/// <c>Update</c>/<c>Draw</c>; routing is via <see cref="Last_Hope.UI.Menu"/> and <see cref="GameManager"/>.
+/// </summary>
 public abstract class MenuBase
 {
     private const int FrameSize = 32;
     private const int FrameCount = 3;
     private const double FrameDuration = 0.15;
-    private static Texture2D _lmbTexture;
-    private static Texture2D _keysTexture;
+    protected static Texture2D _lmbTexture;
+    protected static Texture2D _lettersTexture;
+    protected static Texture2D _numbersTexture;
+    protected static Texture2D _specialTexture;
 
-    private const int KeyRowW = 0;
-    private const int KeyRowA = 1;
-    private const int KeyRowS = 2;
-    private const int KeyRowD = 3;
-    private const int KeyRowT = 4;
-    private const int KeyRow1 = 5;
-    private const int KeyRow2 = 6;
-    private const int KeyRowShift = 7;
+    protected enum KeySheet { Letters, Numbers, Special }
 
-    private enum SegKind { Text, Key, Lmb, ItemSprite, BoundKey }
+    /// <summary>Labels for the shared restart/quit pair on <see cref="GameOverMenu"/> and <see cref="WinnerMenu"/>.</summary>
+    protected static class EndGameMenuLabels
+    {
+        public const string Restart = "Restart Game";
+        public const string Quit = "Quit Game";
+    }
+
+    /// <summary>Hit boxes and text positions for <see cref="LayoutEndGameTwoButtonMenu"/>.</summary>
+    protected readonly record struct EndGameMenuLayout(
+        Vector2 TitlePosition,
+        Vector2 RestartTextPosition,
+        Vector2 QuitTextPosition,
+        Rectangle RestartHitBox,
+        Rectangle QuitHitBox);
+
+    /// <summary>
+    /// Computes centered title position plus stacked restart/quit rows (used by <see cref="GameOverMenu"/> and <see cref="WinnerMenu"/>).
+    /// </summary>
+    protected EndGameMenuLayout LayoutEndGameTwoButtonMenu(string titleText, float restartOffsetY = 100f, float quitOffsetY = 200f)
+    {
+        Vector2 titlePos = GetFontPosition(titleText);
+        Vector2 restartPos = GetFontPosition(EndGameMenuLabels.Restart) + new Vector2(0, restartOffsetY);
+        Vector2 quitPos = GetFontPosition(EndGameMenuLabels.Quit) + new Vector2(0, quitOffsetY);
+        return new EndGameMenuLayout(
+            titlePos,
+            restartPos,
+            quitPos,
+            GetTextRectangle(EndGameMenuLabels.Restart, restartPos),
+            GetTextRectangle(EndGameMenuLabels.Quit, quitPos));
+    }
+
+    /// <summary>
+    /// Mouse handling for end-game buttons. Invoked from <see cref="GameOverMenu.Update"/> / <see cref="WinnerMenu.Update"/>.
+    /// </summary>
+    protected void HandleEndGameMenuClicks(in EndGameMenuLayout layout, Action onRestart, Action onQuit)
+    {
+        if (!InputManager.LeftMousePress())
+            return;
+        Point m = InputManager.CurrentMouseState.Position;
+        if (layout.RestartHitBox.Contains(m))
+            onRestart();
+        else if (layout.QuitHitBox.Contains(m))
+            onQuit();
+    }
+
+    /// <summary>
+    /// Draws title + dim button rects + restart/quit labels. Used by <see cref="GameOverMenu.Draw"/> and <see cref="WinnerMenu.Draw"/>.
+    /// </summary>
+    protected void DrawEndGameTwoButtonOverlay(SpriteBatch spriteBatch, string titleText, Color titleColor, Color quitLabelColor, in EndGameMenuLayout layout)
+    {
+        gm.DrawUiString(spriteBatch, _font, titleText, layout.TitlePosition, titleColor);
+        spriteBatch.Draw(Pixel, layout.RestartHitBox, Color.DarkSlateGray);
+        spriteBatch.Draw(Pixel, layout.QuitHitBox, Color.DarkSlateGray);
+        gm.DrawUiString(spriteBatch, _font, EndGameMenuLabels.Restart, layout.RestartTextPosition, Color.White);
+        gm.DrawUiString(spriteBatch, _font, EndGameMenuLabels.Quit, layout.QuitTextPosition, quitLabelColor);
+    }
+
+    private enum SegKind { Text, ItemSprite, BoundKey }
+
+    /// <summary>One token in a controls or items reference line (see <see cref="DrawSavedControlsText"/>, <see cref="DrawItemsText"/>).</summary>
     private readonly struct Segment
     {
         public readonly SegKind Kind;
         public readonly string Text;
-        public readonly int KeyRow;
         public readonly ItemType Item;
         public readonly KeybindId? BindId;
-        private Segment(SegKind k, string t, int r, ItemType i, KeybindId? bindId)
+        private Segment(SegKind k, string t, ItemType i, KeybindId? bindId)
         {
             Kind = k;
             Text = t;
-            KeyRow = r;
             Item = i;
             BindId = bindId;
         }
-        public static Segment T(string t) => new Segment(SegKind.Text, t, 0, ItemType.None, null);
-        public static Segment K(int row) => new Segment(SegKind.Key, null, row, ItemType.None, null);
-        public static Segment L() => new Segment(SegKind.Lmb, null, 0, ItemType.None, null);
-        public static Segment I(ItemType item) => new Segment(SegKind.ItemSprite, null, 0, item, null);
-        public static Segment B(KeybindId id) => new Segment(SegKind.BoundKey, null, 0, ItemType.None, id);
+        public static Segment T(string t) => new Segment(SegKind.Text, t, ItemType.None, null);
+        public static Segment I(ItemType item) => new Segment(SegKind.ItemSprite, null, item, null);
+        public static Segment B(KeybindId id) => new Segment(SegKind.BoundKey, null, ItemType.None, id);
     }
-
-    private static readonly Segment[][] ControlsLines =
-    {
-        new[] { Segment.T("Controls") },
-        Array.Empty<Segment>(),
-        new[] { Segment.T("Movement") },
-        new[] {
-            Segment.K(KeyRowW), Segment.T(" "),
-            Segment.K(KeyRowA), Segment.T(" "),
-            Segment.K(KeyRowS), Segment.T(" "),
-            Segment.K(KeyRowD), Segment.T(" -> Move"),
-        },
-        new[] { Segment.K(KeyRowShift), Segment.T(" -> Dash") },
-        Array.Empty<Segment>(),
-        new[] { Segment.T("Combat") },
-        new[] { Segment.L(), Segment.T(" -> Attack") },
-        Array.Empty<Segment>(),
-        new[] { Segment.T("Hotbar") },
-        new[] {
-            Segment.K(KeyRow1), Segment.T(" / "),
-            Segment.K(KeyRow2), Segment.T(" -> Select slot"),
-        },
-        new[] { Segment.T("G -> Place item") },
-        new[] { Segment.K(KeyRowT), Segment.T(" -> Throw item") },
-    };
 
     private static Segment[][] BuildSavedControlsLines() => new Segment[][]
     {
@@ -90,6 +119,15 @@ public abstract class MenuBase
         Array.Empty<Segment>(),
         new[] { Segment.T("Combat") },
         new[] { Segment.B(KeybindId.Attack), Segment.T(" -> Attack") },
+        new[] { Segment.B(KeybindId.KeyboardAttack), Segment.T(" -> Attack (KB)") },
+        Array.Empty<Segment>(),
+        new[] { Segment.T("Aim") },
+        new[] {
+            Segment.B(KeybindId.AimUp), Segment.T(" "),
+            Segment.B(KeybindId.AimDown), Segment.T(" "),
+            Segment.B(KeybindId.AimLeft), Segment.T(" "),
+            Segment.B(KeybindId.AimRight), Segment.T(" -> Aim"),
+        },
         Array.Empty<Segment>(),
         new[] { Segment.T("Hotbar") },
         new[] {
@@ -143,9 +181,8 @@ public abstract class MenuBase
 
     private static readonly Color HubBackdropTop = new(14, 18, 34, 255);
     private static readonly Color HubBackdropBottom = new(28, 38, 72, 255);
-    private static readonly Color HubBackdropRail = new(255, 255, 255, 18);
 
-    /// <summary>Full-screen gradient wash for title/settings style menus (replaces the gameplay map).</summary>
+    /// <summary>Full-screen gradient wash for title/settings style menus (replaces the gameplay map). Used by <see cref="MainMenuScreen"/>, <see cref="SettingsMenu"/>, <see cref="ItemsIndexMenu"/>.</summary>
     protected static void DrawHubMenuBackdrop(SpriteBatch spriteBatch, Texture2D pixel, in Viewport vp)
     {
         const int bands = 16;
@@ -161,12 +198,6 @@ public abstract class MenuBase
             Color c = Color.Lerp(HubBackdropTop, HubBackdropBottom, (t0 + t1) * 0.5f);
             spriteBatch.Draw(pixel, new Rectangle(0, y0, w, rh), c);
         }
-    }
-
-    protected static void DrawHubMenuLeftRail(SpriteBatch spriteBatch, Texture2D pixel, in Viewport vp, float uiScale)
-    {
-        int railW = (int)(52f * uiScale);
-        spriteBatch.Draw(pixel, new Rectangle(0, 0, railW, vp.Height), HubBackdropRail);
     }
 
     /// <summary>Thin border frame (settings panel, modals, hub boxes).</summary>
@@ -210,9 +241,24 @@ public abstract class MenuBase
         return (body, mul);
     }
 
+    /// <summary>
+    /// Gets a Rectangle representing the bounding box for the given text.
+    /// </summary>
+    /// <param name="text">The text to measure.</param>
+    /// <param name="position">The top-left position of the text.</param>
+    /// <param name="scale">The scale applied to the text.</param>
+    /// <returns>A Rectangle encompassing the text area.</returns>
     protected Rectangle GetTextRectangle(string text, Vector2 position, float scale = 1)
         => GetTextRectangleForFont(_font, text, position, scale);
 
+    /// <summary>
+    /// Gets a Rectangle representing the bounding box for the given text, using a specific font.
+    /// </summary>
+    /// <param name="font">The SpriteFont to use for measurement.</param>
+    /// <param name="text">The text to measure.</param>
+    /// <param name="position">The top-left position of the text.</param>
+    /// <param name="scale">The scale applied to the text.</param>
+    /// <returns>A Rectangle encompassing the text area.</returns>
     protected Rectangle GetTextRectangleForFont(SpriteFont font, string text, Vector2 position, float scale = 1f)
     {
         if (font == null && gm.FontBitmap == null)
@@ -225,7 +271,12 @@ public abstract class MenuBase
             (int)size.Y + 10);
     }
 
-    public Vector2 GetFontPosition(string text)
+    /// <summary>
+    /// Calculates the centered position for a given text string on the screen.
+    /// </summary>
+    /// <param name="text">The text to measure and center.</param>
+    /// <returns>A Vector2 representing the centered position.</returns>
+    protected Vector2 GetFontPosition(string text)
     {
         Viewport viewport = Game.GraphicsDevice.Viewport;
         Vector2 center = new Vector2(viewport.Width / 2f, viewport.Height / 2f);
@@ -235,9 +286,6 @@ public abstract class MenuBase
         Vector2 textSize = gm.MeasureUiString(_font, text, 1f);
         return new Vector2(center.X - textSize.X / 2f, center.Y - textSize.Y / 2f);
     }
-
-    protected float MeasureControlsContentWidth(SpriteFont textFont, float textScale) =>
-        MeasureControlsLinesWidth(textFont, textScale, ControlsLines);
 
     private float MeasureControlsLinesWidth(SpriteFont textFont, float textScale, Segment[][] lines)
     {
@@ -291,11 +339,10 @@ public abstract class MenuBase
         return maxW;
     }
 
+    /// <summary>
+    /// Draws control hints using <see cref="KeybindStore"/> (saved bindings). Used by <see cref="PausedMenu.Draw"/>.
+    /// </summary>
     /// <param name="basePos">Top-left of the text block inside the panel.</param>
-    protected void DrawControlsText(SpriteBatch spriteBatch, GameTime gameTime, Vector2 basePos, float textScale) =>
-        DrawControlsLinesCore(spriteBatch, gameTime, basePos, textScale, ControlsLines);
-
-    /// <summary>Draws control hints using <see cref="KeybindStore"/> (saved bindings).</summary>
     protected void DrawSavedControlsText(SpriteBatch spriteBatch, GameTime gameTime, Vector2 basePos, float textScale) =>
         DrawControlsLinesCore(spriteBatch, gameTime, basePos, textScale, BuildSavedControlsLines());
 
@@ -305,7 +352,9 @@ public abstract class MenuBase
             return;
 
         if (_lmbTexture == null) _lmbTexture = _content.Load<Texture2D>("menu/LeftMouseClick");
-        if (_keysTexture == null) _keysTexture = _content.Load<Texture2D>("menu/keys");
+        if (_lettersTexture == null) _lettersTexture = _content.Load<Texture2D>("menu/letters");
+        if (_numbersTexture == null) _numbersTexture = _content.Load<Texture2D>("menu/numbers");
+        if (_specialTexture == null) _specialTexture = _content.Load<Texture2D>("menu/special");
 
         SpriteFont textFont = MenuUiFont;
         var (bodyFont, bodyMul) = BodyFontForMenuText(textFont);
@@ -338,20 +387,6 @@ public abstract class MenuBase
                         gm.DrawUiString(spriteBatch, bodyFont, seg.Text, new Vector2(x, y), Color.White, bodyTs);
                         x += gm.MeasureUiString(bodyFont, seg.Text, bodyTs).X;
                         break;
-                    case SegKind.Key:
-                    {
-                        Rectangle src = new Rectangle(frame * FrameSize, seg.KeyRow * FrameSize, FrameSize, FrameSize);
-                        spriteBatch.Draw(_keysTexture, new Vector2(x, y + spriteYOffset), src, Color.White, 0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0f);
-                        x += spriteSize;
-                        break;
-                    }
-                    case SegKind.Lmb:
-                    {
-                        Rectangle src = new Rectangle(frame * FrameSize, 0, FrameSize, FrameSize);
-                        spriteBatch.Draw(_lmbTexture, new Vector2(x, y + spriteYOffset), src, Color.White, 0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0f);
-                        x += spriteSize;
-                        break;
-                    }
                     case SegKind.BoundKey:
                     {
                         GameInputBinding b = KeybindStore.GetBinding(seg.BindId!.Value);
@@ -371,11 +406,17 @@ public abstract class MenuBase
         {
             case BindingKind.Keyboard:
             {
-                int? row = KeySpriteRowForBindings(b.Key);
-                if (row.HasValue)
+                var info = KeySpriteInfoForBindings(b.Key);
+                if (info.HasValue)
                 {
-                    Rectangle src = new Rectangle(frame * FrameSize, row.Value * FrameSize, FrameSize, FrameSize);
-                    spriteBatch.Draw(_keysTexture, new Vector2(x, y + spriteYOffset), src, Color.White, 0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0f);
+                    Texture2D tex = info.Value.sheet switch
+                    {
+                        KeySheet.Letters => _lettersTexture,
+                        KeySheet.Numbers => _numbersTexture,
+                        _ => _specialTexture,
+                    };
+                    Rectangle src = new Rectangle(frame * FrameSize, info.Value.row * FrameSize, FrameSize, FrameSize);
+                    spriteBatch.Draw(tex, new Vector2(x, y + spriteYOffset), src, Color.White, 0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0f);
                 }
                 else
                 {
@@ -413,19 +454,41 @@ public abstract class MenuBase
         }
     }
 
-    private static int? KeySpriteRowForBindings(Keys k) => k switch
+    protected static (KeySheet sheet, int row)? KeySpriteInfoForBindings(Keys k)
     {
-        Keys.W => 0,
-        Keys.A => 1,
-        Keys.S => 2,
-        Keys.D => 3,
-        Keys.T => 4,
-        Keys.D1 or Keys.NumPad1 => 5,
-        Keys.D2 or Keys.NumPad2 => 6,
-        Keys.LeftShift or Keys.RightShift => 7,
-        _ => null,
-    };
+        if (k >= Keys.A && k <= Keys.Z)
+            return (KeySheet.Letters, k - Keys.A);
 
+        if (k >= Keys.D1 && k <= Keys.D9)
+            return (KeySheet.Numbers, k - Keys.D1);
+        if (k == Keys.D0)
+            return (KeySheet.Numbers, 9);
+        if (k >= Keys.NumPad1 && k <= Keys.NumPad9)
+            return (KeySheet.Numbers, k - Keys.NumPad1);
+        if (k == Keys.NumPad0)
+            return (KeySheet.Numbers, 9);
+
+        return k switch
+        {
+            Keys.Up                             => (KeySheet.Special, 0),
+            Keys.Down                           => (KeySheet.Special, 1),
+            Keys.Left                           => (KeySheet.Special, 2),
+            Keys.Right                          => (KeySheet.Special, 3),
+            Keys.OemPeriod                      => (KeySheet.Special, 4),
+            Keys.OemComma                       => (KeySheet.Special, 5),
+            Keys.LeftShift or Keys.RightShift   => (KeySheet.Special, 6),
+            Keys.Space                          => (KeySheet.Special, 7),
+            Keys.LeftAlt or Keys.RightAlt       => (KeySheet.Special, 8),
+            Keys.Tab                            => (KeySheet.Special, 9),
+            Keys.Enter                          => (KeySheet.Special, 10),
+            Keys.Back                           => (KeySheet.Special, 11),
+            _                                   => null,
+        };
+    }
+
+    /// <summary>
+    /// Item reference list (icons + descriptions). Used by <see cref="PausedMenu.Draw"/> and <see cref="ItemsIndexMenu.Draw"/>.
+    /// </summary>
     /// <param name="wrapInnerWidth">Max width for wrapping item descriptions (excluding panel padding).</param>
     protected void DrawItemsText(SpriteBatch spriteBatch, GameTime gameTime, Vector2 basePos, float wrapInnerWidth, float textScale)
     {
@@ -590,11 +653,17 @@ public abstract class MenuBase
         }
     }
 
+    /// <summary>
+    /// Draws all <see cref="GameObject"/> instances in play. Used by gameplay and menus that show the frozen world
+    /// (<see cref="PausedMenu"/>, <see cref="GameOverMenu"/>, <see cref="WinnerMenu"/>, <see cref="RunningMenu"/>, <see cref="ItemsIndexMenu"/>).
+    /// </summary>
+    /// <param name="effect">Optional post-process (e.g. <see cref="GameManager.DeathFade"/> on game over).</param>
     protected void DrawWorld(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix, Effect effect = null)
     {
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, effect: effect, transformMatrix: transformMatrix);
         foreach (GameObject gameObject in _gameObjects)
         {
+            if (gameObject.IsYSorted) continue;
             gameObject.Draw(gameTime, spriteBatch);
         }
         spriteBatch.End();

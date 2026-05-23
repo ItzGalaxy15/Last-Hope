@@ -2,7 +2,8 @@ using Microsoft.Xna.Framework;
 
 namespace Last_Hope.Engine;
 
-/// <summary>
+
+// This animation manager is derived from this tutorial: https://www.youtube.com/watch?v=N9QLHludTFw&list=PLvN4CrYN-8i4MhiXQMajViJoC5udFfNfA&index=7
 /// Manages 2D sprite sheet animations by tracking frame progression and calculating source rectangles.
 /// </summary>
 /// <remarks>

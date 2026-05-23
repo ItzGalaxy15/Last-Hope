@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Last_Hope.Animations;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
@@ -24,12 +23,15 @@ public class Bomb : GameObject
 
     private const float ExplosionRadius = 100f;
     private const float ExplosionDamage = 100f;
+    private const float BombDrawScale = 1f;
 
     private const int BombFrameSize = 32;
     private const int BombFrameCount = 8;
     private const int BombSpriteRowY = 0; // top row with bomb fuse frames
-    private const float BombDrawScale = 1f;
 
+    /// <summary>
+    /// Creates a bomb at the given position with an initial velocity and fuse duration.
+    /// </summary>
     public Bomb(Vector2 position, Vector2 initialVelocity, float fuseSeconds = 3f)
     {
         _position = position;
@@ -41,6 +43,9 @@ public class Bomb : GameObject
         SetCollider(_collider);
     }
 
+    /// <summary>
+    /// Loads the bomb sprite sheet from content. Falls back to a plain pixel if the asset is missing.
+    /// </summary>
     public override void Load(ContentManager content)
     {
         base.Load(content);
@@ -55,6 +60,9 @@ public class Bomb : GameObject
         }
     }
 
+    /// <summary>
+    /// Moves the bomb with drag, advances the fuse timer, updates the fuse animation frame, and triggers the explosion when the fuse runs out.
+    /// </summary>
     public override void Update(GameTime gameTime)
     {
         if (_exploded)
@@ -78,11 +86,11 @@ public class Bomb : GameObject
         base.Update(gameTime);
     }
 
+    /// <summary>
+    /// Damages all enemies within the explosion radius, awards XP for kills, spawns the explosion animation, and removes the bomb from the game.
+    /// </summary>
     private void Explode()
     {
-        if (_exploded)
-            return;
-
         _exploded = true;
         GameManager gm = GameManager.GetGameManager();
 
@@ -92,7 +100,7 @@ public class Bomb : GameObject
                 continue;
 
             enemy.Damage(ExplosionDamage);
-            if (enemy.CurrentHealth <= 0f)
+            if (enemy._currentHp <= 0f)
             {
                 gm._player?.AddExperience(enemy.ExperienceValue);
                 gm.RemoveGameObject(enemy);
@@ -113,6 +121,9 @@ public class Bomb : GameObject
         gm.RemoveGameObject(this);
     }
 
+    /// <summary>
+    /// Draws the current fuse frame from the sprite sheet, or a plain black square if the sprite sheet is unavailable.
+    /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
     if (_bombSpriteSheet is not null)

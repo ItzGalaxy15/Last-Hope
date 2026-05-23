@@ -6,22 +6,70 @@ using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Last_Hope.BaseModel;
 
 public abstract class BasePlayer : GameObject
 {
+    public Texture2D AimArrowSprite;
     public Vector2 _position { get; protected set; }
 
     // Fraction of the body size used as the hitbox — tune this to adjust fairness.
     protected const float HitboxFraction = 0.55f;
     public abstract float _bodyWidth { get; }
 
-    // Player stats
-    public float _maxHp { get; protected set; }
+    // Base Player stats
     public float _currentHp { get; protected set; }
+    public abstract float BaseMaxHp { get; }
+    public abstract int BaseDamage { get; }
+    public abstract float BaseCritChance { get; }
+    public abstract float BaseHaste { get; } // Attack cooldown
+    public abstract float BaseSpeed { get; }
     public BaseWeapon _Weapon { get; protected set; }
-    public float _Speed { get; protected set; }
+
+    // Current Player stats (after buffs/debuffs)
+    public abstract float CurrentMaxHp { get; protected set; }
+    public abstract int CurrentDamage { get; protected set; }
+    public abstract float CurrentCritChance { get; protected set; }
+    public abstract float CurrentHaste { get; protected set; }
+    public abstract float CurrentSpeed { get; protected set; }
+
+    private float _stunTimer;
+    private float _stunVisualTotalDuration;
+    private float _stunCooldownTimer;
+    private const float StunCooldownDuration = 3f;
+
+    public bool IsStunned => _stunTimer > 0f;
+    public float StunVisualProgress => _stunVisualTotalDuration > 0f
+        ? MathHelper.Clamp(_stunTimer / _stunVisualTotalDuration, 0f, 1f)
+        : 0f;
+
+    public void ApplyStun(float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        if (_stunCooldownTimer > 0f)
+            return;
+
+        float newTimer = Math.Max(_stunTimer, duration);
+        if (newTimer > _stunTimer)
+            _stunVisualTotalDuration = newTimer;
+
+        _stunTimer = newTimer;
+        _stunCooldownTimer = StunCooldownDuration;
+    }
+
+    // Shared input state
+    protected Vector2 _moveInput;
+    protected Vector2 _aimInput;
+    public Vector2 AimInput => _aimInput;
+    protected Vector2 _lastMoveDirection;
+
+    // Aim arrow parameters
+    private const float AimArrowDistance = 70f;
+    private const float AimArrowScale = 2f;
 
     // Dash parameters
     public float _DashDistance {get; protected set; }
@@ -60,6 +108,22 @@ public abstract class BasePlayer : GameObject
     public int Level => _Level;
     public float LevelUpFlashProgress => MathHelper.Clamp(_levelUpFlashTimer / LevelUpFlashDuration, 0f, 1f);
 
+    // Accumulated stat bonuses from leveling (never reset)
+    protected float _levelHpBonus;
+    protected float _levelDamageBonus;
+    protected float _levelCritBonus;
+    protected float _levelHasteBonus;
+    protected float _levelSpeedBonus;
+    public float LevelHpBonus     => _levelHpBonus;
+    public float LevelDamageBonus => _levelDamageBonus;
+    public float LevelCritBonus   => _levelCritBonus;
+    public float LevelHasteBonus  => _levelHasteBonus;
+    public float LevelSpeedBonus  => _levelSpeedBonus;
+    protected const float LevelStatBonus = 0.01f;
+    private const int TalentPointInterval = 5;
+
+    public event Action OnTalentPointEarned;
+
     // UI bar properties
     public float DashCooldownProgress => MathHelper.Clamp(_dashCooldown / DashCooldown, 0f, 1f);
     public float TeleportCooldownProgress => MathHelper.Clamp(_teleportCooldown / TeleportCooldownDuration, 0f, 1f);
@@ -77,29 +141,37 @@ public abstract class BasePlayer : GameObject
     {
         get
         {
-            float HealthProgress = (_currentHp / _maxHp);
+            float HealthProgress = _currentHp / CurrentMaxHp;
             return MathHelper.Clamp(HealthProgress, 0f, 1f);
         }
     }
 
-    protected BasePlayer(Vector2 position, float maxHp, BaseWeapon weapon, float speed, int level, int experience, float dashDistance)
+    protected BasePlayer(Vector2 position, BaseWeapon weapon, int level, int experience, float dashDistance)
     {
         _position = position;
-        _maxHp = maxHp;
-        _currentHp = maxHp;
         _Weapon = weapon;
-        _Speed = speed;
         _Level = level;
         _Experience = experience;
         _DashDistance = dashDistance;
+        MakeStats();
+        _currentHp = CurrentMaxHp;
+    }
+
+    protected void MakeStats()
+    {
+        CurrentMaxHp = BaseMaxHp;
+        CurrentDamage = BaseDamage;
+        CurrentCritChance = BaseCritChance;
+        CurrentHaste = BaseHaste;
+        CurrentSpeed = BaseSpeed;
     }
 
     public void Heal(float amount)
     {
         _currentHp += amount;
-        if (_currentHp > _maxHp)
+        if (_currentHp > CurrentMaxHp)
         {
-            _currentHp = _maxHp;
+            _currentHp = CurrentMaxHp;
         }
     }
 
@@ -134,9 +206,9 @@ public abstract class BasePlayer : GameObject
     private void CheckLevelUp()
     {
         int newLevel = (int)(_Experience / XpPerLevel);
-        if (newLevel > _Level)
+        while (_Level < newLevel)
         {
-            _Level = newLevel;
+            _Level++;
             OnLevelUp();
         }
     }
@@ -144,7 +216,13 @@ public abstract class BasePlayer : GameObject
     protected virtual void OnLevelUp()
     {
         _levelUpFlashTimer = LevelUpFlashDuration;
-        // Override in subclasses to handle level up effects
+        _levelHpBonus     += LevelStatBonus;
+        _levelDamageBonus += LevelStatBonus;
+        _levelCritBonus   += LevelStatBonus;
+        _levelHasteBonus  += LevelStatBonus;
+        _levelSpeedBonus  += LevelStatBonus;
+        if (_Level % TalentPointInterval == 0)
+            OnTalentPointEarned?.Invoke();
     }
 
     protected void Dash(Vector2 direction, float distance)
@@ -173,7 +251,7 @@ public abstract class BasePlayer : GameObject
 
         ApplyDashOffset(current - start);
     }
-
+    // read this about teleport and had similar issues: https://community.monogame.net/t/finding-spawn-points/8100/4
     protected bool Teleport()
     {
         var gm = GameManager.GetGameManager();
@@ -212,8 +290,23 @@ public abstract class BasePlayer : GameObject
 
     public override void Update(GameTime gameTime)
     {
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         if (_levelUpFlashTimer > 0f)
-            _levelUpFlashTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _levelUpFlashTimer = TimerHelper.DecreaseTimer(_levelUpFlashTimer, dt);
+
+        if (_stunTimer > 0f)
+        {
+            _stunTimer = TimerHelper.DecreaseTimer(_stunTimer, dt);
+            if (_stunTimer <= 0f)
+            {
+                _stunTimer = 0f;
+                _stunVisualTotalDuration = 0f;
+            }
+        }
+
+        if (_stunCooldownTimer > 0f)
+            _stunCooldownTimer = TimerHelper.DecreaseTimer(_stunCooldownTimer, dt);
 
         base.Update(gameTime);
     }
@@ -222,15 +315,49 @@ public abstract class BasePlayer : GameObject
     {
 
     }
-    
+
+    public override bool IsYSorted => true;
+    public override float GetSortY() => GetPosition().Y + _bodyWidth;
+
     public Vector2 GetPosition()
     {
         return _position;
     }
 
+    public override void HandleInput(InputManager inputManager)
+    {
+        _moveInput = Vector2.Zero;
+
+        if (IsStunned)
+            return;
+
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp))    _moveInput.Y -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown))  _moveInput.Y += 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft))  _moveInput.X -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.MoveRight)) _moveInput.X += 1f;
+
+        Vector2 rawAim = Vector2.Zero;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimUp))    rawAim.Y -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimDown))  rawAim.Y += 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimLeft))  rawAim.X -= 1f;
+        if (inputManager.IsGameplayKeyDown(KeybindId.AimRight)) rawAim.X += 1f;
+
+        if (rawAim != Vector2.Zero)
+            _aimInput = rawAim;
+        else if (_moveInput != Vector2.Zero)
+            _aimInput = _moveInput;
+
+        if (_moveInput != Vector2.Zero)
+        {
+            Vector2 normalized = _moveInput;
+            normalized.Normalize();
+            _lastMoveDirection = normalized;
+        }
+    }
+
     public void Move(Vector2 direction, GameTime gameTime)
     {
-        if (direction == Vector2.Zero)
+        if (IsStunned || direction == Vector2.Zero)
         {
             return;
         }
@@ -238,7 +365,7 @@ public abstract class BasePlayer : GameObject
         direction.Normalize();
 
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Vector2 velocity = direction * _Speed * dt;
+        Vector2 velocity = direction * CurrentSpeed * dt;
 
         // --- X movement ---
         Vector2 newPosX = new Vector2(_position.X + velocity.X, _position.Y);
@@ -255,6 +382,10 @@ public abstract class BasePlayer : GameObject
         }
 
         _position = MovementHelper.ClampToMapBounds(_position, _bodyWidth);
+
+        var gm = GameManager.GetGameManager();
+        if (gm.IsForestLocked && _position.X < gm.ForestBoundaryX)
+            _position = new Vector2(gm.ForestBoundaryX, _position.Y);
     }
 
     protected bool IsPositionSafe(Vector2 position)
@@ -290,7 +421,7 @@ public abstract class BasePlayer : GameObject
     protected void Revive()
     {
         ExtraLives--;
-        _currentHp = _maxHp; // Prevent death
+        _currentHp = CurrentMaxHp; // Prevent death
 
         _greenGlowTimer = 1.5f;
         _hurtCooldown = 1.5f; // Grant 1.5 seconds of invincibility to escape
@@ -302,6 +433,52 @@ public abstract class BasePlayer : GameObject
         AudioManager.PlaySfx(_deathSound);
         GameManager.GetGameManager().playerAlive = false;
         GameManager.GetGameManager()._state = GameState.GameOver;
+    }
+
+    protected void DrawAimArrow(SpriteBatch spriteBatch)
+    {
+        if (AimArrowSprite == null)
+            return;
+
+        Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        Vector2 direction;
+
+        if (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly)
+        {
+            direction = _aimInput;
+            if (direction == Vector2.Zero)
+                return;
+            direction.Normalize();
+        }
+        else
+        {
+            Vector2 mousePos = GameManager.GetGameManager().GetWorldMousePosition();
+            direction = mousePos - center;
+            if (direction == Vector2.Zero)
+                return;
+            direction.Normalize();
+        }
+
+        Vector2 arrowPos = center + direction * AimArrowDistance;
+
+        float rotation = (float)Math.Atan2(direction.Y, direction.X) + MathHelper.PiOver2;
+
+        Vector2 origin = new Vector2(
+            AimArrowSprite.Width * 0.5f,
+            AimArrowSprite.Height * 0.5f
+        );
+
+        spriteBatch.Draw(
+            AimArrowSprite,
+            arrowPos,
+            null,
+            Color.White,
+            rotation,
+            origin,
+            AimArrowScale,
+            SpriteEffects.None,
+            0f
+        );
     }
 
     public abstract void Damage(float amount);

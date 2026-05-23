@@ -373,6 +373,12 @@ namespace Last_Hope.SkillTree
         }
         
         public ClassSkillTreeData GetData() => _data;
+
+        public void AddUnspentPoint()
+        {
+            _state.UnspentSkillPoints++;
+            SkillTreeSaveManager.Save(_state);
+        }
     }
 
     /// <summary>
@@ -402,16 +408,27 @@ namespace Last_Hope.SkillTree
         /// <returns>The loaded or newly created <see cref="SkillTreeState"/>.</returns>
         public static SkillTreeState Load(string classId)
         {
+            var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
             if (File.Exists(SaveFile))
             {
                 try
                 {
                     string json = File.ReadAllText(SaveFile);
-                    return JsonSerializer.Deserialize<SkillTreeState>(json);
+                    SkillTreeState? state = JsonSerializer.Deserialize<SkillTreeState>(json, jsonOptions);
+                    if (state != null)
+                    {
+                        state.ClassId = string.IsNullOrEmpty(state.ClassId) ? classId : state.ClassId;
+                        state.AllocatedNodes ??= new Dictionary<string, int>();
+                        int sumAllocated = state.AllocatedNodes.Values.Sum();
+                        if (state.TotalPointsSpent != sumAllocated)
+                            state.TotalPointsSpent = sumAllocated;
+                        return state;
+                    }
                 }
-                catch { /* Handle parsing error gracefully if needed */ }
+                catch { /* fall through to fresh state */ }
             }
-            
+
             // Return default fresh state if no save exists. Starts with 5 points for testing.
             return new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 5 };
         }

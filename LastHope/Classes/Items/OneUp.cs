@@ -4,11 +4,17 @@ namespace Last_Hope.Classes.Items;
 
 public class OneUp : BaseItem
 {
-    public OneUp() 
-        : base("1-Up", "Grants an extra revive upon death.", maxCount: 1, startingCount: 1)
+    /// <summary>
+    /// Registers the 1-Up as an instant-use item. Its effect is applied on pickup.
+    /// </summary>
+    public OneUp()
+        : base("1-Up", "Instantly grants an extra revive upon death.", maxCount: 1, startingCount: 1)
     {
     }
 
+    /// <summary>
+    /// Grants the player one extra life. This is now handled automatically on pickup.
+    /// </summary>
     protected override void OnUse(BasePlayer player)
     {
         player.AddLife(1);

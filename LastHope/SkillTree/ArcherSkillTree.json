@@ -1,0 +1,175 @@
+{
+  "ClassId": "Archer",
+  "Theme": {
+    "PrimaryColorHex": "#2D9E4F",
+    "SecondaryColorHex": "#D4EDDA",
+    "DefaultShape": 0
+  },
+  "LayerUnlockRequirements": {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 4,
+    "5": 5
+  },
+  "Nodes": [
+    {
+      "Id": "archer_dmg_l0", "Name": "Strong Draw", "Description": "Increases Attack Damage.",
+      "MaxPoints": 1, "Type": 0, "Layer": 0, "Rarity": "Common", "IconId": "icon_strong_draw",
+      "Tags": ["Damage"], "Dependencies": [],
+      "Effects": [{ "EffectId": "damage", "ValuePerPoint": 10.0 }], "GridX": -1, "GridY": 0
+    },
+    {
+      "Id": "archer_spd_l0", "Name": "Swift Feet", "Description": "Increases Movement Speed.",
+      "MaxPoints": 1, "Type": 0, "Layer": 0, "Rarity": "Common", "IconId": "icon_swift_feet",
+      "Tags": ["Speed"], "Dependencies": [],
+      "Effects": [{ "EffectId": "speed", "ValuePerPoint": 50.0 }], "GridX": 0, "GridY": 0
+    },
+    {
+      "Id": "archer_hst_l0", "Name": "Quick Draw", "Description": "Increases Attack Speed.",
+      "MaxPoints": 1, "Type": 0, "Layer": 0, "Rarity": "Common", "IconId": "icon_hardened_body",
+      "Tags": ["Haste"], "Dependencies": [],
+      "Effects": [{ "EffectId": "haste", "ValuePerPoint": 0.1 }], "GridX": 1, "GridY": 0
+    },
+
+    {
+      "Id": "crit_chance_l1", "Name": "Hawk Eye", "Description": "Increases Critical Hit Chance.",
+      "MaxPoints": 1, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_hawk_eye",
+      "Tags": ["Crit"], "Dependencies": ["archer_dmg_l0"],
+      "Effects": [{ "EffectId": "crit_chance", "ValuePerPoint": 0.1 }], "GridX": -3, "GridY": 1
+    },
+    {
+      "Id": "Piercing_stance_l1", "Name": "Piercing Arrows", "Description": "Craft stronger arrows that pierce multiple targets.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_piercing_arrows",
+      "Tags": ["Stance"], "Dependencies": ["archer_dmg_l0"],
+      "Effects": [{ "EffectId": "unlock_piercing_arrows", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 1
+    },
+
+    {
+      "Id": "archer_hp_l1", "Name": "Armor Upgrade", "Description": "Increases HitPoints.",
+      "MaxPoints": 1, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_armor_upgrade",
+      "Tags": ["Health"], "Dependencies": ["archer_spd_l0"],
+      "Effects": [{ "EffectId": "hp", "ValuePerPoint": 20.0 }], "GridX": -0.5, "GridY": 1
+    },
+    {
+      "Id": "poison_arrow_stance_l1", "Name": "Poison Arrows", "Description": "Equips arrows with poison tips. Deals damage over time to enemies.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_poison_arrows",
+      "Tags": ["Stance"], "Dependencies": ["archer_spd_l0"],
+      "Effects": [{ "EffectId": "unlock_poison_arrows", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 1
+    },
+
+    {
+      "Id": "explosive_radius_l1", "Name": "Bigger BOOM", "Description": "Increases the radius of explosive attacks.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_crossbow",
+      "Tags": ["Stance"], "Dependencies": ["archer_hst_l0", "explosive_arrow_stance_l1"],
+      "Effects": [{ "EffectId": "unlock_crossbow_stance", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 1
+    },
+    {
+      "Id": "explosive_arrow_stance_l1", "Name": "Fleet Foot", "Description": "Increases Dodge Chance.",
+      "MaxPoints": 3, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_fleet_foot",
+      "Tags": ["Defense"], "Dependencies": ["archer_hst_l0"],
+      "Effects": [{ "EffectId": "dodge_chance", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 1
+    },
+
+    {
+      "Id": "attack_speed_keystone_l2", "Name": "Rapid Fire Rhythm", "Description": "Increased attack speed for short duration after 5 hits.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
+      "Tags": ["Proc"], "Dependencies": ["crit_chance_l1"],
+      "Effects": [{ "EffectId": "unlock_rapid_fire", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 2
+    },
+    {
+      "Id": "crit_guarantee_l2", "Name": "Lock On", "Description": "Guarentee Critical Hit after 2 hits.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_crit_guarantee",
+      "Tags": ["Proc"], "Dependencies": ["Piercing_stance_l1"],
+      "Effects": [{ "EffectId": "unlock_crit_guarantee", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 2
+    },
+    {
+      "Id": "spread_poison_l2", "Name": "Infectious Poison", "Description": "Enemies spread poison to nearby enemies.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_Infectious_poison",
+      "Tags": ["Proc"], "Dependencies": ["archer_hp_l1", "poison_arrow_stance_l1"],
+      "Effects": [{ "EffectId": "unlock_poison_spread", "ValuePerPoint": 1.0 }], "GridX": -0.5, "GridY": 2
+    },
+    {
+      "Id": "poison_touch_l2", "Name": "Poison Touch", "Description": "Enemies that touch you become poisoned.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_dmg",
+      "Tags": ["Proc"], "Dependencies": ["poison_arrow_stance_l1"],
+      "Effects": [{ "EffectId": "unlock_poison_touch", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 2
+    },
+    {
+      "Id": "fortify_l2", "Name": "Fortify", "Description": "100% chance on hit taken to briefly increase your own damage reduction.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
+      "Tags": ["Proc"], "Dependencies": ["explosive_radius_l1"],
+      "Effects": [{ "EffectId": "proc_fortify", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 2
+    },
+    {
+      "Id": "on_dodge_counter_l2", "Name": "Counter Shot", "Description": "Successfully dodging an attack instantly triggers a free counter-attack.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
+      "Tags": ["Proc"], "Dependencies": ["explosive_arrow_stance_l1"],
+      "Effects": [{ "EffectId": "proc_counter_shot", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 2
+    },
+
+    {
+      "Id": "archer_haste_l3", "Name": "Lightning Draw", "Description": "Increases Attack Speed.",
+      "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_lightning_draw",
+      "Tags": ["Haste"], "Dependencies": ["attack_speed_keystone_l2", "crit_guarantee_l2"],
+      "Effects": [{ "EffectId": "haste", "ValuePerPoint": 0.2 }], "GridX": -2, "GridY": 3
+    },
+    {
+      "Id": "increased_poison_damage_l3", "Name": "Deadlier Poison", "Description": "Doubles the damage of your poison.",
+      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_keen_eye",
+      "Tags": ["Damage"], "Dependencies": [],
+      "Effects": [{ "EffectId": "poison_damage", "ValuePerPoint": 5.0 }], "GridX": 0, "GridY": 3
+    },
+    {
+      "Id": "archer_hp_l3", "Name": "Iron Will", "Description": "Further increases Maximum HP.",
+      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_hardened_body",
+      "Tags": ["Defense"], "Dependencies": [],
+      "Effects": [{ "EffectId": "max_hp", "ValuePerPoint": 25.0 }], "GridX": 2, "GridY": 3
+    },
+
+    {
+      "Id": "giant_arrow_l4", "Name": "Giant Arrow", "Description": "Shoot a massive arrow that deals massive damage.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_giant_arrow",
+      "Tags": ["Active"], "Dependencies": [],
+      "Effects": [{ "EffectId": "unlock_giant_arrow", "ValuePerPoint": 1.0 }], "GridX": -2, "GridY": 4
+    },
+    {
+      "Id": "arrow_storm_l4", "Name": "Arrow Storm", "Description": "Fires a barrage of arrows.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_arrow_storm",
+      "Tags": ["Active", "Burst"], "Dependencies": [],
+      "Effects": [{ "EffectId": "unlock_arrow_storm", "ValuePerPoint": 1.0 }], "GridX": 0, "GridY": 4
+    },
+    {
+      "Id": "concussive_shot_l4", "Name": "Concussive Shot", "Description": "Active: Fires a blunt-tipped bolt that deals moderate damage and applies a Stun effect.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_concussive_shot",
+      "Tags": ["Active", "Stun"], "Dependencies": [],
+      "Effects": [{ "EffectId": "unlock_concussive_shot", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 4
+    }
+  ],
+  "Connections": [
+    { "FromNodeId": "archer_dmg_l0", "ToNodeId": "crit_chance_l1" },
+    { "FromNodeId": "archer_dmg_l0", "ToNodeId": "Piercing_stance_l1" },
+    { "FromNodeId": "crit_chance_l1", "ToNodeId": "attack_speed_keystone_l2" },
+    { "FromNodeId": "Piercing_stance_l1", "ToNodeId": "crit_guarantee_l2" },
+    { "FromNodeId": "attack_speed_keystone_l2", "ToNodeId": "archer_haste_l3" },
+    { "FromNodeId": "crit_guarantee_l2", "ToNodeId": "archer_haste_l3" },
+    { "FromNodeId": "archer_haste_l3", "ToNodeId": "giant_arrow_l4" },
+
+    { "FromNodeId": "archer_spd_l0", "ToNodeId": "archer_hp_l1" },
+    { "FromNodeId": "archer_spd_l0", "ToNodeId": "poison_arrow_stance_l1" },
+    { "FromNodeId": "poison_arrow_stance_l1", "ToNodeId": "spread_poison_l2" },
+    { "FromNodeId": "poison_arrow_stance_l1", "ToNodeId": "poison_touch_l2" },
+    { "FromNodeId": "spread_poison_l2", "ToNodeId": "increased_poison_damage_l3" },
+    { "FromNodeId": "poison_touch_l2", "ToNodeId": "increased_poison_damage_l3" },
+    { "FromNodeId": "increased_poison_damage_l3", "ToNodeId": "arrow_storm_l4" },
+
+    { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_radius_l1" },
+    { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_arrow_stance_l1" },
+    { "FromNodeId": "explosive_radius_l1", "ToNodeId": "fortify_l2" },
+    { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "on_dodge_counter_l2" },
+    { "FromNodeId": "fortify_l2", "ToNodeId": "archer_hp_l3" },
+    { "FromNodeId": "on_dodge_counter_l2", "ToNodeId": "archer_hp_l3" },
+    { "FromNodeId": "archer_hp_l3", "ToNodeId": "concussive_shot_l4" }
+  ]
+}

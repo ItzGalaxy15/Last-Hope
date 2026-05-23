@@ -3,7 +3,7 @@ using Last_Hope.BaseModel;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
+// http://www.xnadevelopment.com/tutorials/notsohealthy/NotSoHealthy.shtml took inspiration but made my own.
 namespace Last_Hope.UI;
 
 public class ExperienceBar : UIElement
@@ -91,81 +91,14 @@ public class ExperienceBar : UIElement
 
 		DrawFilledCircle(spriteBatch, _badgeCenter, _badgeRadius, badgeBase);
 		DrawCircleOutline(spriteBatch, _badgeCenter, _badgeRadius, 2, badgeRing);
-		DrawLevelNumber(spriteBatch, _badgeCenter, player?.Level ?? 0, levelColor);
-	}
-
-	private void DrawLevelNumber(SpriteBatch spriteBatch, Point center, int level, Color color)
-	{
-		Texture2D pixel = GetPixel(spriteBatch);
-		string text = Math.Max(0, level).ToString();
-
-		const int digitW = 8;
-		const int digitH = 12;
-		const int thickness = 2;
-		const int spacing = 3;
-
-		int totalWidth = (text.Length * digitW) + ((text.Length - 1) * spacing);
-		int startX = center.X - (totalWidth / 2);
-		int startY = center.Y - (digitH / 2);
-
-		for (int i = 0; i < text.Length; i++)
+		SpriteFont font = GameManager.GetGameManager()._font;
+		if (font != null)
 		{
-			if (!char.IsDigit(text[i]))
-				continue;
-
-			int digit = text[i] - '0';
-			DrawSevenSegmentDigit(
-				spriteBatch,
-				pixel,
-				new Point(startX + i * (digitW + spacing), startY),
-				digit,
-				digitW,
-				digitH,
-				thickness,
-				color);
-		}
-	}
-
-	private void DrawSevenSegmentDigit(
-		SpriteBatch spriteBatch,
-		Texture2D pixel,
-		Point topLeft,
-		int digit,
-		int width,
-		int height,
-		int thickness,
-		Color color)
-	{
-		bool a = digit is 0 or 2 or 3 or 5 or 6 or 7 or 8 or 9;
-		bool b = digit is 0 or 1 or 2 or 3 or 4 or 7 or 8 or 9;
-		bool c = digit is 0 or 1 or 3 or 4 or 5 or 6 or 7 or 8 or 9;
-		bool d = digit is 0 or 2 or 3 or 5 or 6 or 8 or 9;
-		bool e = digit is 0 or 2 or 6 or 8;
-		bool f = digit is 0 or 4 or 5 or 6 or 8 or 9;
-		bool g = digit is 2 or 3 or 4 or 5 or 6 or 8 or 9;
-
-		int midY = topLeft.Y + (height / 2) - (thickness / 2);
-		int bottomY = topLeft.Y + height - thickness;
-		int rightX = topLeft.X + width - thickness;
-		int upperVertHeight = (height / 2) - thickness;
-		int lowerVertY = midY + thickness;
-		int lowerVertHeight = height - (height / 2) - thickness;
-
-		if (a)
-			spriteBatch.Draw(pixel, new Rectangle(topLeft.X, topLeft.Y, width, thickness), color);
-		if (g)
-			spriteBatch.Draw(pixel, new Rectangle(topLeft.X, midY, width, thickness), color);
-		if (d)
-			spriteBatch.Draw(pixel, new Rectangle(topLeft.X, bottomY, width, thickness), color);
-
-		if (f)
-			spriteBatch.Draw(pixel, new Rectangle(topLeft.X, topLeft.Y + thickness, thickness, upperVertHeight), color);
-		if (b)
-			spriteBatch.Draw(pixel, new Rectangle(rightX, topLeft.Y + thickness, thickness, upperVertHeight), color);
-		if (e)
-			spriteBatch.Draw(pixel, new Rectangle(topLeft.X, lowerVertY, thickness, lowerVertHeight), color);
-		if (c)
-			spriteBatch.Draw(pixel, new Rectangle(rightX, lowerVertY, thickness, lowerVertHeight), color);
+			const float scale = 0.6f;
+			string levelText = Math.Max(0, player?.Level ?? 0).ToString();
+			Vector2 textSize = font.MeasureString(levelText) * scale;
+			Vector2 textPos = new Vector2(_badgeCenter.X - textSize.X / 2, _badgeCenter.Y - textSize.Y / 2);
+			spriteBatch.DrawString(font, levelText, textPos, levelColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);		}
 	}
 
 	private Texture2D GetPixel(SpriteBatch spriteBatch)

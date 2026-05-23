@@ -8,7 +8,7 @@ namespace Last_Hope.Engine.LevelGenerator
         /// <summary>
         /// Picks a random rectangle of grass tiles and replaces them all with flower tiles to give
         /// the map a bit of variety. It tries up to 100 times to find a spot that's entirely plain
-        /// grass — if it can't find one it just skips the flower field for this map rather than
+        /// grass. If it can't find one it just skips the flower field for this map rather than
         /// forcing it somewhere it doesn't fit.
         /// </summary>
         private void ApplyFlowerField(int[,] map)

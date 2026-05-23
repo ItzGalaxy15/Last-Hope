@@ -4,51 +4,36 @@ using Last_Hope.Engine;
 
 namespace Last_Hope.UI.Menus;
 
+/// <summary>
+/// Victory overlay with restart/quit. Routed via <see cref="Last_Hope.UI.Menu.UpdateWinnerMenu"/> /
+/// <see cref="Last_Hope.UI.Menu.DrawWinnerMenu"/>.
+/// </summary>
 public class WinnerMenu : MenuBase
 {
+    /// <summary>Handles restart/quit using shared <see cref="MenuBase.HandleEndGameMenuClicks"/>.</summary>
     public void Update(GameTime gameTime)
     {
-        string restartText = "Restart Game";
-        Vector2 restartPos = GetFontPosition(restartText) + new Vector2(0, 100);
-        Rectangle restartRect = GetTextRectangle(restartText, restartPos);
-
-        string quitText = "Quit Game";
-        Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 200);
-        Rectangle quitRect = GetTextRectangle(quitText, quitPos);
-
-        if (restartRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
-        {
-            gm.ResetGame();
-            _state = GameState.Running;
-        }
-
-        if (quitRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
-        {
-            Game.Exit();
-        }
+        const string title = "Winner";
+        EndGameMenuLayout layout = LayoutEndGameTwoButtonMenu(title);
+        HandleEndGameMenuClicks(layout,
+            onRestart: () =>
+            {
+                gm.ResetGame();
+                _state = GameState.Running;
+            },
+            onQuit: () => Game.Exit());
     }
 
+    /// <summary>Draws the running world then winner text and end-game buttons.</summary>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
-        string winnerText = "Winner";
-        Vector2 positionWinner = GetFontPosition(winnerText);
-
-        string restartText = "Restart Game";
-        Vector2 restartPos = GetFontPosition(restartText) + new Vector2(0, 100);
-        Rectangle restartRect = GetTextRectangle(restartText, restartPos);
-
-        string quitText = "Quit Game";
-        Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 200);
-        Rectangle quitRect = GetTextRectangle(quitText, quitPos);
+        const string title = "Winner";
+        EndGameMenuLayout layout = LayoutEndGameTwoButtonMenu(title);
 
         DrawWorld(gameTime, spriteBatch, transformMatrix);
 
         spriteBatch.Begin();
-        gm.DrawUiString(spriteBatch, _font, winnerText, positionWinner, Color.LimeGreen);
-        spriteBatch.Draw(Pixel, restartRect, Color.DarkSlateGray);
-        spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
-        gm.DrawUiString(spriteBatch, _font, restartText, restartPos, Color.White);
-        gm.DrawUiString(spriteBatch, _font, quitText, quitPos, Color.Red);
+        DrawEndGameTwoButtonOverlay(spriteBatch, title, Color.LimeGreen, Color.Red, layout);
         spriteBatch.End();
     }
 }

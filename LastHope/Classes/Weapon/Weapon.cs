@@ -13,18 +13,16 @@ public class Weapon : BaseWeapon
     private const float SlashVisualExpand = 45f;
     private const float SlashHitboxExpand = 55f;
 
-    public Weapon(string name, int damage, float critChance) : base(name, damage, critChance)
+    public Weapon(string name ) : base(name)
     {
     }
 
-    public override void Attack(Vector2 direction, Vector2 origin)
+    public override void Attack(Vector2 direction, Vector2 origin, int damage, float critChance)
     {
-        System.Console.WriteLine("Weapon.Slash called");
         Vector2 pivot = origin - direction * (SlashRadius + SlashWidth / 2f);
         ArcCollider arcCollider = new ArcCollider(pivot, direction, SlashRadius, SlashWidth);
-        var slash = new Slash(arcCollider, Damage, CritChance, origin, direction, SlashVisualExpand, SlashHitboxExpand);
+        var slash = new Slash(arcCollider, damage, critChance, origin, direction, SlashVisualExpand, SlashHitboxExpand);
         GameManager.GetGameManager().AddGameObject(slash);
-        System.Console.WriteLine("Slash added to GameManager");
     }
 
     public override void SetOwner(GameObject owner)

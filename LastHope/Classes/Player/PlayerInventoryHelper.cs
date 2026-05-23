@@ -13,5 +13,15 @@ internal static class PlayerInventoryHelper
     internal static bool TryPickup(BasePlayer? player, ItemType item) =>
         player?.TryPickupItem(item) ?? false;
 
+    internal static ItemType GetItemInSlot(BasePlayer? player, int slot)
+    {
+        ItemType[]? inv = player?.Inventory;
+        if (inv != null && slot >= 0 && slot < inv.Length)
+        {
+            return inv[slot];
+        }
+        return ItemType.None;
+    }
+
     internal static int GetHudExtraLives(BasePlayer? player) => player?.ExtraLives ?? 0;
 }

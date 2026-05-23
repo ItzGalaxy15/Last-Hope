@@ -2,15 +2,17 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
-using Last_Hope.BaseModel;
-using Last_Hope.SkillTree;
-using System.IO;
-using System.Text.Json;
 using Last_Hope.UI.Menus;
-using System;
+using Last_Hope.SkillTree;
 
 namespace Last_Hope.UI;
 
+/// <summary>
+/// Facade for all full-screen menu states and the in-run skill tree overlay. Each method pair is invoked from
+/// <see cref="GameManager"/> based on <see cref="GameState"/> (e.g. <see cref="GameState.MainMenu"/> →
+/// <see cref="UpdateMainMenu"/> / <see cref="DrawMainMenu"/>). Gum-backed hubs call <see cref="ReleaseMainMenuGum"/> /
+/// <see cref="ReleasePausedMenuGum"/> when leaving those states.
+/// </summary>
 public class Menu
 {
     private readonly MainMenuScreen _mainMenu = new();
@@ -24,142 +26,112 @@ public class Menu
     private readonly GameOverMenu _gameOverMenu = new();
 
     private SkillTreeMenuCanvas _skillTreeCanvas;
-    private bool _showSkillTree = false;
+    private bool _showSkillTree;
+
+    private StatScreenOverlay _statScreen;
+    private bool _showStatScreen;
+
+    private void EnsureStatScreen()
+    {
+        if (_statScreen == null)
+            _statScreen = new StatScreenOverlay(GameManager.GetGameManager().Pixel);
+    }
 
     public void UpdateMainMenu(GameTime gameTime) => _mainMenu.Update(gameTime);
-    public void DrawMainMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _mainMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    public void DrawMainMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
+        _mainMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
     /// <summary>Removes Gum controls when leaving the title hub so they do not stay interactive.</summary>
     public void ReleaseMainMenuGum() => _mainMenu.ReleaseGumUi();
 
+    /// <summary>Removes pause Gum buttons when resuming or changing state away from <see cref="GameState.Paused"/>.</summary>
     public void ReleasePausedMenuGum() => _pausedMenu.ReleaseGumUi();
 
     public void UpdateCharactersRosterMenu(GameTime gameTime) => _charactersRosterMenu.Update(gameTime);
-    public void DrawCharactersRosterMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _charactersRosterMenu.Draw(gameTime, spriteBatch);
+
+    public void DrawCharactersRosterMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
+        _charactersRosterMenu.Draw(gameTime, spriteBatch);
 
     public void UpdateCharacterSelectMenu(GameTime gameTime) => _characterSelectMenu.Update(gameTime);
-    public void DrawCharacterSelectMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _characterSelectMenu.Draw(gameTime, spriteBatch);
+
+    public void DrawCharacterSelectMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
+        _characterSelectMenu.Draw(gameTime, spriteBatch);
 
     public void UpdateItemsIndexMenu(GameTime gameTime) => _itemsIndexMenu.Update(gameTime);
-    public void DrawItemsIndexMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _itemsIndexMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    public void DrawItemsIndexMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
+        _itemsIndexMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
     public void UpdateSettingsMenu(GameTime gameTime) => _settingsMenu.Update(gameTime);
-    public void DrawSettingsMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _settingsMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    public void DrawSettingsMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
+        _settingsMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
     public void UpdatePausedMenu(GameTime gameTime) => _pausedMenu.Update(gameTime);
-    public void DrawPausedMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _pausedMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    public void DrawPausedMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
+        _pausedMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
     public void UpdateWinnerMenu(GameTime gameTime) => _winnerMenu.Update(gameTime);
-    public void DrawWinnerMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _winnerMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    public void DrawWinnerMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
+        _winnerMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
     public void UpdateGameOverMenu(GameTime gameTime) => _gameOverMenu.Update(gameTime);
-    public void DrawGameOverMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
-        => _gameOverMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
+    public void DrawGameOverMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
+        _gameOverMenu.Draw(gameTime, spriteBatch, transformMatrix);
+
+    /// <summary>Running gameplay update, or skill tree UI when the overlay is open (toggle: N).</summary>
     public void UpdateRunningMenu(GameTime gameTime)
     {
-        var gm = GameManager.GetGameManager();
-        var input = gm.InputManager;
+        GameManager gm = GameManager.GetGameManager();
+        InputManager input = gm.InputManager;
+
+        if (input.IsKeyPress(Keys.C))
+        {
+            EnsureStatScreen();
+            _showStatScreen = !_showStatScreen;
+        }
+
+        if (_showStatScreen && _statScreen != null)
+            _statScreen.Update(gameTime);
 
         if (input.IsKeyPress(Keys.N))
         {
             _showSkillTree = !_showSkillTree;
-            
-            // Optionally intercept states here to pause background mechanics!
-            // e.g. gm._state = _showSkillTree ? GameState.Paused : GameState.Running;
 
             if (_showSkillTree && _skillTreeCanvas == null)
             {
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                string projectRoot = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\"));
-                string jsonPath = Path.Combine(projectRoot, "SkillTree", "WarriorSkillTree.json");
-                
-                // Fallback check in case you run the built executable outside of Visual Studio
-                if (!File.Exists(jsonPath))
+                Viewport vp = gm.Game != null
+                    ? gm.Game.GraphicsDevice.Viewport
+                    : new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
+
+                switch (gm._player)
                 {
-                    jsonPath = Path.Combine(baseDir, "SkillTree", "WarriorSkillTree.json");
+                    case Warrior:
+                        _skillTreeCanvas = SkillTreeOverlayFactory.CreateWarriorOverlay(gm, vp);
+                        break;
+                    case Archer:
+                        _skillTreeCanvas = SkillTreeOverlayFactory.CreateArcherOverlay(gm, vp);
+                        break;
+                    default:
+                        _showSkillTree = false; // no overlay for other classes
+                        break;
                 }
-
-                ClassSkillTreeData treeData = null;
-
-                if (File.Exists(jsonPath))
-                {
-                    string rawJson = File.ReadAllText(jsonPath);
-                    try
-                    {
-                        var options = new JsonSerializerOptions 
-                        { 
-                            ReadCommentHandling = JsonCommentHandling.Skip,
-                            AllowTrailingCommas = true 
-                        };
-                        treeData = JsonSerializer.Deserialize<ClassSkillTreeData>(rawJson, options);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Console.WriteLine($"[SkillTree Error] JSON Parsing Failed: {ex.Message}");
-                        throw new Exception($"Failed to parse Skill Tree JSON: {ex.Message}", ex);
-                    }
-                }
-
-                if (treeData == null)
-                {
-                    throw new System.Exception($"[SkillTree Error] Data is null! Could not find JSON at: {Path.GetFullPath(jsonPath)} \nEnsure the file's 'Copy to Output Directory' property is set to 'Copy if newer' in Visual Studio!");
-                }
-                if (treeData.Nodes == null || treeData.Nodes.Count == 0)
-                {
-                    throw new System.Exception("[SkillTree Error] JSON loaded, but Nodes list is empty! Check your JSON structure.");
-                }
-
-                System.Console.WriteLine($"[SkillTree UI] Successfully parsed {treeData.Nodes.Count} nodes from JSON.");
-
-                SkillTreeState state = SkillTreeSaveManager.Load("Warrior");
-
-                BaseSkillTree tree = new BaseSkillTree(treeData, state);
-
-                if (gm._player is Warrior warrior)
-                {
-                    tree.OnEffectApplied += warrior.ApplyNodeEffect;
-                    tree.OnTreeRespec += warrior.RevertAllSkillStats;
-                }
-
-                UIThemeData theme = new UIThemeData
-                {
-                    LockedDesaturation = new Color(80, 85, 95), // Muted steel grey / visible locked
-                    AccentGlowColor = new Color(255, 70, 20), // Crimson / Burnt Orange
-                    BorderColor = new Color(160, 170, 180) // Bright Steel
-                };
-
-                Viewport vp = default;
-                if (gm.Game != null)
-                    vp = gm.Game.GraphicsDevice.Viewport;
-                else
-                    vp = new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
-
-                _skillTreeCanvas = new SkillTreeMenuCanvas(tree, theme, gm.Pixel, vp);
             }
         }
 
         if (_showSkillTree)
         {
-            Viewport vp = default;
-            if (gm.Game != null)
-                vp = gm.Game.GraphicsDevice.Viewport;
-            else
-                vp = new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
+            Viewport vp = gm.Game != null
+                ? gm.Game.GraphicsDevice.Viewport
+                : new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
 
             _skillTreeCanvas?.Update(gameTime, vp);
             if (_skillTreeCanvas?.IsClosed == true)
-            {
                 _showSkillTree = false;
-                // Return state back to running if you modified it
-            }
         }
         else
         {
@@ -167,19 +139,59 @@ public class Menu
         }
     }
 
+    public void AwardTalentPoint()
+    {
+        if (_skillTreeCanvas != null)
+        {
+            _skillTreeCanvas.AddTalentPoint();
+        }
+        else
+        {
+            // Canvas not yet opened this run, write directly to the save file so the
+            // point is there when the player opens the skill tree later.
+            GameManager gm = GameManager.GetGameManager();
+            string classId = gm._player switch
+            {
+                Warrior => "Warrior",
+                Archer  => "Archer",
+                _       => null
+            };
+            if (classId == null) return;
+            SkillTreeState state = SkillTreeSaveManager.Load(classId);
+            state.UnspentSkillPoints++;
+            SkillTreeSaveManager.Save(state);
+        }
+
+        GameManager.GetGameManager().RequestToast("Talent Point Earned!");
+    }
+
+    public void ResetSkillTree()
+    {
+        _skillTreeCanvas = null;
+        _showSkillTree = false;
+    }
+
+    /// <summary>World draw plus optional full-screen skill tree overlay on top.</summary>
     public void DrawRunningMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         _runningMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
         if (_showSkillTree && _skillTreeCanvas != null)
         {
-            var gm = GameManager.GetGameManager();
+            GameManager gm = GameManager.GetGameManager();
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
 
             Viewport vp = spriteBatch.GraphicsDevice.Viewport;
-            spriteBatch.Draw(gm.Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(10, 12, 15, 235)); // Smoky cinematic dark layer
+            spriteBatch.Draw(gm.Pixel, new Rectangle(0, 0, vp.Width, vp.Height), new Color(10, 12, 15, 235));
             _skillTreeCanvas.Draw(gameTime, spriteBatch);
 
+            spriteBatch.End();
+        }
+
+        if (_showStatScreen && _statScreen != null)
+        {
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+            _statScreen.Draw(gameTime, spriteBatch);
             spriteBatch.End();
         }
     }

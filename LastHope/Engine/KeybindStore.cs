@@ -25,6 +25,12 @@ public enum KeybindId
     ItemSlot2,
     PlaceItem,
     ThrowItem,
+    AimUp,
+    AimDown,
+    AimLeft,
+    AimRight,
+    /// <summary>Keyboard-only attack key — fires in the current aim direction.</summary>
+    KeyboardAttack,
 }
 
 /// <summary>
@@ -122,6 +128,12 @@ public readonly struct GameInputBinding : IEquatable<GameInputBinding>
     }
 }
 
+public enum ControlScheme
+{
+    MouseAndKeyboard,
+    KeyboardOnly,
+}
+
 /// <summary>
 /// Manages the mapping between logical gameplay actions (<see cref="KeybindId"/>) and physical inputs (<see cref="GameInputBinding"/>).
 /// In-memory gameplay bindings for the current run only (not written to disk).
@@ -146,10 +158,17 @@ public static class KeybindStore
         [KeybindId.ItemSlot1] = GameInputBinding.Keyboard(Keys.D1),
         [KeybindId.ItemSlot2] = GameInputBinding.Keyboard(Keys.D2),
         [KeybindId.PlaceItem] = GameInputBinding.Keyboard(Keys.G),
-        [KeybindId.ThrowItem] = GameInputBinding.Keyboard(Keys.T),
+        [KeybindId.ThrowItem] = GameInputBinding.FromMouse(MouseBindButton.Right),
+        [KeybindId.AimUp] = GameInputBinding.Keyboard(Keys.Up),
+        [KeybindId.AimDown] = GameInputBinding.Keyboard(Keys.Down),
+        [KeybindId.AimLeft] = GameInputBinding.Keyboard(Keys.Left),
+        [KeybindId.AimRight] = GameInputBinding.Keyboard(Keys.Right),
+        [KeybindId.KeyboardAttack] = GameInputBinding.Keyboard(Keys.Space),
     };
 
     private static readonly Dictionary<KeybindId, GameInputBinding> Current = new(Defaults);
+
+    public static ControlScheme CurrentScheme { get; set; } = ControlScheme.MouseAndKeyboard;
 
     /// <summary>
     /// Retrieves the current physical input assigned to a logical action.
@@ -238,8 +257,13 @@ public static class KeybindStore
         KeybindId.Ability2 => "Ability 2",
         KeybindId.ItemSlot1 => "Item slot 1",
         KeybindId.ItemSlot2 => "Item slot 2",
-        KeybindId.PlaceItem => "Place item",
-        KeybindId.ThrowItem => "Throw item",
+        KeybindId.PlaceItem => "Place Item (at feet)",
+        KeybindId.ThrowItem => "Use/Throw Item",
+        KeybindId.AimUp => "Aim up",
+        KeybindId.AimDown => "Aim down",
+        KeybindId.AimLeft => "Aim left",
+        KeybindId.AimRight => "Aim right",
+        KeybindId.KeyboardAttack => "Attack (keyboard)",
         _ => id.ToString(),
     };
 }

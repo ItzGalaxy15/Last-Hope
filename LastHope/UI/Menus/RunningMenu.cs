@@ -1,13 +1,16 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Last_Hope.Engine;
-using Last_Hope.BaseModel;
 using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope.UI.Menus;
 
 public class RunningMenu : MenuBase
 {
+    /// <summary>
+    /// Updates the main game loop logic, handling input, object updates, collisions, and state changes.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
     public void Update(GameTime gameTime)
     {
 
@@ -41,6 +44,12 @@ public class RunningMenu : MenuBase
         _toBeRemoved.Clear();
     }
 
+    /// <summary>
+    /// Draws the active game world to the screen.
+    /// </summary>
+    /// <param name="gameTime">Provides a snapshot of timing values.</param>
+    /// <param name="spriteBatch">The SpriteBatch used for rendering.</param>
+    /// <param name="transformMatrix">Optional transformation matrix.</param>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         DrawWorld(gameTime, spriteBatch, transformMatrix);

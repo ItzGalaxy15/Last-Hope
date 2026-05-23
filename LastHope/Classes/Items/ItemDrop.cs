@@ -15,29 +15,32 @@ public enum ItemType
     Decoy,
     HealingPotion,
     OneUp,
-
-    
 }
 
 public class ItemDrop : GameObject
 {
     private Vector2 _position;
-    private ItemType _type;
-    public ItemType Type => _type;
+    public ItemType Type { get; }
     private RectangleCollider _collider;
     private Texture2D? _itemSpriteSheet;
     private Texture2D? _hearthSprite;
     private const float PickupRadius = 150f;
     private const float Speed = 350f;
 
+    /// <summary>
+    /// Creates an item drop of the given type at the given world position.
+    /// </summary>
     public ItemDrop(Vector2 position, ItemType type)
     {
         _position = position;
-        _type = type;
+        Type = type;
         _collider = new RectangleCollider(new Rectangle((int)position.X - 16, (int)position.Y - 16, 32, 32));
         SetCollider(_collider);
     }
 
+    /// <summary>
+    /// Loads the item sprite sheet and the heart sprite for the OneUp item. Falls back gracefully if either asset is missing.
+    /// </summary>
     public override void Load(ContentManager content)
     {
         base.Load(content);
@@ -60,17 +63,16 @@ public class ItemDrop : GameObject
         }
     }
 
+    /// <summary>
+    /// Pulls the item toward the player when within pickup radius, picks it up on contact, and awards fallback XP if the inventory is full.
+    /// Rare items (OneUp, HealingPotion) are frozen in place when both inventory slots are occupied.
+    /// </summary>
     public override void Update(GameTime gameTime)
     {
         GameManager gm = GameManager.GetGameManager();
         BasePlayer? player = gm._player;
         ItemType[]? inv = PlayerInventoryHelper.GetInventorySlots(player);
         if (player is null || inv is null)
-            return;
-
-        // Prevent rare items from being sucked in and destroyed for XP if inventory is full
-        bool isInventoryFull = inv[0] != ItemType.None && inv[1] != ItemType.None;
-        if (isInventoryFull && (_type == ItemType.OneUp || _type == ItemType.HealingPotion))
             return;
 
         Vector2 playerPos = player.GetPosition();
@@ -88,26 +90,33 @@ public class ItemDrop : GameObject
 
             if (distance < 25f)
             {
-                if (PlayerInventoryHelper.TryPickup(player, _type))
+                // 1-Up is used instantly on pickup and does not take an inventory slot.
+                if (Type == ItemType.OneUp)
                 {
-                    gm.RemoveGameObject(this);
+                    player.AddLife(1);
+                    // TODO: Consider adding a visual/sound effect here for pickup feedback.
                 }
                 else
                 {
-                    player.AddExperience(10); // Small chunk of XP if inventory is full
-                    gm.RemoveGameObject(this);
+                    // For other items, try to add to inventory. If full, grant fallback XP.
+                    if (!PlayerInventoryHelper.TryPickup(player, Type))
+                        player.AddExperience(10);
                 }
+                gm.RemoveGameObject(this);
             }
         }
         base.Update(gameTime);
     }
 
+    /// <summary>
+    /// Draws the item with a sine-wave vertical bounce and a red glow behind it. Uses the heart sprite for OneUp, the sprite sheet for all other types, or colored squares as a fallback.
+    /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         float bounceOffset = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4f) * 6f;
         Vector2 drawPos = _position + new Vector2(0, bounceOffset);
 
-        if (_type == ItemType.OneUp && _hearthSprite != null)
+        if (Type == ItemType.OneUp && _hearthSprite != null)
         {
             Rectangle sourceRect = new Rectangle(0, 0, _hearthSprite.Width, _hearthSprite.Height);
             Vector2 origin = new Vector2(_hearthSprite.Width / 2f, _hearthSprite.Height / 2f);
@@ -116,10 +125,10 @@ public class ItemDrop : GameObject
             spriteBatch.Draw(_hearthSprite, drawPos, sourceRect, Color.Red * 0.5f, 0f, origin, 1.4f, SpriteEffects.None, 0f);
             spriteBatch.Draw(_hearthSprite, drawPos, sourceRect, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
         }
-        else if (_itemSpriteSheet != null && _type != ItemType.OneUp)
+        else if (_itemSpriteSheet != null)
         {
-            Rectangle sourceRect = _type == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : 
-                                   _type == ItemType.Decoy ? new Rectangle(0, 32, 32, 32) : 
+            Rectangle sourceRect = Type == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : 
+                                   Type == ItemType.Decoy ? new Rectangle(0, 32, 32, 32) : 
                                    new Rectangle(0, 64, 32, 32);
             
             // Draw red glow behind the item
@@ -131,9 +140,9 @@ public class ItemDrop : GameObject
             Texture2D pixel = GameManager.GetGameManager().Pixel;
             
             spriteBatch.Draw(pixel, new Rectangle((int)drawPos.X - 12, (int)drawPos.Y - 12, 24, 24), Color.Red * 0.5f);
-            Color itemColor = _type == ItemType.Bomb ? Color.Black : 
-                              _type == ItemType.Decoy ? Color.Brown : 
-                              _type == ItemType.HealingPotion ? Color.Red : Color.Pink;
+            Color itemColor = Type == ItemType.Bomb ? Color.Black : 
+                              Type == ItemType.Decoy ? Color.Brown : 
+                              Type == ItemType.HealingPotion ? Color.Red : Color.Pink;
             spriteBatch.Draw(pixel, new Rectangle((int)drawPos.X - 8, (int)drawPos.Y - 8, 16, 16), itemColor);
         }
     }

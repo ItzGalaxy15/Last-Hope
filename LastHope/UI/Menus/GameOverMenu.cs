@@ -4,64 +4,47 @@ using Last_Hope.Engine;
 
 namespace Last_Hope.UI.Menus;
 
+/// <summary>
+/// Game over overlay: dimmed world + restart/quit. Driven from <see cref="Last_Hope.UI.Menu.UpdateGameOverMenu"/> /
+/// <see cref="Last_Hope.UI.Menu.DrawGameOverMenu"/> when <see cref="GameState"/> is game over.
+/// </summary>
 public class GameOverMenu : MenuBase
 {
-    private float _fadeAmount = 0f;
+    private float _fadeAmount;
     private const float FadeSpeed = 0.5f;
 
+    /// <summary>Advances fade and handles restart/quit clicks (layout from <see cref="MenuBase.LayoutEndGameTwoButtonMenu"/>).</summary>
     public void Update(GameTime gameTime)
     {
         _fadeAmount += (float)gameTime.ElapsedGameTime.TotalSeconds * FadeSpeed;
-        if (_fadeAmount > 0.8f) // Clamp to 0.8 so it doesn't go fully black
+        if (_fadeAmount > 0.8f)
             _fadeAmount = 0.8f;
 
-        string restartText = "Restart Game";
-        Vector2 restartPos = GetFontPosition(restartText) + new Vector2(0, 100);
-        Rectangle restartRect = GetTextRectangle(restartText, restartPos);
-
-        string quitText = "Quit Game";
-        Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 200);
-        Rectangle quitRect = GetTextRectangle(quitText, quitPos);
-
-        if (restartRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
-        {
-            _fadeAmount = 0f;
-            gm.ResetGame();
-            _state = GameState.Running;
-        }
-
-        if (quitRect.Contains(InputManager.CurrentMouseState.Position) && InputManager.LeftMousePress())
-        {
-            Game.Exit();
-        }
+        const string title = "Game Over";
+        EndGameMenuLayout layout = LayoutEndGameTwoButtonMenu(title);
+        HandleEndGameMenuClicks(layout,
+            onRestart: () =>
+            {
+                _fadeAmount = 0f;
+                gm.ResetGame();
+                _state = GameState.Running;
+            },
+            onQuit: () => Game.Exit());
     }
 
+    /// <summary>Applies death fade shader, draws world, then title and <see cref="MenuBase.EndGameMenuLabels"/> buttons.</summary>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
-        string gameOverText = "Game Over";
-        Vector2 positrionGameOver = GetFontPosition(gameOverText);
-
-        string restartText = "Restart Game";
-        Vector2 restartPos = GetFontPosition(restartText) + new Vector2(0, 100);
-        Rectangle restartRect = GetTextRectangle(restartText, restartPos);
-
-        string quitText = "Quit Game";
-        Vector2 quitPos = GetFontPosition(quitText) + new Vector2(0, 200);
-        Rectangle quitRect = GetTextRectangle(quitText, quitPos);
+        const string title = "Game Over";
+        EndGameMenuLayout layout = LayoutEndGameTwoButtonMenu(title);
 
         if (gm.DeathFade != null)
-        {
             gm.DeathFade.Parameters["FadeAmount"]?.SetValue(_fadeAmount);
-        }
 
         DrawWorld(gameTime, spriteBatch, transformMatrix, gm.DeathFade);
 
         spriteBatch.Begin();
-        gm.DrawUiString(spriteBatch, _font, gameOverText, positrionGameOver, Color.Red);
-        spriteBatch.Draw(Pixel, restartRect, Color.DarkSlateGray);
-        spriteBatch.Draw(Pixel, quitRect, Color.DarkSlateGray);
-        gm.DrawUiString(spriteBatch, _font, restartText, restartPos, Color.White);
-        gm.DrawUiString(spriteBatch, _font, quitText, quitPos, Color.Red);
+        DrawEndGameTwoButtonOverlay(spriteBatch, title, Color.Red, Color.Red, layout);
         spriteBatch.End();
     }
 }

@@ -20,6 +20,9 @@ public class Decoy : GameObject
     private readonly RectangleCollider _collider;
     private Texture2D? _itemSpriteSheet;
 
+    /// <summary>
+    /// Creates a decoy at the given position with an initial throw velocity and a lifetime before it disappears.
+    /// </summary>
     public Decoy(Vector2 position, Vector2 initialVelocity, float lifetimeSeconds = 5f)
     {
         _position = position;
@@ -30,6 +33,9 @@ public class Decoy : GameObject
         SetCollider(_collider);
     }
 
+    /// <summary>
+    /// Loads the item sprite sheet from content. Falls back to a plain pixel if the asset is missing.
+    /// </summary>
     public override void Load(ContentManager content)
     {
         try
@@ -44,6 +50,9 @@ public class Decoy : GameObject
         base.Load(content);
     }
 
+    /// <summary>
+    /// Moves the decoy with drag until it settles, counts down its lifetime, and removes it when the lifetime or health reaches zero.
+    /// </summary>
     public override void Update(GameTime gameTime)
     {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -57,22 +66,22 @@ public class Decoy : GameObject
 
         _lifetime -= dt;
         if (_lifetime <= 0f || Health <= 0f)
-        {
             GameManager.GetGameManager().RemoveGameObject(this);
-            if (GameManager.GetGameManager().ActiveDecoy == this)
-            {
-                GameManager.GetGameManager().ActiveDecoy = null;
-            }
-        }
 
         base.Update(gameTime);
     }
 
+    /// <summary>
+    /// Reduces the decoy's health by the given amount. Enemies call this when they attack the decoy.
+    /// </summary>
     public void Damage(float amount)
     {
         Health -= amount;
     }
 
+    /// <summary>
+    /// Draws the decoy using the food sprite from the sprite sheet, or a brown square as a fallback.
+    /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Rectangle destinationRect = new Rectangle((int)_position.X - (DecoySize / 2), (int)_position.Y - (DecoySize / 2), DecoySize, DecoySize);
@@ -90,11 +99,17 @@ public class Decoy : GameObject
         base.Draw(gameTime, spriteBatch);
     }
 
+    /// <summary>
+    /// Returns the decoy's current world position so enemies can navigate toward it.
+    /// </summary>
     public Vector2 GetPosition()
     {
         return _position;
     }
 
+    /// <summary>
+    /// Clears the game manager's ActiveDecoy reference if this decoy is the active one, then destroys the object.
+    /// </summary>
     public override void Destroy()
     {
         if (GameManager.GetGameManager().ActiveDecoy == this)

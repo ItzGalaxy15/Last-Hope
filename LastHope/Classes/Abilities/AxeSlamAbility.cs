@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework;
 using Last_Hope.BaseModel;
 using Last_Hope.Engine;
-using Last_Hope;
 
 namespace Last_Hope.Classes.Abilities;
 
