@@ -33,6 +33,7 @@ public sealed class SettingsMenu : MenuBase
     private readonly List<(Rectangle rect, KeybindId id)> _bindTargets = new();
     private Rectangle _schemeToggleRect;
     private Rectangle _fullscreenToggleRect;
+    private Rectangle _MuteToggleRect;
 
     private float _controlsScrollY;
     private float _controlsMaxScroll;
@@ -45,6 +46,8 @@ public sealed class SettingsMenu : MenuBase
     private bool _draggingMaster;
     private bool _draggingMusic;
     private bool _draggingSfx;
+
+    private bool isMuted = false;
 
     public void Update(GameTime gameTime)
     {
@@ -196,6 +199,13 @@ public sealed class SettingsMenu : MenuBase
                     return;
                 }
             }
+            if (_tab == SettingsTab.Sound)
+            {
+                if (_MuteToggleRect.Contains(mouse))
+                {
+                    isMuted = !isMuted;
+                }
+            }
         }
 
         if (InputManager.IsKeyPress(Keys.D1) || InputManager.IsKeyPress(Keys.NumPad1))
@@ -206,9 +216,18 @@ public sealed class SettingsMenu : MenuBase
             _tab = SettingsTab.Display;
 
         //Apply audio settings immediately when dragging, but only if we're on the sound tab to avoid confusion
-        AudioManager.MasterVolume = _masterVolume;
-        AudioManager.MusicVolume = _musicVolume;
-        AudioManager.SfxVolume = _sfxVolume;
+        if (!isMuted)
+        {
+            AudioManager.MasterVolume = _masterVolume;
+            AudioManager.MusicVolume = _musicVolume;
+            AudioManager.SfxVolume = _sfxVolume;
+        }
+        else
+        {
+            AudioManager.MasterVolume = 0f;
+            AudioManager.MusicVolume = 0f;
+            AudioManager.SfxVolume = 0f;
+        }
         AudioManager.Apply();
 
         if (_tab == SettingsTab.Controls)
@@ -548,12 +567,50 @@ public sealed class SettingsMenu : MenuBase
         DrawSlider("Music Volume", ref _musicVolume, ref _draggingMusic);
         DrawSlider("SFX Volume", ref _sfxVolume, ref _draggingSfx);
 
+
+        var (labelFont, labelMul) = BodyFontForMenuText(font);
+
+        float toggleH = 36f * ui;
+        float toggleW = 400f * ui;
+
+        // Position BELOW sliders
+        int toggleX = (int)(content.X + (content.Width / 2f) - (toggleW / 2f));
+        int toggleY = (int)y;
+
+        // Reversed logic
+        string schemeLabel = isMuted ? "Muted: ON" : "Muted: OFF";
+
+        _MuteToggleRect = new Rectangle(toggleX, toggleY, (int)toggleW, (int)toggleH);
+
+        spriteBatch.Draw(
+            Pixel,
+            _MuteToggleRect,
+            isMuted
+                ? new Color(120, 70, 70, 220)
+                : new Color(40, 48, 62, 200)
+        );
+
+        DrawPanelOutline(
+            spriteBatch,
+            _MuteToggleRect,
+            isMuted
+                ? new Color(255, 140, 140, 200)
+                : new Color(120, 140, 170, 120)
+        );
+
+        float labelScale = textScale * 0.82f * labelMul;
+
+        Vector2 labelSz = gm.MeasureUiString(labelFont, schemeLabel, labelScale);
+
+        gm.DrawUiString(spriteBatch,labelFont,schemeLabel,new Vector2(_MuteToggleRect.Center.X - (labelSz.X / 2f),_MuteToggleRect.Center.Y - (labelSz.Y / 2f)),
+            Color.White,0f,Vector2.Zero,labelScale, SpriteEffects.None, 0f);
+
         // Optional hint
         gm.DrawUiString(
             spriteBatch,
             bf,
             "Drag sliders with mouse",
-            new Vector2(x, y),
+            new Vector2(x, y - 50f),
             Color.Gray,
             0f,
             Vector2.Zero,
