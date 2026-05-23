@@ -25,9 +25,10 @@ public class AxeSlamAbility : BaseAbility
         if (player is Warrior warrior)
         {
             Vector2 aimDir = warrior.GetAbilityAimDirection(); // Gebruik de richting waarin je castte
+            Vector2 castAnchor = warrior.GetCastAnchor();
 
-            int damage = (int)(warrior._Weapon.Damage * DamageMultiplier);
-            warrior.HitFrontalArea(aimDir, Range, damage, StunDuration);
+            int damage = (int)(warrior.CurrentDamage * DamageMultiplier);
+            warrior.HitFrontalArea(castAnchor, aimDir, Range, damage, StunDuration);
 
             warrior.PlayAttackSound();
             warrior.ResetAttackTimer();

@@ -22,7 +22,7 @@ public class ShieldSlamAbility : BaseAbility
     {
         if (player is Warrior warrior)
         {
-            int damage = (int)(warrior._Weapon.Damage * DamageMultiplier);
+            int damage = (int)(warrior.CurrentDamage * DamageMultiplier);
             warrior.HitRadialArea(Radius, damage, StunDuration);
 
             warrior.PlayAttackSound();
