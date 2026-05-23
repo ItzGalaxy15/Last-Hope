@@ -31,6 +31,7 @@ public class Warrior : BasePlayer
     private const int AbilityColumns = 4;
     private const int AxeAbilityRow = 0;
     private const int ShieldAbilityRow = 1;
+    private const int ShieldSlamSheetRow = 0;
     private const float AbilityDrawScale = 3f;
 
     private int _walkRow;
@@ -106,10 +107,12 @@ public class Warrior : BasePlayer
     public override float CurrentSpeed { get; protected set; }
     
     public Texture2D WarriorAbilitySprite { get; private set; }
+    public Texture2D ShieldSlamSprite { get; private set; }
     private AnimationManager _abilityAnimation;
     private bool _isCastingAbility;
     private bool _abilityHitTriggered;
     private BaseAbility _castingAbility;
+    private Texture2D _abilitySprite;
     private float _abilityRotation;
     private Vector2 _abilityAimDir;
     private Vector2 _abilityOrigin;
@@ -135,6 +138,7 @@ public class Warrior : BasePlayer
         
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
         try { WarriorAbilitySprite = content.Load<Texture2D>("WarriorAbilitySheet"); } catch { WarriorAbilitySprite = null; }
+        try { ShieldSlamSprite = content.Load<Texture2D>("ShieldSlam"); } catch { ShieldSlamSprite = null; }
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
         _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
         _inputManager = GameManager.GetGameManager().InputManager;
@@ -402,6 +406,9 @@ public class Warrior : BasePlayer
         if (ability is AxeSlamAbility)
             return GetCastAnchor();
 
+        if (ability is ShieldSlamAbility)
+            return _position;
+
         return GetAbilityCastAnchor();
     }
 
@@ -635,11 +642,11 @@ public class Warrior : BasePlayer
             spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, equipmentColor, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
         }
 
-        if (_isCastingAbility && _abilityAnimation != null && WarriorAbilitySprite != null)
+        if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null)
         {
             Rectangle abilitySource = _abilityAnimation.GetSourceRect();
             float rotation = _abilityRotate ? _abilityRotation : 0f;
-            spriteBatch.Draw(WarriorAbilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, AbilityDrawScale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, AbilityDrawScale, SpriteEffects.None, 0f);
         }
 
         if (IsSwordActive && DualWieldUnlocked)
@@ -756,23 +763,37 @@ public class Warrior : BasePlayer
         _abilityHitTriggered = false;
         _castingAbility = ability;
 
-        int row = ability switch
+        bool isShieldSlam = ability is ShieldSlamAbility;
+        if (isShieldSlam)
         {
-            AxeSlamAbility => AxeAbilityRow,
-            ShieldSlamAbility => ShieldAbilityRow,
-            _ => AxeAbilityRow
-        };
+            _abilitySprite = ShieldSlamSprite ?? WarriorAbilitySprite;
+            _abilityAimDir = new Vector2(1f, 0f);
+            _abilityRotation = 0f;
+            _abilityRotate = false;
+            _abilityDrawPos = _position;
+            _abilityOrigin = Vector2.Zero;
+
+            _abilityAnimation = new AnimationManager(
+                AbilityFrames,
+                AbilityColumns,
+                new Vector2(FrameSize, FrameSize),
+                8, // interval
+                false, // loop
+                0,
+                ShieldSlamSheetRow * FrameSize
+            );
+
+            return;
+        }
+
+        _abilitySprite = WarriorAbilitySprite;
 
         Vector2 castAnchor = GetAbilityCastAnchorForAbility(ability);
         _abilityAimDir = GetAbilityAimDirection(castAnchor);
-        _abilityRotation = (float)Math.Atan2(_abilityAimDir.Y, _abilityAimDir.X);
-        if (row == AxeAbilityRow)
-            _abilityRotation += MathHelper.PiOver2;
-        _abilityRotate = row == AxeAbilityRow;
+        _abilityRotation = (float)Math.Atan2(_abilityAimDir.Y, _abilityAimDir.X) + MathHelper.PiOver2;
+        _abilityRotate = true;
         _abilityDrawPos = castAnchor;
-        _abilityOrigin = _abilityRotate
-            ? new Vector2(FrameSize * 0.5f, FrameSize)
-            : new Vector2(FrameSize * 0.5f, FrameSize * 0.5f);
+        _abilityOrigin = new Vector2(FrameSize * 0.5f, FrameSize);
 
         _abilityAnimation = new AnimationManager(
             AbilityFrames,
@@ -781,7 +802,7 @@ public class Warrior : BasePlayer
             8, // interval
             false, // loop
             0,
-            row * FrameSize
+            AxeAbilityRow * FrameSize
         );
     }
 

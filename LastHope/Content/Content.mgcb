@@ -399,6 +399,18 @@
 /processorParam:TextureFormat=Color
 /build:Shcrub-version2.webp
 
+#begin ShieldSlam.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ShieldSlam.png
+
 #begin ShieldSprite.png
 /importer:TextureImporter
 /processor:TextureProcessor
