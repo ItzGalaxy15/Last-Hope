@@ -61,6 +61,39 @@ public abstract class BasePlayer : GameObject
         _stunCooldownTimer = StunCooldownDuration;
     }
 
+    // Poison status (mirrors BaseEnemy's poison)
+    private bool _isPoisoned;
+    private float _poisonTimer;
+    private float _poisonTickTimer;
+    private float _poisonDamagePerTick;
+    private const float PoisonDuration = 3f;
+    private const float PoisonTickInterval = 0.5f;
+    public bool IsPoisoned => _isPoisoned;
+
+    public void ApplyPoison(float damagePerTick)
+    {
+        if (_isPoisoned)
+        {
+            _poisonTimer = PoisonDuration; // refresh
+            return;
+        }
+        _isPoisoned = true;
+        _poisonDamagePerTick = damagePerTick;
+        _poisonTimer = PoisonDuration;
+        _poisonTickTimer = PoisonTickInterval;
+    }
+
+    protected new Color DrawTint
+    {
+        get
+        {
+            Color baseTint = base.DrawTint;
+            if (baseTint != Color.White) return baseTint; // hurt flash wins
+            if (_isPoisoned) return Color.Purple;
+            return Color.White;
+        }
+    }
+
     // Shared input state
     protected Vector2 _moveInput;
     protected Vector2 _aimInput;
@@ -308,6 +341,21 @@ public abstract class BasePlayer : GameObject
         if (_stunCooldownTimer > 0f)
             _stunCooldownTimer = TimerHelper.DecreaseTimer(_stunCooldownTimer, dt);
 
+        if (_isPoisoned)
+        {
+            _poisonTimer = TimerHelper.DecreaseTimer(_poisonTimer, dt);
+            _poisonTickTimer = TimerHelper.DecreaseTimer(_poisonTickTimer, dt);
+
+            if (_poisonTickTimer <= 0f)
+            {
+                _poisonTickTimer = PoisonTickInterval;
+                Damage(_poisonDamagePerTick);
+            }
+
+            if (_poisonTimer <= 0f)
+                _isPoisoned = false;
+        }
+
         base.Update(gameTime);
     }
 
@@ -384,8 +432,21 @@ public abstract class BasePlayer : GameObject
         _position = MovementHelper.ClampToMapBounds(_position, _bodyWidth);
 
         var gm = GameManager.GetGameManager();
-        if (gm.IsForestLocked && _position.X < gm.ForestBoundaryX)
-            _position = new Vector2(gm.ForestBoundaryX, _position.Y);
+        if (gm.ForestBoundaryX > 0f)
+        {
+            if (gm.CurrentZone == Zone.Village)
+            {
+                if (gm.IsForestLocked && _position.X < gm.ForestBoundaryX)
+                    _position = new Vector2(gm.ForestBoundaryX, _position.Y);
+                else if (gm.VillageCleared && _position.X < gm.ForestBoundaryX)
+                    gm.CurrentZone = Zone.Forest;
+            }
+            else
+            {
+                if (_position.X > gm.ForestBoundaryX)
+                    _position = new Vector2(gm.ForestBoundaryX, _position.Y);
+            }
+        }
     }
 
     protected bool IsPositionSafe(Vector2 position)
