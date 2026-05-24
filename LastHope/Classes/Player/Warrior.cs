@@ -118,6 +118,7 @@ public class Warrior : BasePlayer
     private Vector2 _abilityOrigin;
     private Vector2 _abilityDrawPos;
     private bool _abilityRotate;
+    private float _abilityDrawScale;
 
     public Warrior(Vector2 startPosition)
         : base(position: startPosition, weapon: new Weapon("Sword"), level: 0, experience: 0, dashDistance: 140f)
@@ -634,6 +635,14 @@ public class Warrior : BasePlayer
             }
         }
 
+        bool isBehindAbilityCasting = _isCastingAbility && (_castingAbility is ShieldSlamAbility || _castingAbility is AxeSlamAbility);
+        if (isBehindAbilityCasting && _abilityAnimation != null && _abilitySprite != null)
+        {
+            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
+            float rotation = _abilityRotate ? _abilityRotation : 0f;
+            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
+        }
+
         spriteBatch.Draw(WarriorSprite, _position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
         if (IsShieldActive && _walkRow == 0)
@@ -642,11 +651,11 @@ public class Warrior : BasePlayer
             spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, equipmentColor, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
         }
 
-        if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null)
+        if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null && !isBehindAbilityCasting)
         {
             Rectangle abilitySource = _abilityAnimation.GetSourceRect();
             float rotation = _abilityRotate ? _abilityRotation : 0f;
-            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, AbilityDrawScale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
         }
 
         if (IsSwordActive && DualWieldUnlocked)
@@ -772,6 +781,7 @@ public class Warrior : BasePlayer
             _abilityRotate = false;
             _abilityDrawPos = _position;
             _abilityOrigin = Vector2.Zero;
+            _abilityDrawScale = AbilityDrawScale * 1.25f;
 
             _abilityAnimation = new AnimationManager(
                 AbilityFrames,
@@ -794,6 +804,7 @@ public class Warrior : BasePlayer
         _abilityRotate = true;
         _abilityDrawPos = castAnchor;
         _abilityOrigin = new Vector2(FrameSize * 0.5f, FrameSize);
+        _abilityDrawScale = ability is AxeSlamAbility ? AbilityDrawScale * 1.15f : AbilityDrawScale;
 
         _abilityAnimation = new AnimationManager(
             AbilityFrames,
