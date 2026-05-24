@@ -55,7 +55,7 @@ public class Boss : BaseEnemy
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 3f; // Attack cooldown
     public override float BaseSpeed { get; } = 60f;
-    public override float ExperienceValue { get; protected set; } = 100f;
+    public override float ExperienceValue { get; protected set; } = 5f;
 
     // Current Orc Stats
     public override float CurrentMaxHp { get; protected set; }
