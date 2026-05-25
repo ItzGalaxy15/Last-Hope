@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,13 +23,21 @@ namespace Last_Hope.Classes.Weapon
         private bool hasPoisonArrows;
         private bool hasSpreadPoison;
         private bool hasIncreasedPoisonDamage;
+        private bool hasExplosiveArrows;
+        private bool hasIncreasedExplosionRadius;
+        private bool hasIncreasedExplosionDamage;
         private Action<BaseEnemy> _onHitEnemy;
 
+        private float ExplosionRadius = 150f;
+
         private const float PoisonDamagePerTick = 5f;
+        private const float ExplosionDamageMultiplier = 1.5f;
+        private const float ExplosionRadiusMultiplier = 1.5f;
+        private const float ExplosionSplashMultiplier = 0.5f;
 
         private HashSet<GameObject> _alreadyHit = new HashSet<GameObject>();
 
-        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage, float critChance, bool piercingArrows, bool poisonArrows, bool spreadPoison, bool increasedPoisonDamage, Action<BaseEnemy> onHitEnemy = null)
+        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage, float critChance, bool piercingArrows, bool poisonArrows, bool spreadPoison, bool increasedPoisonDamage, bool explosiveArrows, bool increasedExplosionRadius, bool increasedExplosionDamage, Action<BaseEnemy> onHitEnemy = null)
         {
             _owner = owner;
             _position = origin;
@@ -39,6 +48,9 @@ namespace Last_Hope.Classes.Weapon
             hasPoisonArrows = poisonArrows;
             hasSpreadPoison = spreadPoison;
             hasIncreasedPoisonDamage = increasedPoisonDamage;
+            hasExplosiveArrows = explosiveArrows;
+            hasIncreasedExplosionRadius = increasedExplosionRadius;
+            hasIncreasedExplosionDamage = increasedExplosionDamage;
             _onHitEnemy = onHitEnemy;
             _collider = new RectangleCollider(new Rectangle(origin.ToPoint(), new Point(10, 10)));
             SetCollider(_collider);
@@ -131,6 +143,20 @@ namespace Last_Hope.Classes.Weapon
                         if (hasSpreadPoison)
                         {
                             enemy.EnablePoisonSpreading();
+                        }
+                        if (hasExplosiveArrows)
+                        {
+                            if (hasIncreasedExplosionRadius)
+                            {
+                                ExplosionRadius = ExplosionRadius * ExplosionRadiusMultiplier;
+                            }
+                            if (hasIncreasedExplosionDamage)
+                            {
+                                damage = (int)(damage * ExplosionDamageMultiplier);
+                            }
+                            ExplosionHelper.Explode(_position, ExplosionRadius, (int)(damage * ExplosionSplashMultiplier), enemy);
+                            GameManager.GetGameManager().RemoveGameObject(this);
+                            return;
                         }
                         if (hasPiercingArrows)
                         {

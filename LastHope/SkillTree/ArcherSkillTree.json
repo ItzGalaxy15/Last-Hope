@@ -61,21 +61,21 @@
 
     {
       "Id": "explosive_radius_l1", "Name": "Bigger BOOM", "Description": "Increases the radius of explosive attacks.",
-      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_crossbow",
-      "Tags": ["Stance"], "Dependencies": ["archer_hst_l0", "explosive_arrow_stance_l1"],
-      "Effects": [{ "EffectId": "unlock_crossbow_stance", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 1
+      "MaxPoints": 1, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_crossbow",
+      "Tags": ["Proc"], "Dependencies": ["explosive_arrow_stance_l1"],
+      "Effects": [{ "EffectId": "explosive_radius", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 1
     },
     {
-      "Id": "explosive_arrow_stance_l1", "Name": "Fleet Foot", "Description": "Increases Dodge Chance.",
-      "MaxPoints": 3, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_fleet_foot",
-      "Tags": ["Defense"], "Dependencies": ["archer_hst_l0"],
-      "Effects": [{ "EffectId": "dodge_chance", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 1
+      "Id": "explosive_arrow_stance_l1", "Name": "Booming Arrows", "Description": "Arrows explode on impact, dealing area damage.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_booming_arrows",
+      "Tags": ["Stance"], "Dependencies": ["archer_hst_l0"],
+      "Effects": [{ "EffectId": "unlock_explosive_arrows", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 1
     },
 
     {
       "Id": "attack_speed_keystone_l2", "Name": "Rapid Fire Rhythm", "Description": "Increased attack speed for short duration after 5 hits.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
-      "Tags": ["Proc"], "Dependencies": ["crit_chance_l1"],
+      "Tags": ["Stance"], "Dependencies": ["crit_chance_l1"],
       "Effects": [{ "EffectId": "unlock_rapid_fire", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 2
     },
     {
@@ -122,10 +122,10 @@
       "Effects": [{ "EffectId": "poison_damage", "ValuePerPoint": 5.0 }], "GridX": 0, "GridY": 3
     },
     {
-      "Id": "archer_hp_l3", "Name": "Iron Will", "Description": "Further increases Maximum HP.",
-      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_hardened_body",
-      "Tags": ["Defense"], "Dependencies": [],
-      "Effects": [{ "EffectId": "max_hp", "ValuePerPoint": 25.0 }], "GridX": 2, "GridY": 3
+      "Id": "explosive_damage_l3", "Name": "Explosive Force", "Description": "Increases the damage of your explosive attacks by 50%.",
+      "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_explosive_damage",
+      "Tags": ["Attack"], "Dependencies": [],
+      "Effects": [{ "EffectId": "explosive_damage", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 3
     },
 
     {
@@ -164,12 +164,12 @@
     { "FromNodeId": "poison_touch_l2", "ToNodeId": "increased_poison_damage_l3" },
     { "FromNodeId": "increased_poison_damage_l3", "ToNodeId": "arrow_storm_l4" },
 
-    { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_radius_l1" },
     { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_arrow_stance_l1" },
+    { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "explosive_radius_l1" },
     { "FromNodeId": "explosive_radius_l1", "ToNodeId": "fortify_l2" },
     { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "on_dodge_counter_l2" },
-    { "FromNodeId": "fortify_l2", "ToNodeId": "archer_hp_l3" },
-    { "FromNodeId": "on_dodge_counter_l2", "ToNodeId": "archer_hp_l3" },
-    { "FromNodeId": "archer_hp_l3", "ToNodeId": "concussive_shot_l4" }
+    { "FromNodeId": "fortify_l2", "ToNodeId": "explosive_damage_l3" },
+    { "FromNodeId": "on_dodge_counter_l2", "ToNodeId": "explosive_damage_l3" },
+    { "FromNodeId": "explosive_damage_l3", "ToNodeId": "concussive_shot_l4" }
   ]
 }

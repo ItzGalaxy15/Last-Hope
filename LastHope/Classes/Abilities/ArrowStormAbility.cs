@@ -79,7 +79,10 @@ public class ArrowStormAbility : BaseAbility
             _firingDirection.X * sin + _firingDirection.Y * cos
         );
 
-        var arrow = new Arrow(center, spreadDirection, ArrowSpeed, archer, archer.CurrentDamage, archer.CurrentCritChance, bow.piercingArrows, bow.poisonArrows, bow.spreadPoison, bow.increasedPoisonDamage, bow.OnHitCallBack);
+        var arrow = new Arrow(center, spreadDirection, ArrowSpeed, archer, archer.CurrentDamage, archer.CurrentCritChance, bow.piercingArrows,
+                              bow.poisonArrows, bow.spreadPoison, bow.increasedPoisonDamage, 
+                              bow.explosiveArrows, bow.increasedExplosionRadius, bow.increasedExplosionDamage,
+                              bow.OnHitCallBack);
         GameManager.GetGameManager().AddGameObject(arrow);
     }
 }
