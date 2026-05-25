@@ -69,4 +69,10 @@ public abstract class BaseAbility
     /// </summary>
     /// <param name="player">The player casting the ability.</param>
     protected abstract void OnExecute(BasePlayer player);
+
+    /// <summary>
+    /// Executes the actual damage or effect of the ability. Called by the player when the casting animation reaches the impact frame.
+    /// </summary>
+    /// <param name="player">The player casting the ability.</param>
+    public virtual void PerformHit(BasePlayer player) { }
 }
