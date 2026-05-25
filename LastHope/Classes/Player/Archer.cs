@@ -258,6 +258,15 @@ public class Archer : BasePlayer
         if (_greenGlowTimer > 0f)
             drawColor = Color.Lerp(drawColor, Color.LimeGreen, 0.5f);
 
+        Color freezeTint = new Color(150, 220, 255);
+        float freezeIntensity = IsStunned ? (0.35f + 0.65f * StunVisualProgress) : 0f;
+        if (freezeIntensity > 0f)
+            drawColor = Color.Lerp(drawColor, freezeTint, freezeIntensity);
+
+        Color equipmentColor = freezeIntensity > 0f
+            ? Color.Lerp(Color.White, freezeTint, freezeIntensity)
+            : Color.White;
+
         spriteBatch.Draw(ArcherSprite, _position, archerSource, drawColor, 0f, Vector2.Zero, ArcherDrawScale, SpriteEffects.None, 0f);
 
         // Draw bow sprite
@@ -276,7 +285,7 @@ public class Archer : BasePlayer
             ? new Vector2(_bodyWidth - bowW - 40f, y)
             : new Vector2(40f, y);
 
-        spriteBatch.Draw(BowSprite, _position + bowOffset, bowSource, Color.White, 0f, Vector2.Zero, BowDrawScale, bowFlip, 0f);
+        spriteBatch.Draw(BowSprite, _position + bowOffset, bowSource, equipmentColor, 0f, Vector2.Zero, BowDrawScale, bowFlip, 0f);
 
         if (DebugDrawHitbox && _collider is not null)
             HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.LimeGreen);
@@ -291,6 +300,7 @@ public class Archer : BasePlayer
             return;
 
         _hurtCooldown = EnemyContactHurtInterval;
+        //_hurtCooldown = enemy is Troll ? 1f : EnemyContactHurtInterval;
 
         float damageToTake = EnemyContactDamage;
         if (enemy is Boss)

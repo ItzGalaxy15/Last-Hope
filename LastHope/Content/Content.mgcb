@@ -85,6 +85,18 @@
 /processorParam:TextureFormat=Color
 /build:Bow sheet.png
 
+#begin Club.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Club.png
+
 #begin decorations.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -144,18 +156,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:explosion.png
-
-#begin Explosion1.jpg
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Explosion1.jpg
 
 #begin Farmlands.png
 /importer:TextureImporter
@@ -399,6 +399,18 @@
 /processorParam:TextureFormat=Color
 /build:Shcrub-version2.webp
 
+#begin ShieldSlam.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ShieldSlam.png
+
 #begin ShieldSprite.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -440,6 +452,18 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sounds/Warrior Attack.wav
+
+#begin Spider.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Spider.png
 
 #begin SwordSheet.png
 /importer:TextureImporter
@@ -489,6 +513,18 @@
 /processorParam:TextureFormat=Color
 /build:Tree.png
 
+#begin Troll.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Troll.png
+
 #begin VillageSpriteSheetNew.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -500,6 +536,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:VillageSpriteSheetNew.png
+
+#begin WarriorAbilitySheet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:WarriorAbilitySheet.png
 
 #begin WarriorSheet.png
 /importer:TextureImporter

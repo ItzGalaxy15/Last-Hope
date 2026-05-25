@@ -35,6 +35,65 @@ public abstract class BasePlayer : GameObject
     public abstract float CurrentHaste { get; protected set; }
     public abstract float CurrentSpeed { get; protected set; }
 
+    private float _stunTimer;
+    private float _stunVisualTotalDuration;
+    private float _stunCooldownTimer;
+    private const float StunCooldownDuration = 3f;
+
+    public bool IsStunned => _stunTimer > 0f;
+    public float StunVisualProgress => _stunVisualTotalDuration > 0f
+        ? MathHelper.Clamp(_stunTimer / _stunVisualTotalDuration, 0f, 1f)
+        : 0f;
+
+    public void ApplyStun(float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        if (_stunCooldownTimer > 0f)
+            return;
+
+        float newTimer = Math.Max(_stunTimer, duration);
+        if (newTimer > _stunTimer)
+            _stunVisualTotalDuration = newTimer;
+
+        _stunTimer = newTimer;
+        _stunCooldownTimer = StunCooldownDuration;
+    }
+
+    // Poison status (mirrors BaseEnemy's poison)
+    private bool _isPoisoned;
+    private float _poisonTimer;
+    private float _poisonTickTimer;
+    private float _poisonDamagePerTick;
+    private const float PoisonDuration = 3f;
+    private const float PoisonTickInterval = 0.5f;
+    public bool IsPoisoned => _isPoisoned;
+
+    public void ApplyPoison(float damagePerTick)
+    {
+        if (_isPoisoned)
+        {
+            _poisonTimer = PoisonDuration; // refresh
+            return;
+        }
+        _isPoisoned = true;
+        _poisonDamagePerTick = damagePerTick;
+        _poisonTimer = PoisonDuration;
+        _poisonTickTimer = PoisonTickInterval;
+    }
+
+    protected new Color DrawTint
+    {
+        get
+        {
+            Color baseTint = base.DrawTint;
+            if (baseTint != Color.White) return baseTint; // hurt flash wins
+            if (_isPoisoned) return Color.Purple;
+            return Color.White;
+        }
+    }
+
     // Shared input state
     protected Vector2 _moveInput;
     protected Vector2 _aimInput;
@@ -264,8 +323,38 @@ public abstract class BasePlayer : GameObject
 
     public override void Update(GameTime gameTime)
     {
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         if (_levelUpFlashTimer > 0f)
-            _levelUpFlashTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _levelUpFlashTimer = TimerHelper.DecreaseTimer(_levelUpFlashTimer, dt);
+
+        if (_stunTimer > 0f)
+        {
+            _stunTimer = TimerHelper.DecreaseTimer(_stunTimer, dt);
+            if (_stunTimer <= 0f)
+            {
+                _stunTimer = 0f;
+                _stunVisualTotalDuration = 0f;
+            }
+        }
+
+        if (_stunCooldownTimer > 0f)
+            _stunCooldownTimer = TimerHelper.DecreaseTimer(_stunCooldownTimer, dt);
+
+        if (_isPoisoned)
+        {
+            _poisonTimer = TimerHelper.DecreaseTimer(_poisonTimer, dt);
+            _poisonTickTimer = TimerHelper.DecreaseTimer(_poisonTickTimer, dt);
+
+            if (_poisonTickTimer <= 0f)
+            {
+                _poisonTickTimer = PoisonTickInterval;
+                Damage(_poisonDamagePerTick);
+            }
+
+            if (_poisonTimer <= 0f)
+                _isPoisoned = false;
+        }
 
         base.Update(gameTime);
     }
@@ -286,6 +375,10 @@ public abstract class BasePlayer : GameObject
     public override void HandleInput(InputManager inputManager)
     {
         _moveInput = Vector2.Zero;
+
+        if (IsStunned)
+            return;
+
         if (inputManager.IsGameplayKeyDown(KeybindId.MoveUp))    _moveInput.Y -= 1f;
         if (inputManager.IsGameplayKeyDown(KeybindId.MoveDown))  _moveInput.Y += 1f;
         if (inputManager.IsGameplayKeyDown(KeybindId.MoveLeft))  _moveInput.X -= 1f;
@@ -312,7 +405,7 @@ public abstract class BasePlayer : GameObject
 
     public void Move(Vector2 direction, GameTime gameTime)
     {
-        if (direction == Vector2.Zero)
+        if (IsStunned || direction == Vector2.Zero)
         {
             return;
         }
@@ -339,8 +432,21 @@ public abstract class BasePlayer : GameObject
         _position = MovementHelper.ClampToMapBounds(_position, _bodyWidth);
 
         var gm = GameManager.GetGameManager();
-        if (gm.IsForestLocked && _position.X < gm.ForestBoundaryX)
-            _position = new Vector2(gm.ForestBoundaryX, _position.Y);
+        if (gm.ForestBoundaryX > 0f)
+        {
+            if (gm.CurrentZone == Zone.Village)
+            {
+                if (gm.IsForestLocked && _position.X < gm.ForestBoundaryX)
+                    _position = new Vector2(gm.ForestBoundaryX, _position.Y);
+                else if (gm.VillageCleared && _position.X < gm.ForestBoundaryX)
+                    gm.CurrentZone = Zone.Forest;
+            }
+            else
+            {
+                if (_position.X > gm.ForestBoundaryX)
+                    _position = new Vector2(gm.ForestBoundaryX, _position.Y);
+            }
+        }
     }
 
     protected bool IsPositionSafe(Vector2 position)

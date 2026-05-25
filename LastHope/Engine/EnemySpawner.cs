@@ -14,38 +14,39 @@ namespace Last_Hope.Engine;
 /// </remarks>
 public class EnemySpawner
 {
-    /// <summary>The total number of waves required to complete a run.</summary>
-    public int TotalWaves { get; set; } = 1;
-
+    /// <summary>The total number of waves per zone (village runs 1..N, then forest runs 1..N).</summary>
+    public int TotalWaves { get; set; } = 6;
+    
     /// <summary>The exponential multiplier applied to the base enemy count per wave.</summary>
     public float EnemyMultiplierPerWave { get; set; } = 1.5f;
-
+    
     /// <summary>The base number of enemies that will spawn on the first wave.</summary>
     public int StartingEnemies { get; set; } = 20;
-
+    
     /// <summary>Whether a Boss enemy should be spawned at the end of the final wave.</summary>
     public bool BossAppearsOnLastWave { get; set; } = true;
-
+    
     /// <summary>Whether to cap the maximum number of enemies spawned per wave.</summary>
     public bool UseMaxEnemyLimit { get; set; } = true;
-
+    
     /// <summary>The absolute maximum number of enemies allowed per wave, if <see cref="UseMaxEnemyLimit"/> is true.</summary>
-    public int MaxEnemiesPerWave { get; set; } = 35;
+    public int MaxEnemiesPerWave { get; set; } = 100;
 
     private float spawnTimer = 0f;
     private float spawnInterval = 0.2f; // spawn an enemy every 0.2s
 
     private int currentWave = 1;
-
+    
     /// <summary>The current wave the player is on. Starts at 1.</summary>
     public int CurrentWave => currentWave;
-
+    
     private int spawnedThisWave = 0;
     private float waveWaitTimer = 0f;
     private bool waitingForNextWave = false;
-    private readonly float wavePause = 3f; // pause between the waves
+    private float wavePause = 3f; // pause between the waves
     private bool bossSpawned = false;
-
+    private Zone _previousZone = Zone.Village;
+    
     /// <summary>Indicates whether the final wave's boss has been spawned yet.</summary>
     public bool BossSpawned => bossSpawned;
 
@@ -91,6 +92,20 @@ public class EnemySpawner
     {
         var gm = GameManager.GetGameManager();
 
+        if (gm.CurrentZone != _previousZone)
+        {
+            if (_previousZone == Zone.Village && gm.CurrentZone == Zone.Forest)
+            {
+                currentWave = 1;
+                spawnedThisWave = 0;
+                spawnTimer = 0f;
+                waveWaitTimer = 0f;
+                waitingForNextWave = false;
+                bossSpawned = false;
+            }
+            _previousZone = gm.CurrentZone;
+        }
+
         int currentEnemyCount = 0;
         foreach (var gameObject in gm._gameObjects)
         {
@@ -110,7 +125,15 @@ public class EnemySpawner
             {
                 if (currentWave == finalWave)
                 {
-                    gm._state = GameState.Winner;
+                    if (gm.CurrentZone == Zone.Village)
+                    {
+                        gm.VillageCleared = true;
+                        // Idle until player crosses west, which flips CurrentZone to Forest and resets us.
+                    }
+                    else
+                    {
+                        gm._state = GameState.Winner;
+                    }
                     return;
                 }
 
@@ -128,8 +151,16 @@ public class EnemySpawner
 
         if (BossAppearsOnLastWave && currentWave == finalWave && !bossSpawned)
         {
-            Point bossSpawnPos = GetValidSpawnPoint();
-            gm.AddGameObject(new Boss(bossSpawnPos));
+            if (gm.CurrentZone == Zone.Village)
+            {
+                Point bossSpawnPos = GetValidSpawnPoint();
+                gm.AddGameObject(new Boss(bossSpawnPos));
+            }
+            else
+            {
+                Point bossSpawnPos = GetValidSpawnPoint(inForest: true);
+                gm.AddGameObject(new SpiderBoss(bossSpawnPos));
+            }
             bossSpawned = true;
         }
 
@@ -148,13 +179,20 @@ public class EnemySpawner
         {
             spawnTimer = 0f;
 
-            Point spawnPosition = GetValidSpawnPoint();
-            if (gm.RNG.NextDouble() < 0.5)
-                gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", speed: 200f, owner: null)));
+            bool inForest = gm.CurrentZone == Zone.Forest;
+            Point spawnPosition = GetValidSpawnPoint(inForest: inForest, collisionSize: 96);
+            if (inForest)
+            {
+                // TODO: add Wolf to the pool when implemented.
+                gm.AddGameObject(new Troll(spawnPosition));
+            }
             else
-                gm.AddGameObject(new Wolf(spawnPosition));
-                gm.AddGameObject(new Orc(spawnPosition));
-
+            {
+                if (gm.RNG.NextDouble() < 0.5)
+                    gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", speed: 200f, owner: null)));
+                else
+                    gm.AddGameObject(new Orc(spawnPosition));
+            }
             spawnedThisWave++;
         }
     }
@@ -164,19 +202,15 @@ public class EnemySpawner
     /// </summary>
     /// <param name="radius">The distance from the player to search for a spawn point.</param>
     /// <returns>A valid world coordinate for spawning, or a fallback location if no valid spot is found within the allowed attempts.</returns>
-    private Point GetValidSpawnPoint(float radius = 1500f)
+    private Point GetValidSpawnPoint(float radius = 1500f, bool inForest = false, int collisionSize = 160)
     {
-        var gm = GameManager.GetGameManager();
-
         const int maxAttempts = 25;
 
         for (int i = 0; i < maxAttempts; i++)
         {
-            Vector2 pos = RandomOffScreenLocation(radius);
+            Vector2 pos = RandomOffScreenLocation(radius, inForest);
 
-            const int size = 160; // Increased to 160 to guarantee safe spawn for Bosses as well
-
-            var rect = new Rectangle((int)pos.X, (int)pos.Y, size, size);
+            var rect = new Rectangle((int)pos.X, (int)pos.Y, collisionSize, collisionSize);
             var collider = new RectangleCollider(rect);
 
             if (!CollisionWorld.CollidesWithStatic(collider))
@@ -184,7 +218,7 @@ public class EnemySpawner
         }
 
         // fallback (safe but rare)
-        return RandomOffScreenLocation(radius).ToPoint();
+        return RandomOffScreenLocation(radius, inForest).ToPoint();
     }
 
     /// <summary>
@@ -192,7 +226,7 @@ public class EnemySpawner
     /// </summary>
     /// <param name="distance">The radius of the circle around the player.</param>
     /// <returns>A vector coordinate at the specified distance.</returns>
-    public Vector2 RandomOffScreenLocation(float distance = 1400f)
+    public Vector2 RandomOffScreenLocation(float distance = 1400f, bool inForest = false)
     {
         var gm = GameManager.GetGameManager();
         if (gm._player == null)
@@ -202,14 +236,20 @@ public class EnemySpawner
 
         float angle = (float)(gm.RNG.NextDouble() * Math.PI * 2);
 
-        Vector2 pos = playerPos + (new Vector2(
+        Vector2 pos = playerPos + new Vector2(
             (float)Math.Cos(angle),
             (float)Math.Sin(angle)
-        ) * distance);
+        ) * distance;
 
-        // Keep enemies in the village zone never spawn in the locked forest
+        // Clamp into the active zone so enemies don't spawn across the boundary.
         if (gm.ForestBoundaryX > 0f)
-            pos.X = Math.Max(pos.X, gm.ForestBoundaryX);
+        {
+            if (inForest)
+                pos.X = Math.Min(pos.X, gm.ForestBoundaryX);
+            else
+                pos.X = Math.Max(pos.X, gm.ForestBoundaryX);
+        }
+
         return pos;
     }
 
@@ -234,7 +274,7 @@ public class EnemySpawner
     /// <summary>
     /// Gets a random location off the screen relative to the player position, within World bounds.
     /// </summary>
-    public static Vector2 RandomOffScreenLocation()
+    public Vector2 RandomOffScreenLocation()
     {
         var gm = GameManager.GetGameManager();
         if (gm._player == null) return gm.RandomScreenLocation();
@@ -271,5 +311,6 @@ public class EnemySpawner
         waveWaitTimer = 0f;
         waitingForNextWave = false;
         bossSpawned = false;
+        _previousZone = Zone.Village;
     }
 }

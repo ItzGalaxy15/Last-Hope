@@ -14,12 +14,19 @@ public class ShieldSlamAbility : BaseAbility
     {
         if (player is Warrior warrior)
         {
-            int damage = (int)(warrior._Weapon.Damage * DamageMultiplier);
+            warrior.StartAbilityAnimation(this);
+        }
+    }
+
+    public override void PerformHit(BasePlayer player)
+    {
+        if (player is Warrior warrior)
+        {
+            int damage = (int)(warrior.CurrentDamage * DamageMultiplier);
             warrior.HitRadialArea(Radius, damage, StunDuration);
 
             warrior.PlayAttackSound();
             warrior.ResetAttackTimer();
-            warrior.FireRadialSlashes(); // Re-use multiple slashes to indicate the radial shockwave
         }
     }
 }

@@ -16,15 +16,22 @@ public class AxeSlamAbility : BaseAbility
     {
         if (player is Warrior warrior)
         {
-            Vector2 aimDir = GameManager.GetGameManager().GetWorldMousePosition() - warrior.GetPosition();
-            if (aimDir != Vector2.Zero) aimDir.Normalize();
+            warrior.StartAbilityAnimation(this);
+        }
+    }
 
-            int damage = (int)(warrior._Weapon.Damage * DamageMultiplier);
-            warrior.HitFrontalArea(aimDir, Range, damage, StunDuration);
+    public override void PerformHit(BasePlayer player)
+    {
+        if (player is Warrior warrior)
+        {
+            Vector2 aimDir = warrior.GetAbilityAimDirection(); // Gebruik de richting waarin je castte
+            Vector2 castAnchor = warrior.GetCastAnchor();
+
+            int damage = (int)(warrior.CurrentDamage * DamageMultiplier);
+            warrior.HitFrontalArea(castAnchor, aimDir, Range, damage, StunDuration);
 
             warrior.PlayAttackSound();
             warrior.ResetAttackTimer();
-            warrior._Weapon.Attack(aimDir, warrior.GetCastAnchor(), warrior.CurrentDamage, warrior.CurrentCritChance);
         }
     }
 }

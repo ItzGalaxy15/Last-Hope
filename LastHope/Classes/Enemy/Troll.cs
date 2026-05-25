@@ -10,10 +10,11 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope;
 
-public class Orc : BaseEnemy
+public class Troll : BaseEnemy
 {
-    private const float SpriteScale = 3f;
+    private const float SpriteScale = 1.5f;
     private const bool DebugDrawHitbox = false;
+    private const float StunDurationSeconds = 0.5f;
 
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
@@ -21,35 +22,42 @@ public class Orc : BaseEnemy
     private bool _isAttacking = false;
     private bool _isFacingLeft = false;
     private float _attackCooldownTimer = 0f;
+    private Texture2D _clubTexture;
 
-    private const int OrcFacingRightRow = 0;
+    private const int TrollFacingRightRow = 0;
     private const int WalkingStartColumn = 0;
     private const int WalkingFrameCount = 3;
     private const int AttackStartColumn = 3;
     private const int AttackFrameCount = 1;
     private const int SheetColumns = 8;
-    private const int FrameSize = 32;
-    
+    private const int FrameSize = 64;
+    private const float ClubSize = 32f;
+
+    private static readonly Vector2 ClubOffsetRight = new Vector2(14f, -20f);
+    private static readonly Vector2 ClubOffsetLeft = new Vector2(-17f, -20f);
+    private static readonly Vector2 ClubAttackOffsetRight = new Vector2(20f, 8f);
+    private static readonly Vector2 ClubAttackOffsetLeft = new Vector2(-20f, 8f);
+
     private float FullSize => FrameSize * SpriteScale;
     private float HitboxSize => FullSize * 0.55f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-    // Base Orc stats
-    public override float BaseMaxHp { get; } = 100f;
-    public override int BaseDamage { get; } = 10;
+    // Base Troll stats
+    public override float BaseMaxHp { get; } = 140f;
+    public override int BaseDamage { get; } = 5;
     public override float BaseCritChance { get; } = 0f;
-    public override float BaseHaste { get; } = 0.5f; // Attack cooldown
-    public override float BaseSpeed { get; } = 70f;
-    public override float ExperienceValue { get; protected set; } = 0.5f;
+    public override float BaseHaste { get; } = 0.7f; // Attack cooldown
+    public override float BaseSpeed { get; } = 80f;
+    public override float ExperienceValue { get; protected set; } = 0.7f;
 
-    // Current Orc Stats
+    // Current Troll Stats
     public override float CurrentMaxHp { get; protected set; }
     public override int CurrentDamage { get; protected set; }
     public override float CurrentCritChance { get; protected set; }
     public override float CurrentHaste { get; protected set; }
     public override float CurrentSpeed { get; protected set; }
 
-    public Orc(Point position) : base()
+    public Troll(Point position) : base()
     {
         int size = (int)(FrameSize * SpriteScale);
 
@@ -62,7 +70,8 @@ public class Orc : BaseEnemy
     public override void Load(ContentManager content)
     {
         base.Load(content);
-        _texture = content.Load<Texture2D>("orc");
+        _texture = content.Load<Texture2D>("Troll");
+        _clubTexture = content.Load<Texture2D>("Club");
 
         _walkingAnimation = new AnimationManager(
             WalkingFrameCount,
@@ -71,20 +80,19 @@ public class Orc : BaseEnemy
             10,
             true,
             WalkingStartColumn * FrameSize,
-            OrcFacingRightRow * FrameSize
+            TrollFacingRightRow * FrameSize
         );
 
         _attackAnimation = new AnimationManager(
             AttackFrameCount,
             SheetColumns,
             new Vector2(FrameSize, FrameSize),
-            8,
+            6,
             false,
             AttackStartColumn * FrameSize,
-            OrcFacingRightRow * FrameSize
+            TrollFacingRightRow * FrameSize
         );
 
-        // ✅ IMPORTANT: keep spawn position, only ensure size is correct
         var scaledSize = new Point((int)(FrameSize * SpriteScale), (int)(FrameSize * SpriteScale));
         _collider.shape.Size = scaledSize;
 
@@ -169,7 +177,7 @@ public class Orc : BaseEnemy
             HitboxHelper.DrawHitbox(spriteBatch, _collider.shape, Color.Red);
 
         Rectangle sourceRect;
-        int row = _isFacingLeft ? OrcFacingRightRow + 1 : OrcFacingRightRow;
+        int row = _isFacingLeft ? TrollFacingRightRow + 1 : TrollFacingRightRow;
 
         if (_isAttacking)
         {
@@ -181,6 +189,16 @@ public class Orc : BaseEnemy
             sourceRect = _walkingAnimation.GetSourceRect();
             sourceRect.Y = row * FrameSize;
         }
+
+        float swingProgress = _isAttacking ? _attackAnimation.FrameProgress : 0f;
+        Vector2 idleClubOffset = _isFacingLeft ? ClubOffsetLeft : ClubOffsetRight;
+        Vector2 attackClubOffset = _isFacingLeft ? ClubAttackOffsetLeft : ClubAttackOffsetRight;
+        Vector2 clubOffset = _isAttacking
+            ? Vector2.Lerp(idleClubOffset, attackClubOffset, swingProgress)
+            : idleClubOffset;
+
+        Vector2 clubPosition = center + (clubOffset * SpriteScale);
+        Vector2 clubOrigin = new Vector2(ClubSize / 2f, ClubSize);
 
         spriteBatch.Draw(
             _texture,
@@ -194,6 +212,19 @@ public class Orc : BaseEnemy
             0f
         );
 
+        spriteBatch.Draw(
+            _clubTexture,
+            clubPosition,
+            null,
+            DrawTint,
+            0f,
+            clubOrigin,
+            1f,
+            SpriteEffects.None,
+            0f
+        );
+
+
         base.Draw(gameTime, spriteBatch);
     }
 
@@ -206,7 +237,7 @@ public class Orc : BaseEnemy
             10,
             true,
             WalkingStartColumn * FrameSize,
-            OrcFacingRightRow * FrameSize
+            TrollFacingRightRow * FrameSize
         );
     }
 
@@ -224,6 +255,10 @@ public class Orc : BaseEnemy
         {
             decoy.Damage(10f);
         }
+        else if (other is BasePlayer player)
+        {
+            player.ApplyStun(StunDurationSeconds);
+        }
 
         _isAttacking = true;
         _attackCooldownTimer = CurrentHaste;
@@ -232,10 +267,10 @@ public class Orc : BaseEnemy
             AttackFrameCount,
             SheetColumns,
             new Vector2(FrameSize, FrameSize),
-            8,
+            6,
             false,
             AttackStartColumn * FrameSize,
-            OrcFacingRightRow * FrameSize
+            TrollFacingRightRow * FrameSize
         );
     }
 

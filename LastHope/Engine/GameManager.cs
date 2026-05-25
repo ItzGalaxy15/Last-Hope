@@ -17,8 +17,14 @@ using Last_Hope.Engine.Pathfinding;
 
 namespace Last_Hope.Engine;
 
+public enum Zone
+{
+    Village,
+    Forest
+}
+
 /// <summary>
-/// The central hub of the game engine, responsible for managing the game loop, 
+/// The central hub of the game engine, responsible for managing the game loop,
 /// state machine, object lifecycle, and global resources.
 /// </summary>
 /// <remarks>
@@ -78,9 +84,10 @@ public class GameManager
     public void RequestToast(string message) => _pendingToast = message;
     public string ConsumeToast() { var t = _pendingToast; _pendingToast = null; return t; }
 
-    public const int ForestUnlockLevel = 10;
     public float ForestBoundaryX { get; set; } = 0f;
-    public bool IsForestLocked => (_player?.Level ?? 0) < ForestUnlockLevel && ForestBoundaryX > 0f;
+    public Zone CurrentZone { get; set; } = Zone.Village;
+    public bool VillageCleared { get; set; } = false;
+    public bool IsForestLocked => CurrentZone == Zone.Village && !VillageCleared && ForestBoundaryX > 0f;
 
     /// <summary>
     /// Tile grid for enemy pathfinding; set after level generation. Mark cells non-walkable when adding blocking collision.
@@ -484,6 +491,8 @@ public class GameManager
         HasUsedOneUp = false;
 
         EnemySpawner.Reset();
+        CurrentZone = Zone.Village;
+        VillageCleared = false;
 
         Menu.ResetSkillTree();
 

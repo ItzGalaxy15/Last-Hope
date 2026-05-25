@@ -1,14 +1,14 @@
+using System;
+using System.Collections.Generic;
 using Last_Hope.Classes.Camera;
 using Last_Hope.Engine;
 using Last_Hope.Engine.LevelGenerator;
 using Last_Hope.Engine.Pathfinding;
 using Last_Hope.UI;
 using Microsoft.Xna.Framework;
-using MonoGameGum;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
+using MonoGameGum;
 
 namespace Last_Hope;
 
@@ -16,8 +16,8 @@ public class Last_Hope : Game
 {
     private const int MapWidthInTiles = 150;
     private const int MapHeightInTiles = 100;
+    public GraphicsDeviceManager Graphics { get; }
 
-    private GraphicsDeviceManager _graphics;
     private InputManager _inputManager;
     private GameManager _gameManager;
     private SpriteBatch _spriteBatch;
@@ -32,11 +32,11 @@ public class Last_Hope : Game
 
     public Last_Hope()
     {
-        _graphics = new GraphicsDeviceManager(this);
+        Graphics = new GraphicsDeviceManager(this);
 
-        _graphics.PreferredBackBufferWidth = 1920;
-        _graphics.PreferredBackBufferHeight = 1080;
-        _graphics.IsFullScreen = false;
+        Graphics.PreferredBackBufferWidth = 1920;
+        Graphics.PreferredBackBufferHeight = 1080;
+        Graphics.IsFullScreen = false;
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
@@ -157,7 +157,16 @@ public class Last_Hope : Game
         GumService.Default.Update(gameTime);
         if (_gameManager.playerAlive && _gameManager._player != null)
         {
-            _camera.MinX = _gameManager.IsForestLocked ? _gameManager.ForestBoundaryX : 0f;
+            if (_gameManager.CurrentZone == Zone.Forest)
+            {
+                _camera.MinX = 0f;
+                _camera.MaxX = _gameManager.ForestBoundaryX;
+            }
+            else
+            {
+                _camera.MinX = _gameManager.IsForestLocked ? _gameManager.ForestBoundaryX : 0f;
+                _camera.MaxX = null;
+            }
             _camera.Update(_gameManager._player.GetPosition());
         }
 
