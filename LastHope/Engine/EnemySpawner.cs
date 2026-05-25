@@ -21,7 +21,7 @@ public class EnemySpawner
     public float EnemyMultiplierPerWave { get; set; } = 1.5f;
     
     /// <summary>The base number of enemies that will spawn on the first wave.</summary>
-    public int StartingEnemies { get; set; } = 0;
+    public int StartingEnemies { get; set; } = 20;
     
     /// <summary>Whether a Boss enemy should be spawned at the end of the final wave.</summary>
     public bool BossAppearsOnLastWave { get; set; } = true;
