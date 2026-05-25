@@ -4,7 +4,9 @@ using Last_Hope.Collision;
 using Last_Hope.Classes.Items;
 using Last_Hope.Engine;
 using Last_Hope.Helpers;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -21,6 +23,10 @@ public class Orc : BaseEnemy
     private bool _isAttacking = false;
     private bool _isFacingLeft = false;
     private float _attackCooldownTimer = 0f;
+    private SoundEffect _attackSound;
+    private static SoundEffectInstance _sharedAttackInstance;
+    private static SoundEffectInstance _sharedHurtInstance;
+    private static SoundEffectInstance _sharedDeathInstance;
 
     private const int OrcFacingRightRow = 0;
     private const int WalkingStartColumn = 0;
@@ -63,6 +69,9 @@ public class Orc : BaseEnemy
     {
         base.Load(content);
         _texture = content.Load<Texture2D>("orc");
+        _attackSound = content.Load<SoundEffect>("sounds/Orc_Attack");
+        _hurtSound = content.Load<SoundEffect>("sounds/Orc_Hurt");
+        _deathSound = content.Load<SoundEffect>("sounds/Orc_Dead");
 
         _walkingAnimation = new AnimationManager(
             WalkingFrameCount,
@@ -227,6 +236,7 @@ public class Orc : BaseEnemy
 
         _isAttacking = true;
         _attackCooldownTimer = CurrentHaste;
+        AudioManager.PlaySfxOnce(ref _sharedAttackInstance, _attackSound);
 
         _attackAnimation = new AnimationManager(
             AttackFrameCount,
@@ -238,6 +248,9 @@ public class Orc : BaseEnemy
             OrcFacingRightRow * FrameSize
         );
     }
+
+    protected override void PlayHurtSound() => AudioManager.PlaySfxOnce(ref _sharedHurtInstance, _hurtSound);
+    protected override void PlayDeathSound() => AudioManager.PlaySfxOnce(ref _sharedDeathInstance, _deathSound);
 
     public override Vector2 GetPosition()
     {

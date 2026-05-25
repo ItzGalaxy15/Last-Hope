@@ -15,8 +15,8 @@ namespace Last_Hope.UI;
 /// </summary>
 internal static class SkillTreeOverlayFactory
 {
-    private const string WarriorTreeRelativePath = @"SkillTree\WarriorSkillTree.json";
-    private const string ArcherSkillTreeRelativePath = @"SkillTree\ArcherSkillTree.json";
+    private static readonly string WarriorTreeRelativePath = Path.Combine("SkillTree", "WarriorSkillTree.json");
+    private static readonly string ArcherSkillTreeRelativePath = Path.Combine("SkillTree", "ArcherSkillTree.json");
 
 
     /// <summary>
@@ -25,7 +25,7 @@ internal static class SkillTreeOverlayFactory
     public static SkillTreeMenuCanvas CreateWarriorOverlay(GameManager gm, in Viewport viewport)
     {
         string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string projectRoot = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\"));
+        string projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
         string jsonPath = Path.Combine(projectRoot, WarriorTreeRelativePath);
 
         if (!File.Exists(jsonPath))
@@ -74,7 +74,7 @@ internal static class SkillTreeOverlayFactory
     public static SkillTreeMenuCanvas CreateArcherOverlay(GameManager gm, in Viewport viewport)
     {
         string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string projectRoot = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\"));
+        string projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
         string jsonPath = Path.Combine(projectRoot, ArcherSkillTreeRelativePath);
 
         if (!File.Exists(jsonPath))

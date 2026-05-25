@@ -58,6 +58,19 @@ public static class AudioManager
         sound.Play(SfxVolume, 0f, 0f);
     }
 
+    // Plays the sound only if it is not already playing, using a shared per-class instance.
+    // Pass a static SoundEffectInstance field by ref so all instances of a class share one slot.
+    public static void PlaySfxOnce(ref SoundEffectInstance instance, SoundEffect sound)
+    {
+        if (sound == null) return;
+        if (instance == null || instance.State != SoundState.Playing)
+        {
+            instance ??= sound.CreateInstance();
+            instance.Volume = SfxVolume;
+            instance.Play();
+        }
+    }
+
     public static void PlayMusic(Song song, bool isRepeating = true)
     {
         MediaPlayer.IsRepeating = isRepeating;
