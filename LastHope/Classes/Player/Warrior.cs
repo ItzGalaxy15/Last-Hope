@@ -62,6 +62,7 @@ public class Warrior : BasePlayer
     private const double ProcChance = 0.10;
     private const float AdrenalineRegenRate = 5.0f;
     private SoundEffect _attackSound;
+    private SoundEffect _specialSound;
 
     // --- Skill Tree States ---
     public Texture2D SwordSprite { get; private set; }
@@ -142,6 +143,8 @@ public class Warrior : BasePlayer
         try { ShieldSlamSprite = content.Load<Texture2D>("ShieldSlam"); } catch { ShieldSlamSprite = null; }
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
         _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
+        _hurtSound = content.Load<SoundEffect>("sounds/Warrior_Hurt");
+        _specialSound = content.Load<SoundEffect>("sounds/Warrior_Special");
         _inputManager = GameManager.GetGameManager().InputManager;
 
         SyncColliderToPosition();
@@ -763,6 +766,7 @@ public class Warrior : BasePlayer
 
         _currentHp -= amount;
         TriggerHurtFlash();
+        if (_hurtSound != null) AudioManager.PlaySfx(_hurtSound);
         CheckDeath();
     }
 
@@ -771,6 +775,7 @@ public class Warrior : BasePlayer
         _isCastingAbility = true;
         _abilityHitTriggered = false;
         _castingAbility = ability;
+        if (_specialSound != null) AudioManager.PlaySfx(_specialSound);
 
         bool isShieldSlam = ability is ShieldSlamAbility;
         if (isShieldSlam)

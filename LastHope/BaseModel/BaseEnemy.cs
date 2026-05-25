@@ -2,7 +2,9 @@ using System.Dynamic;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Last_Hope.Helpers;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -24,7 +26,8 @@ public abstract class BaseEnemy : GameObject
     private float _poisonSpreadTimer;
     private const float PoisonSpreadDuration = 1f;
 
-    //public abstract BaseWeapon Weapon { get; protected set; }
+    protected SoundEffect _hurtSound;
+    protected SoundEffect _deathSound;
 
     // Fraction of (frameSize * spriteScale) used as the hitbox side length.
     // Override per-enemy to tune without touching hitbox math.
@@ -149,9 +152,17 @@ public abstract class BaseEnemy : GameObject
         TriggerHurtFlash();
         if (_currentHp < 0f)
         {
+            PlayDeathSound();
             GameManager.GetGameManager().RemoveGameObject(this);
         }
+        else
+        {
+            PlayHurtSound();
+        }
     }
+
+    protected virtual void PlayHurtSound() { }
+    protected virtual void PlayDeathSound() { }
 
     public virtual void isPoisoned(bool poisoned, float poisonDamage)
 {

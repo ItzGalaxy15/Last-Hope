@@ -4,7 +4,9 @@ using Last_Hope.Collision;
 using Last_Hope.Classes.Items;
 using Last_Hope.Engine;
 using Last_Hope.Helpers;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -23,6 +25,10 @@ public class Troll : BaseEnemy
     private bool _isFacingLeft = false;
     private float _attackCooldownTimer = 0f;
     private Texture2D _clubTexture;
+    private SoundEffect _attackSound;
+    private static SoundEffectInstance _sharedAttackInstance;
+    private static SoundEffectInstance _sharedHurtInstance;
+    private static SoundEffectInstance _sharedDeathInstance;
 
     private const int TrollFacingRightRow = 0;
     private const int WalkingStartColumn = 0;
@@ -72,6 +78,9 @@ public class Troll : BaseEnemy
         base.Load(content);
         _texture = content.Load<Texture2D>("Troll");
         _clubTexture = content.Load<Texture2D>("Club");
+        _attackSound = content.Load<SoundEffect>("sounds/Troll_Attack");
+        _hurtSound = content.Load<SoundEffect>("sounds/Troll_Hurt");
+        _deathSound = content.Load<SoundEffect>("sounds/Troll_Dead");
 
         _walkingAnimation = new AnimationManager(
             WalkingFrameCount,
@@ -262,6 +271,7 @@ public class Troll : BaseEnemy
 
         _isAttacking = true;
         _attackCooldownTimer = CurrentHaste;
+        AudioManager.PlaySfxOnce(ref _sharedAttackInstance, _attackSound);
 
         _attackAnimation = new AnimationManager(
             AttackFrameCount,
@@ -273,6 +283,9 @@ public class Troll : BaseEnemy
             TrollFacingRightRow * FrameSize
         );
     }
+
+    protected override void PlayHurtSound() => AudioManager.PlaySfxOnce(ref _sharedHurtInstance, _hurtSound);
+    protected override void PlayDeathSound() => AudioManager.PlaySfxOnce(ref _sharedDeathInstance, _deathSound);
 
     public override Vector2 GetPosition()
     {
