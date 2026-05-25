@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Last_Hope;
+using Last_Hope.Engine;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Last_Hope.Engine;
-using LastHope.Audio;
-
 namespace Last_Hope.UI.Menus;
 
 public sealed class SettingsMenu : MenuBase
@@ -30,8 +30,11 @@ public sealed class SettingsMenu : MenuBase
     private static Texture2D _lmbTexture;
 
     private SettingsChromeLayout _chrome;
-    private List<(Rectangle rect, KeybindId id)> _bindTargets = new();
+    private readonly List<(Rectangle rect, KeybindId id)> _bindTargets = new();
     private Rectangle _schemeToggleRect;
+    private Rectangle _fullscreenToggleRect;
+    private Rectangle _MuteToggleRect;
+
     private float _controlsScrollY;
     private float _controlsMaxScroll;
     private static readonly RasterizerState ScissorRasterizer = new RasterizerState { ScissorTestEnable = true, CullMode = CullMode.None };
@@ -43,6 +46,8 @@ public sealed class SettingsMenu : MenuBase
     private bool _draggingMaster;
     private bool _draggingMusic;
     private bool _draggingSfx;
+
+    private bool isMuted = false;
 
     public void Update(GameTime gameTime)
     {
@@ -113,7 +118,9 @@ public sealed class SettingsMenu : MenuBase
                 GameInputBinding bind = nb.Value;
                 KeybindId? owner = KeybindStore.FindBindingOwner(bind, _awaitingRebind.Value);
                 if (!owner.HasValue)
+                {
                     KeybindStore.ApplyRebind(_awaitingRebind.Value, bind);
+                }
                 else
                 {
                     _pendingConflict = owner;
@@ -184,6 +191,21 @@ public sealed class SettingsMenu : MenuBase
                     }
                 }
             }
+            if (_tab == SettingsTab.Display)
+            {
+                if (_fullscreenToggleRect.Contains(mouse))
+                {
+                    ((Last_Hope)Game).Graphics.ToggleFullScreen();
+                    return;
+                }
+            }
+            if (_tab == SettingsTab.Sound)
+            {
+                if (_MuteToggleRect.Contains(mouse))
+                {
+                    isMuted = !isMuted;
+                }
+            }
         }
 
         if (InputManager.IsKeyPress(Keys.D1) || InputManager.IsKeyPress(Keys.NumPad1))
@@ -194,9 +216,18 @@ public sealed class SettingsMenu : MenuBase
             _tab = SettingsTab.Display;
 
         //Apply audio settings immediately when dragging, but only if we're on the sound tab to avoid confusion
-        AudioManager.MasterVolume = _masterVolume;
-        AudioManager.MusicVolume = _musicVolume;
-        AudioManager.SfxVolume = _sfxVolume;
+        if (!isMuted)
+        {
+            AudioManager.MasterVolume = _masterVolume;
+            AudioManager.MusicVolume = _musicVolume;
+            AudioManager.SfxVolume = _sfxVolume;
+        }
+        else
+        {
+            AudioManager.MasterVolume = 0f;
+            AudioManager.MusicVolume = 0f;
+            AudioManager.SfxVolume = 0f;
+        }
         AudioManager.Apply();
 
         if (_tab == SettingsTab.Controls)
@@ -266,17 +297,20 @@ public sealed class SettingsMenu : MenuBase
             DrawControlsRebindable(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
             spriteBatch.End();
         }
-        else
+        else if (_tab == SettingsTab.Sound)
         {
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-            if (_tab == SettingsTab.Sound)
-                DrawSoundSettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
-            else
-                DrawPlaceholderInRect(spriteBatch, layoutFont, chrome.ContentRect, "Coming soon.", 0.62f * ui);
+            DrawSoundSettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
+            spriteBatch.End();
+        }
+        if (_tab == SettingsTab.Display)
+        {
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            DrawDisplaySettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
             spriteBatch.End();
         }
 
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         if (_tab == SettingsTab.Controls && _controlsMaxScroll > 0)
         {
             int sbW = Math.Max(4, (int)(5f * ui));
@@ -533,12 +567,50 @@ public sealed class SettingsMenu : MenuBase
         DrawSlider("Music Volume", ref _musicVolume, ref _draggingMusic);
         DrawSlider("SFX Volume", ref _sfxVolume, ref _draggingSfx);
 
+
+        var (labelFont, labelMul) = BodyFontForMenuText(font);
+
+        float toggleH = 36f * ui;
+        float toggleW = 400f * ui;
+
+        // Position BELOW sliders
+        int toggleX = (int)(content.X + (content.Width / 2f) - (toggleW / 2f));
+        int toggleY = (int)y;
+
+        // Reversed logic
+        string schemeLabel = isMuted ? "Muted: ON" : "Muted: OFF";
+
+        _MuteToggleRect = new Rectangle(toggleX, toggleY, (int)toggleW, (int)toggleH);
+
+        spriteBatch.Draw(
+            Pixel,
+            _MuteToggleRect,
+            isMuted
+                ? new Color(120, 70, 70, 220)
+                : new Color(40, 48, 62, 200)
+        );
+
+        DrawPanelOutline(
+            spriteBatch,
+            _MuteToggleRect,
+            isMuted
+                ? new Color(255, 140, 140, 200)
+                : new Color(120, 140, 170, 120)
+        );
+
+        float labelScale = textScale * 0.82f * labelMul;
+
+        Vector2 labelSz = gm.MeasureUiString(labelFont, schemeLabel, labelScale);
+
+        gm.DrawUiString(spriteBatch,labelFont,schemeLabel,new Vector2(_MuteToggleRect.Center.X - (labelSz.X / 2f),_MuteToggleRect.Center.Y - (labelSz.Y / 2f)),
+            Color.White,0f,Vector2.Zero,labelScale, SpriteEffects.None, 0f);
+
         // Optional hint
         gm.DrawUiString(
             spriteBatch,
             bf,
             "Drag sliders with mouse",
-            new Vector2(x, y),
+            new Vector2(x, y - 50f),
             Color.Gray,
             0f,
             Vector2.Zero,
@@ -546,6 +618,31 @@ public sealed class SettingsMenu : MenuBase
             SpriteEffects.None,
             0f
         );
+    }
+
+    private void DrawDisplaySettings(SpriteBatch spriteBatch, GameTime gameTime, SpriteFont font, Rectangle content, float textScale, float ui)
+    {
+        var (labelFont, labelMul) = BodyFontForMenuText(font);
+        float toggleH = 36f * ui;
+        float toggleW = 400f * ui;
+        int toggleX = (int)(content.X + (content.Width / 2f) - (toggleW / 2f));
+        int toggleY = (int)(content.Y + (8f * ui));
+        bool isFullscreen = ((Last_Hope)Game).Graphics.IsFullScreen;
+
+        _fullscreenToggleRect = new Rectangle(toggleX, toggleY, (int)toggleW, (int)toggleH);
+
+
+        spriteBatch.Draw(Pixel, _fullscreenToggleRect, isFullscreen ? new Color(60, 100, 160, 220) : new Color(40, 48, 62, 200));
+        DrawPanelOutline(spriteBatch, _fullscreenToggleRect, isFullscreen ? new Color(140, 185, 255, 200) : new Color(120, 140, 170, 120));
+
+        string schemeLabel = isFullscreen ? "Fullscreen: ON" : "Fullscreen: OFF";
+
+        float labelScale = textScale * 0.82f * labelMul;
+        Vector2 labelSz = gm.MeasureUiString(labelFont, schemeLabel, labelScale);
+        gm.DrawUiString(spriteBatch, labelFont, schemeLabel,
+            new Vector2(_fullscreenToggleRect.Center.X - (labelSz.X / 2f), _fullscreenToggleRect.Center.Y - (labelSz.Y / 2f)),
+            Color.White, 0f, Vector2.Zero, labelScale, SpriteEffects.None, 0f);
+
     }
 
     private void DrawBoundKey(SpriteBatch spriteBatch, SpriteFont font, int frame, Rectangle rect, GameInputBinding bind, float chip)

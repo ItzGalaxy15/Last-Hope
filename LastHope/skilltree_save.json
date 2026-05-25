@@ -1,6 +1,13 @@
 {
   "ClassId": "Warrior",
-  "TotalPointsSpent": 0,
-  "UnspentSkillPoints": 4,
-  "AllocatedNodes": {}
+  "TotalPointsSpent": 10,
+  "UnspentSkillPoints": 41,
+  "AllocatedNodes": {
+    "warrior_haste_l0": 3,
+    "sword_stance_l1": 1,
+    "dodge_l1": 3,
+    "flowing_strikes_l2": 1,
+    "on_dodge_speed_l2": 1,
+    "warrior_dmg_l0": 1
+  }
 }
