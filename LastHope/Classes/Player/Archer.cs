@@ -46,7 +46,7 @@ public class Archer : BasePlayer
     private const float BowDrawDuration = 0.35f;
     private bool _isDrawingBow;
     private float _bowDrawTimer;
-    private Vector2 _bowAimDirection;
+    public Vector2 _bowAimDirection;
     private const float ArrowSpeed = 600f;
 
     public BaseAbility ActiveAbility { get; set; }
@@ -300,6 +300,7 @@ public class Archer : BasePlayer
 
         DrawAimArrow(spriteBatch);
         base.Draw(gameTime, spriteBatch);
+        ActiveAbility?.Draw(spriteBatch);
     }
 
     public override void OnCollision(GameObject other)
@@ -408,6 +409,9 @@ public class Archer : BasePlayer
                 break;
             case "unlock_cluster_bomb":
                 ((Bow)_Weapon).clusterBomb = true;
+                break;
+            case "unlock_arrow_rain":
+                ActiveAbility = new ArrowRainAbility();
                 break;
         }
         UpdateStats();
