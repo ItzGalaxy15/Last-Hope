@@ -85,8 +85,7 @@ public class Wolf : BaseEnemy
         base.Load(content);
 
         // Load dedicated wolf sprite when available; fall back to orc placeholder in the meantime
-        try { _texture = content.Load<Texture2D>("wolf"); }
-        catch { _texture = content.Load<Texture2D>("orc"); }
+        _texture = content.Load<Texture2D>("Wolf");
         _attackSound = content.Load<SoundEffect>("sounds/Wolf_Attack");
         _hurtSound = content.Load<SoundEffect>("sounds/Wolf_Hurt");
         _deathSound = content.Load<SoundEffect>("sounds/Wolf_Dead");
