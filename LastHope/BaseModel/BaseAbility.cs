@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Last_Hope.BaseModel;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Abilities;
 
@@ -75,4 +76,6 @@ public abstract class BaseAbility
     /// </summary>
     /// <param name="player">The player casting the ability.</param>
     public virtual void PerformHit(BasePlayer player) { }
+
+    public virtual void Draw(SpriteBatch spriteBatch) { }
 }

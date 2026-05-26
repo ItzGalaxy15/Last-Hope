@@ -180,6 +180,32 @@ public abstract class BasePlayer : GameObject
         }
     }
 
+    public Vector2 CurrentAimDirection
+    {
+        get
+        {
+            Vector2 center = _position + new Vector2(_bodyWidth * 0.5f);
+            Vector2 direction;
+            if (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly)
+            {
+                direction = _aimInput;
+
+                if (direction == Vector2.Zero)
+                    direction = _lastMoveDirection;
+            }
+            else
+            {
+                Vector2 mousePos = GameManager.GetGameManager().GetWorldMousePosition();
+                direction = mousePos - center;
+            }
+            if (direction != Vector2.Zero)
+            {
+                direction.Normalize();
+            }
+            return direction;
+        }
+    }
+
     protected BasePlayer(Vector2 position, BaseWeapon weapon, int level, int experience, float dashDistance)
     {
         _position = position;

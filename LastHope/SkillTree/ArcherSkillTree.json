@@ -141,10 +141,10 @@
       "Effects": [{ "EffectId": "unlock_arrow_storm", "ValuePerPoint": 1.0 }], "GridX": 0, "GridY": 4
     },
     {
-      "Id": "concussive_shot_l4", "Name": "Concussive Shot", "Description": "Active: Fires a blunt-tipped bolt that deals moderate damage and applies a Stun effect.",
-      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_concussive_shot",
+      "Id": "arrow_rain_l4", "Name": "Arrow Rain", "Description": "Active: Fires a barrage of arrows that fall from the sky in a wide area.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_arrow_rain",
       "Tags": ["Active", "Stun"], "Dependencies": [],
-      "Effects": [{ "EffectId": "unlock_concussive_shot", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 4
+      "Effects": [{ "EffectId": "unlock_arrow_rain", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 4
     }
   ],
   "Connections": [
@@ -170,6 +170,6 @@
     { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "cluster_bomb_l2" },
     { "FromNodeId": "triple_shot_l2", "ToNodeId": "explosive_damage_l3" },
     { "FromNodeId": "cluster_bomb_l2", "ToNodeId": "explosive_damage_l3" },
-    { "FromNodeId": "explosive_damage_l3", "ToNodeId": "concussive_shot_l4" }
+    { "FromNodeId": "explosive_damage_l3", "ToNodeId": "arrow_rain_l4" }
   ]
 }
