@@ -399,6 +399,18 @@
 /processorParam:TextureFormat=Color
 /build:Shcrub-version2.webp
 
+#begin ShieldSlam.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ShieldSlam.png
+
 #begin ShieldSprite.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -423,11 +435,77 @@
 /processorParam:TextureFormat=Color
 /build:Slash-sheet.png
 
+#begin sounds/Archer_Attack.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Archer_Attack.wav
+
+#begin sounds/Archer_Attack2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Archer_Attack2.wav
+
+#begin sounds/Archer_Dead.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Archer_Dead.wav
+
+#begin sounds/Archer_Dead2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Archer_Dead2.wav
+
+#begin sounds/Archer_Hurt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Archer_Hurt.wav
+
+#begin sounds/Archer_Hurt2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Archer_Hurt2.wav
+
+#begin sounds/Archer_Special.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Archer_Special.wav
+
+#begin sounds/Archer_Special2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Archer_Special2.wav
+
 #begin sounds/BMG.wav
 /importer:WavImporter
 /processor:SongProcessor
 /processorParam:Quality=Best
 /build:sounds/BMG.wav
+
+#begin sounds/Boss_Demon_Dead.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Boss_Demon_Dead.wav
+
+#begin sounds/Boss_Demon_Fire_Attack.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Boss_Demon_Fire_Attack.wav
+
+#begin sounds/Boss_Demon_Hurt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Boss_Demon_Hurt.wav
 
 #begin sounds/Death sound.wav
 /importer:WavImporter
@@ -435,11 +513,95 @@
 /processorParam:Quality=Best
 /build:sounds/Death sound.wav
 
+#begin sounds/Goblin_Attack.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Goblin_Attack.wav
+
+#begin sounds/Goblin_Dead.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Goblin_Dead.wav
+
+#begin sounds/Goblin_Hurt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Goblin_Hurt.wav
+
+#begin sounds/Orc_Attack.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Orc_Attack.wav
+
+#begin sounds/Orc_Dead.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Orc_Dead.wav
+
+#begin sounds/Orc_Hurt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Orc_Hurt.wav
+
+#begin sounds/Troll_Attack.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Troll_Attack.wav
+
+#begin sounds/Troll_Dead.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Troll_Dead.wav
+
+#begin sounds/Troll_Hurt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Troll_Hurt.wav
+
 #begin sounds/Warrior Attack.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sounds/Warrior Attack.wav
+
+#begin sounds/Warrior_Hurt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Warrior_Hurt.wav
+
+#begin sounds/Warrior_Special.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Warrior_Special.wav
+
+#begin sounds/Wolf_Attack.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Wolf_Attack.wav
+
+#begin sounds/Wolf_Dead.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Wolf_Dead.wav
+
+#begin sounds/Wolf_Hurt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/Wolf_Hurt.wav
 
 #begin Spider.png
 /importer:TextureImporter
@@ -548,4 +710,16 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Water.png
+
+#begin Wolf.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Wolf.png
 

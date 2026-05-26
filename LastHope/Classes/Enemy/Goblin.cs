@@ -3,7 +3,9 @@ using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Last_Hope.Helpers;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -29,6 +31,10 @@ public class Goblin : BaseEnemy
     private bool _isAttacking = false;
     private bool _isMoving = false;
     private bool _isFacingLeft = false;
+    private SoundEffect _attackSound;
+    private static SoundEffectInstance _sharedAttackInstance;
+    private static SoundEffectInstance _sharedHurtInstance;
+    private static SoundEffectInstance _sharedDeathInstance;
 
     private const int WalkRightRow = 0;
     private const int WalkLeftRow = 1;
@@ -83,8 +89,10 @@ public class Goblin : BaseEnemy
     {
         base.Load(content);
         _texture = content.Load<Texture2D>("Goblin spritesheet attempt-sheet");
-
         _bowTexture = content.Load<Texture2D>("Bow sheet");
+        _attackSound = content.Load<SoundEffect>("sounds/Goblin_Attack");
+        _hurtSound = content.Load<SoundEffect>("sounds/Goblin_Hurt");
+        _deathSound = content.Load<SoundEffect>("sounds/Goblin_Dead");
 
         _walkingAnimation = new AnimationManager(
             WalkFrameCount,
@@ -191,6 +199,7 @@ public class Goblin : BaseEnemy
         {
             _weapon.Attack(aimDirection, GetPosition(), CurrentDamage, CurrentCritChance);
             _attackTimer = CurrentHaste;
+            AudioManager.PlaySfxOnce(ref _sharedAttackInstance, _attackSound);
 
             int attackOffsetX = _isFacingLeft
                 ? AttackLeftStartColumn * FrameSize
@@ -316,6 +325,9 @@ public class Goblin : BaseEnemy
             otherEnemy.EnablePoisonSpreading();
         }
     }
+
+    protected override void PlayHurtSound() => AudioManager.PlaySfxOnce(ref _sharedHurtInstance, _hurtSound);
+    protected override void PlayDeathSound() => AudioManager.PlaySfxOnce(ref _sharedDeathInstance, _deathSound);
 
     public override Vector2 GetPosition()
     {

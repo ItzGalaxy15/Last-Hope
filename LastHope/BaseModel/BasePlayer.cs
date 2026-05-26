@@ -130,6 +130,7 @@ public abstract class BasePlayer : GameObject
 
     // Sounds
     protected SoundEffect _deathSound;
+    protected SoundEffect _hurtSound;
 
 
     // Level EXP

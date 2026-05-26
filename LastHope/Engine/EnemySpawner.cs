@@ -183,8 +183,9 @@ public class EnemySpawner
             Point spawnPosition = GetValidSpawnPoint(inForest: inForest, collisionSize: 96);
             if (inForest)
             {
-                // TODO: add Wolf to the pool when implemented.
                 gm.AddGameObject(new Troll(spawnPosition));
+                gm.AddGameObject(new Wolf(spawnPosition));
+
             }
             else
             {

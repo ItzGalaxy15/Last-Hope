@@ -29,6 +29,12 @@
     <Content Include="Content\Font.png" Condition="Exists('Content\Font.png')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="SkillTree\WarriorSkillTree.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SkillTree\ArcherSkillTree.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Gum.MonoGame" Version="2025.12.9.1" />

@@ -27,6 +27,12 @@ public class Warrior : BasePlayer
     private const float WarriorDrawScale = 3f;
     private const float AxeDrawScale = 1.8f;
     private const float WalkFrameDuration = 0.12f;
+    private const int AbilityFrames = 4;
+    private const int AbilityColumns = 4;
+    private const int AxeAbilityRow = 0;
+    private const int ShieldAbilityRow = 1;
+    private const int ShieldSlamSheetRow = 0;
+    private const float AbilityDrawScale = 3f;
 
     private int _walkRow;
     private int _walkFrameIndex;
@@ -43,6 +49,10 @@ public class Warrior : BasePlayer
     private float _speedBuffTimer = 0f;
     private float _dmgBuffTimer = 0f;
     private float _defBuffTimer = 0f;
+    private float _bleedTimer = 0f;
+    private float _bleedTickTimer = 0f;
+    private float _bleedDps = 0f;
+    private const float BleedTickInterval = 0.5f;
 
     // --- STATE & PHYSICS ---
     private bool _facingLeft;
@@ -56,6 +66,7 @@ public class Warrior : BasePlayer
     private const double ProcChance = 0.10;
     private const float AdrenalineRegenRate = 5.0f;
     private SoundEffect _attackSound;
+    private SoundEffect _specialSound;
 
     // --- Skill Tree States ---
     public Texture2D SwordSprite { get; private set; }
@@ -86,19 +97,33 @@ public class Warrior : BasePlayer
 
     public BaseAbility ActiveAbility { get; set; }
 
-    //Base Warrior Stats
+    // Base Warrior stats
     public override float BaseMaxHp { get; } = 100f;
     public override int BaseDamage { get; } = 20;
     public override float BaseCritChance { get; } = 0.1f;
-    public override float BaseHaste { get; } = 0.9f;// Attack cooldown
-    public override float BaseSpeed { get; } = 150f;
+    public override float BaseHaste { get; } = 0.7f; // Attack cooldown
+    public override float BaseSpeed { get; } = 220f;
 
-    //Current Warrior Stats
+    // Current Warrior stats
     public override float CurrentMaxHp { get; protected set; }
     public override int CurrentDamage { get; protected set; }
     public override float CurrentCritChance { get; protected set; }
     public override float CurrentHaste { get; protected set; }
     public override float CurrentSpeed { get; protected set; }
+    
+    public Texture2D WarriorAbilitySprite { get; private set; }
+    public Texture2D ShieldSlamSprite { get; private set; }
+    private AnimationManager _abilityAnimation;
+    private bool _isCastingAbility;
+    private bool _abilityHitTriggered;
+    private BaseAbility _castingAbility;
+    private Texture2D _abilitySprite;
+    private float _abilityRotation;
+    private Vector2 _abilityAimDir;
+    private Vector2 _abilityOrigin;
+    private Vector2 _abilityDrawPos;
+    private bool _abilityRotate;
+    private float _abilityDrawScale;
 
     public Warrior(Vector2 startPosition)
         : base(position: startPosition, weapon: new Weapon("Sword"), level: 0, experience: 0, dashDistance: 140f)
@@ -118,9 +143,12 @@ public class Warrior : BasePlayer
         try { ShieldSprite = content.Load<Texture2D>("ShieldSprite"); } catch { ShieldSprite = AxeSprite; } // Fallback to avoid crashes
         
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
-        AimArrowSprite = content.Load<Texture2D>("AimArrow");
+        try { WarriorAbilitySprite = content.Load<Texture2D>("WarriorAbilitySheet"); } catch { WarriorAbilitySprite = null; }
+        try { ShieldSlamSprite = content.Load<Texture2D>("ShieldSlam"); } catch { ShieldSlamSprite = null; }
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
         _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
+        _hurtSound = content.Load<SoundEffect>("sounds/Warrior_Hurt");
+        _specialSound = content.Load<SoundEffect>("sounds/Warrior_Special");
         _inputManager = GameManager.GetGameManager().InputManager;
 
         SyncColliderToPosition();
@@ -134,8 +162,27 @@ public class Warrior : BasePlayer
         if (!GameManager.GetGameManager().playerAlive || _currentHp <= 0f)
             return;
 
-        Move(_moveInput, gameTime);
-        SyncColliderToPosition();
+        if (_isCastingAbility)
+        {
+            _abilityAnimation?.Update();
+
+            if (_abilityAnimation != null && _abilityAnimation.ActiveFrame == 3 && !_abilityHitTriggered)
+            {
+                _abilityHitTriggered = true;
+                _castingAbility?.PerformHit(this);
+            }
+
+            if (_abilityAnimation != null && _abilityAnimation.isFinished)
+            {
+                _isCastingAbility = false;
+                _castingAbility = null;
+            }
+        }
+        else
+        {
+            Move(_moveInput, gameTime);
+            SyncColliderToPosition();
+        }
 
         bool buffsChanged = false;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -159,10 +206,22 @@ public class Warrior : BasePlayer
             Heal(AdrenalineRegenRate * dt);
             if (_defBuffTimer <= 0f) buffsChanged = true;
         }
+        if (_bleedTimer > 0f)
+        {
+            _bleedTimer -= dt;
+            _bleedTickTimer -= dt;
+            if (_bleedTickTimer <= 0f)
+            {
+                _bleedTickTimer = BleedTickInterval;
+                _currentHp -= _bleedDps * BleedTickInterval;
+                TriggerHurtFlash();
+                CheckDeath();
+            }
+        }
 
         if (buffsChanged) UpdateStats();
 
-        bool moving = _moveInput != Vector2.Zero;
+        bool moving = _moveInput != Vector2.Zero && !_isCastingAbility;
         if (moving)
         {
             SetWalkRowFromDirection(_moveInput);
@@ -182,10 +241,11 @@ public class Warrior : BasePlayer
         // --- MAJOR ACTIVE ABILITIES LOGIC ---
         ActiveAbility?.Update(this, gameTime);
 
-        if (_inputManager is not null && ActiveAbility != null && ActiveAbility.CanExecute())
+        if (_inputManager is not null && ActiveAbility != null && ActiveAbility.CanExecute() && !_isCastingAbility)
         {
             if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
             {
+                if (_specialSound != null) AudioManager.PlaySfx(_specialSound);
                 ActiveAbility.Execute(this);
             }
         }
@@ -193,9 +253,7 @@ public class Warrior : BasePlayer
         if (_inputManager is not null)
         {
             _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
-                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
-            if (attackPressed && _timeSinceLastAttack >= CurrentHaste)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Attack) && _timeSinceLastAttack >= CurrentHaste && !_isCastingAbility)
             {
                 UseWeapon();
                 AudioManager.PlaySfx(_attackSound);
@@ -203,20 +261,20 @@ public class Warrior : BasePlayer
             }
 
             // place item at feet
-            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _itemActionCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.PlaceItem) && _itemActionCooldown <= 0f && !_isCastingAbility)
             {
                 ItemSystem.PlaceSelectedItem(this);
                 _itemActionCooldown = ItemActionCooldown;
             }
 
             // throw item toward mouse
-            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _itemActionCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.ThrowItem) && _itemActionCooldown <= 0f && !_isCastingAbility)
             {
                 ItemSystem.ThrowSelectedItemTowardMouse(this);
                 _itemActionCooldown = ItemActionCooldown;
             }
 
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Dash) && _dashCooldown <= 0f && !_isCastingAbility)
             {
                 Vector2 dashDirection = _moveInput != Vector2.Zero ? _moveInput : _lastMoveDirection;
                 if (dashDirection != Vector2.Zero)
@@ -227,7 +285,7 @@ public class Warrior : BasePlayer
                 }
             }
 
-            if (_inputManager.IsGameplayKeyPress(KeybindId.Teleport) && _teleportCooldown <= 0f)
+            if (_inputManager.IsGameplayKeyPress(KeybindId.Teleport) && _teleportCooldown <= 0f && !_isCastingAbility)
             {
                 if (Teleport())
                     _teleportCooldown = TeleportCooldownDuration;
@@ -239,8 +297,13 @@ public class Warrior : BasePlayer
 
     public void HitFrontalArea(Vector2 direction, float range, int damage, float stunDuration)
     {
-        var gm = GameManager.GetGameManager();
         Vector2 center = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+        HitFrontalArea(center, direction, range, damage, stunDuration);
+    }
+
+    public void HitFrontalArea(Vector2 center, Vector2 direction, float range, int damage, float stunDuration)
+    {
+        var gm = GameManager.GetGameManager();
 
         foreach (var obj in gm._gameObjects.ToList())
         {
@@ -352,6 +415,29 @@ public class Warrior : BasePlayer
     public Vector2 GetCastAnchor()
     {
         return _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
+    }
+
+    private Vector2 GetAbilityCastAnchor()
+    {
+        return _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+    }
+
+    public void ApplyBleeding(float dps, float duration)
+    {
+        _bleedDps = dps;
+        _bleedTimer = duration;
+        _bleedTickTimer = 0f;
+    }
+
+    private Vector2 GetAbilityCastAnchorForAbility(BaseAbility ability)
+    {
+        if (ability is AxeSlamAbility)
+            return GetCastAnchor();
+
+        if (ability is ShieldSlamAbility)
+            return _position;
+
+        return GetAbilityCastAnchor();
     }
 
     public void ResetAttackTimer()
@@ -576,12 +662,27 @@ public class Warrior : BasePlayer
             }
         }
 
+        bool isBehindAbilityCasting = _isCastingAbility && (_castingAbility is ShieldSlamAbility || _castingAbility is AxeSlamAbility);
+        if (isBehindAbilityCasting && _abilityAnimation != null && _abilitySprite != null)
+        {
+            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
+            float rotation = _abilityRotate ? _abilityRotation : 0f;
+            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
+        }
+
         spriteBatch.Draw(WarriorSprite, _position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
         if (IsShieldActive && _walkRow == 0)
         {
             // Draw shield in front of the player for Down
             spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, equipmentColor, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
+        }
+
+        if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null && !isBehindAbilityCasting)
+        {
+            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
+            float rotation = _abilityRotate ? _abilityRotation : 0f;
+            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
         }
 
         if (IsSwordActive && DualWieldUnlocked)
@@ -689,7 +790,86 @@ public class Warrior : BasePlayer
 
         _currentHp -= amount;
         TriggerHurtFlash();
+        if (_hurtSound != null) AudioManager.PlaySfx(_hurtSound);
         CheckDeath();
+    }
+
+    public void StartAbilityAnimation(BaseAbility ability)
+    {
+        _isCastingAbility = true;
+        _abilityHitTriggered = false;
+        _castingAbility = ability;
+
+        bool isShieldSlam = ability is ShieldSlamAbility;
+        if (isShieldSlam)
+        {
+            _abilitySprite = ShieldSlamSprite ?? WarriorAbilitySprite;
+            _abilityAimDir = new Vector2(1f, 0f);
+            _abilityRotation = 0f;
+            _abilityRotate = false;
+            _abilityDrawPos = _position;
+            _abilityOrigin = Vector2.Zero;
+            _abilityDrawScale = AbilityDrawScale * 1.25f;
+
+            _abilityAnimation = new AnimationManager(
+                AbilityFrames,
+                AbilityColumns,
+                new Vector2(FrameSize, FrameSize),
+                8, // interval
+                false, // loop
+                0,
+                ShieldSlamSheetRow * FrameSize
+            );
+
+            return;
+        }
+
+        _abilitySprite = WarriorAbilitySprite;
+
+        Vector2 castAnchor = GetAbilityCastAnchorForAbility(ability);
+        _abilityAimDir = GetAbilityAimDirection(castAnchor);
+        _abilityRotation = (float)Math.Atan2(_abilityAimDir.Y, _abilityAimDir.X) + MathHelper.PiOver2;
+        _abilityRotate = true;
+        _abilityDrawPos = castAnchor;
+        _abilityOrigin = new Vector2(FrameSize * 0.5f, FrameSize);
+        _abilityDrawScale = ability is AxeSlamAbility ? AbilityDrawScale * 1.15f : AbilityDrawScale;
+
+        _abilityAnimation = new AnimationManager(
+            AbilityFrames,
+            AbilityColumns,
+            new Vector2(FrameSize, FrameSize),
+            8, // interval
+            false, // loop
+            0,
+            AxeAbilityRow * FrameSize
+        );
+    }
+
+    public Vector2 GetAbilityAimDirection() => _abilityAimDir;
+
+    private Vector2 GetAbilityAimDirection(Vector2 castAnchor)
+    {
+        Vector2 direction;
+        if (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly)
+        {
+            direction = _aimInput != Vector2.Zero ? _aimInput : _lastMoveDirection;
+        }
+        else
+        {
+            Vector2 mousePosition = GameManager.GetGameManager().GetWorldMousePosition();
+            direction = mousePosition - castAnchor;
+        }
+
+        if (direction == Vector2.Zero)
+        {
+            direction = _lastMoveDirection != Vector2.Zero ? _lastMoveDirection : new Vector2(1f, 0f);
+        }
+        else
+        {
+            direction.Normalize();
+        }
+
+        return direction;
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)

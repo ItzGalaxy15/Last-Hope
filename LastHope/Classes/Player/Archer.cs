@@ -2,11 +2,12 @@ using System;
 using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Audio;
 using Last_Hope.Classes.Items;
 using Last_Hope.Helpers;
 using Last_Hope.Systems.ItemSystem;
@@ -81,6 +82,8 @@ public class Archer : BasePlayer
     private const float CritGuaranteeDuration = 2f;
     private const float AttackSpeedBoostAmount = 0.3f;
     private const float PoisonDamagePerTick = 5f;
+    private SoundEffect _attackSound;
+    private SoundEffect _specialSound;
     
 
     public Archer(Vector2 startPosition)
@@ -99,7 +102,10 @@ public class Archer : BasePlayer
         AimArrowSprite = content.Load<Texture2D>("AimArrow");
         BowSprite = content.Load<Texture2D>("Bow sheet");
         ArcherSprite = content.Load<Texture2D>("ArcherSheet");
-        _deathSound = content.Load<SoundEffect>("sounds/Death sound");
+        _deathSound = content.Load<SoundEffect>("sounds/Archer_Dead2");
+        _hurtSound = content.Load<SoundEffect>("sounds/Archer_Hurt2");
+        _attackSound = content.Load<SoundEffect>("sounds/Archer_Attack2");
+        _specialSound = content.Load<SoundEffect>("sounds/Archer_Special2");
         _inputManager = GameManager.GetGameManager().InputManager;
         _Weapon.SetOwner(this);
 
@@ -164,6 +170,7 @@ public class Archer : BasePlayer
         {
             if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
             {
+                if (_specialSound != null) AudioManager.PlaySfx(_specialSound);
                 ActiveAbility.Execute(this);
             }
         }
@@ -249,6 +256,7 @@ public class Archer : BasePlayer
         float effectiveCrit = _critGuaranteeTimer > 0f ? 1f : CurrentCritChance;
 
         _Weapon.Attack(_bowAimDirection, center, CurrentDamage, effectiveCrit);
+        if (_attackSound != null) AudioManager.PlaySfx(_attackSound);
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -329,6 +337,7 @@ public class Archer : BasePlayer
     {
         _currentHp -= amount;
         TriggerHurtFlash();
+        if (_hurtSound != null) AudioManager.PlaySfx(_hurtSound);
         CheckDeath();
     }
 
