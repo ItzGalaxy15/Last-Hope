@@ -40,7 +40,7 @@ public class SpiderBoss : BaseEnemy
     public override int BaseDamage { get; } = 15;
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 0.8f;
-    public override float BaseSpeed { get; } = 220f;
+    public override float BaseSpeed { get; } = 180f;
     public override float ExperienceValue { get; protected set; } = 100f;
 
     public override float CurrentMaxHp { get; protected set; }
