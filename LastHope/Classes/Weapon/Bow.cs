@@ -18,6 +18,7 @@ public class Bow : BaseWeapon
     public bool increasedExplosionRadius;
     public bool increasedExplosionDamage;
     public bool tripleShot;
+    public bool clusterBomb;
     public Action<BaseEnemy> OnHitCallBack { get; set; }
     private GameObject _owner;
 
@@ -59,7 +60,7 @@ public class Bow : BaseWeapon
             piercingArrows,
             poisonArrows, spreadPoison, increasedPoisonDamage,
             explosiveArrows, increasedExplosionRadius, increasedExplosionDamage,
-            OnHitCallBack);
+            clusterBomb, OnHitCallBack);
         GameManager.GetGameManager().AddGameObject(arrow);
     }
 

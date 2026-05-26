@@ -103,10 +103,10 @@
       "Effects": [{ "EffectId": "unlock_triple_shot", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 2
     },
     {
-      "Id": "on_dodge_counter_l2", "Name": "Counter Shot", "Description": "Successfully dodging an attack instantly triggers a free counter-attack.",
+      "Id": "cluster_bomb_l2", "Name": "Cluster Bomb", "Description": "After the first explosive arrow hits an enemy more explosions occur.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
       "Tags": ["Proc"], "Dependencies": ["explosive_arrow_stance_l1"],
-      "Effects": [{ "EffectId": "proc_counter_shot", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 2
+      "Effects": [{ "EffectId": "unlock_cluster_bomb", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 2
     },
 
     {
@@ -117,14 +117,14 @@
     },
     {
       "Id": "increased_poison_damage_l3", "Name": "Deadlier Poison", "Description": "Doubles the damage of your poison.",
-      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_keen_eye",
+      "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_keen_eye",
       "Tags": ["Damage"], "Dependencies": [],
       "Effects": [{ "EffectId": "poison_damage", "ValuePerPoint": 5.0 }], "GridX": 0, "GridY": 3
     },
     {
       "Id": "explosive_damage_l3", "Name": "Explosive Force", "Description": "Increases the damage of your explosive attacks by 50%.",
       "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_explosive_damage",
-      "Tags": ["Attack"], "Dependencies": ["triple_shot_l2"],
+      "Tags": ["Attack"], "Dependencies": ["triple_shot_l2", "cluster_bomb_l2"],
       "Effects": [{ "EffectId": "explosive_damage", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 3
     },
 
@@ -167,9 +167,9 @@
     { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_arrow_stance_l1" },
     { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "explosive_radius_l1" },
     { "FromNodeId": "explosive_radius_l1", "ToNodeId": "triple_shot_l2" },
-    { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "on_dodge_counter_l2" },
+    { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "cluster_bomb_l2" },
     { "FromNodeId": "triple_shot_l2", "ToNodeId": "explosive_damage_l3" },
-    { "FromNodeId": "on_dodge_counter_l2", "ToNodeId": "explosive_damage_l3" },
+    { "FromNodeId": "cluster_bomb_l2", "ToNodeId": "explosive_damage_l3" },
     { "FromNodeId": "explosive_damage_l3", "ToNodeId": "concussive_shot_l4" }
   ]
 }

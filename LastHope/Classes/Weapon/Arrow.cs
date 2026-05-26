@@ -26,9 +26,10 @@ namespace Last_Hope.Classes.Weapon
         private bool hasExplosiveArrows;
         private bool hasIncreasedExplosionRadius;
         private bool hasIncreasedExplosionDamage;
+        private bool _hasClusterBomb;
         private Action<BaseEnemy> _onHitEnemy;
 
-        private float ExplosionRadius = 75f;
+        private float ExplosionRadius = 100f;
 
         private const float PoisonDamagePerTick = 5f;
         private const float ExplosionDamageMultiplier = 1.5f;
@@ -40,7 +41,7 @@ namespace Last_Hope.Classes.Weapon
         public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage,
                      float critChance, bool piercingArrows, bool poisonArrows, bool spreadPoison, 
                      bool increasedPoisonDamage, bool explosiveArrows, bool increasedExplosionRadius, 
-                     bool increasedExplosionDamage, Action<BaseEnemy> onHitEnemy = null)
+                     bool increasedExplosionDamage, bool clusterBomb, Action<BaseEnemy> onHitEnemy = null)
         {
             _owner = owner;
             _position = origin;
@@ -54,6 +55,7 @@ namespace Last_Hope.Classes.Weapon
             hasExplosiveArrows = explosiveArrows;
             hasIncreasedExplosionRadius = increasedExplosionRadius;
             hasIncreasedExplosionDamage = increasedExplosionDamage;
+            _hasClusterBomb = clusterBomb;
             _onHitEnemy = onHitEnemy;
             _collider = new RectangleCollider(new Rectangle(origin.ToPoint(), new Point(10, 10)));
             SetCollider(_collider);
@@ -151,13 +153,30 @@ namespace Last_Hope.Classes.Weapon
                         {
                             if (hasIncreasedExplosionRadius)
                             {
-                                ExplosionRadius = ExplosionRadius * ExplosionRadiusMultiplier;
+                                ExplosionRadius *= ExplosionRadiusMultiplier;
                             }
+
                             if (hasIncreasedExplosionDamage)
                             {
                                 damage = (int)(damage * ExplosionDamageMultiplier);
                             }
-                            ExplosionHelper.Explode(_position, ExplosionRadius, (int)(damage * ExplosionSplashMultiplier), enemy);
+                            int splashDamage = (int)(damage * ExplosionSplashMultiplier);
+                            ExplosionHelper.Explode(_position, ExplosionRadius, splashDamage, enemy);
+
+                            if (_hasClusterBomb)
+                            {
+                                Vector2 direction = Vector2.Normalize(_velocity);
+                                Vector2 perpendicular = new Vector2(-direction.Y, direction.X);
+
+                                float behindDistance = ExplosionRadius * 0.75f;
+                                float sideOffset = ExplosionRadius * 0.4f;
+                                float clusterRadius = ExplosionRadius * 0.9f;
+                                Vector2 behindPosition = _position + direction * behindDistance;
+
+                                ExplosionHelper.Explode(behindPosition, clusterRadius, splashDamage, enemy);
+                                ExplosionHelper.Explode(behindPosition - perpendicular * sideOffset, clusterRadius, splashDamage, enemy);
+                                ExplosionHelper.Explode(behindPosition + perpendicular * sideOffset, clusterRadius, splashDamage, enemy);
+                            }
                             GameManager.GetGameManager().RemoveGameObject(this);
                             return;
                         }

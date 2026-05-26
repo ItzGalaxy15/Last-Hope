@@ -397,6 +397,9 @@ public class Archer : BasePlayer
             case "unlock_triple_shot":
                 ((Bow)_Weapon).tripleShot = true;
                 break;
+            case "unlock_cluster_bomb":
+                ((Bow)_Weapon).clusterBomb = true;
+                break;
         }
         UpdateStats();
     }
