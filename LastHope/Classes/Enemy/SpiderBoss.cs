@@ -20,6 +20,8 @@ public class SpiderBoss : BaseEnemy
     private AnimationManager _attackAnimation;
     private bool _isAttacking;
     private float _attackCooldownTimer;
+    private float _postHitPauseTimer;
+    private const float PostHitPauseDuration = 1f;
     private SpiderDir _facing = SpiderDir.Down;
     private SpiderDir _lastFacing = SpiderDir.Down;
 
@@ -36,7 +38,7 @@ public class SpiderBoss : BaseEnemy
     private float HitboxSize => FullSize * 0.5f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-    public override float BaseMaxHp { get; } = 400f;
+    public override float BaseMaxHp { get; } = 800f;
     public override int BaseDamage { get; } = 15;
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 0.8f;
@@ -86,6 +88,8 @@ public class SpiderBoss : BaseEnemy
 
         if (_attackCooldownTimer > 0f)
             _attackCooldownTimer = Math.Max(0f, _attackCooldownTimer - dt);
+        if (_postHitPauseTimer > 0f)
+            _postHitPauseTimer = Math.Max(0f, _postHitPauseTimer - dt);
 
         if (player == null && decoy == null)
             return;
@@ -111,7 +115,8 @@ public class SpiderBoss : BaseEnemy
         if (_isPoisoned)
             movement *= 0.75f;
 
-        _precisePosition += movement;
+        if (_postHitPauseTimer <= 0f)
+            _precisePosition += movement;
         _collider.shape = new Rectangle(
             (int)(_precisePosition.X + HitboxOffset),
             (int)(_precisePosition.Y + HitboxOffset),
@@ -173,7 +178,10 @@ public class SpiderBoss : BaseEnemy
         if (other is Decoy decoy)
             decoy.Damage(10f);
         else if (other is BasePlayer player)
+        {
             player.ApplyPoison(BitePoisonDamage);
+            _postHitPauseTimer = PostHitPauseDuration;
+        }
 
         _isAttacking = true;
         _attackCooldownTimer = CurrentHaste;

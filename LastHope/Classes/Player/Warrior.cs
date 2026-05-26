@@ -49,6 +49,10 @@ public class Warrior : BasePlayer
     private float _speedBuffTimer = 0f;
     private float _dmgBuffTimer = 0f;
     private float _defBuffTimer = 0f;
+    private float _bleedTimer = 0f;
+    private float _bleedTickTimer = 0f;
+    private float _bleedDps = 0f;
+    private const float BleedTickInterval = 0.5f;
 
     // --- STATE & PHYSICS ---
     private bool _facingLeft;
@@ -202,6 +206,18 @@ public class Warrior : BasePlayer
             Heal(AdrenalineRegenRate * dt);
             if (_defBuffTimer <= 0f) buffsChanged = true;
         }
+        if (_bleedTimer > 0f)
+        {
+            _bleedTimer -= dt;
+            _bleedTickTimer -= dt;
+            if (_bleedTickTimer <= 0f)
+            {
+                _bleedTickTimer = BleedTickInterval;
+                _currentHp -= _bleedDps * BleedTickInterval;
+                TriggerHurtFlash();
+                CheckDeath();
+            }
+        }
 
         if (buffsChanged) UpdateStats();
 
@@ -229,6 +245,7 @@ public class Warrior : BasePlayer
         {
             if (_inputManager.IsGameplayKeyPress(KeybindId.Ability1))
             {
+                if (_specialSound != null) AudioManager.PlaySfx(_specialSound);
                 ActiveAbility.Execute(this);
             }
         }
@@ -403,6 +420,13 @@ public class Warrior : BasePlayer
     private Vector2 GetAbilityCastAnchor()
     {
         return _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f);
+    }
+
+    public void ApplyBleeding(float dps, float duration)
+    {
+        _bleedDps = dps;
+        _bleedTimer = duration;
+        _bleedTickTimer = 0f;
     }
 
     private Vector2 GetAbilityCastAnchorForAbility(BaseAbility ability)
@@ -775,7 +799,6 @@ public class Warrior : BasePlayer
         _isCastingAbility = true;
         _abilityHitTriggered = false;
         _castingAbility = ability;
-        if (_specialSound != null) AudioManager.PlaySfx(_specialSound);
 
         bool isShieldSlam = ability is ShieldSlamAbility;
         if (isShieldSlam)
