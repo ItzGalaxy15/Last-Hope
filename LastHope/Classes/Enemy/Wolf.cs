@@ -4,7 +4,9 @@ using Last_Hope.Classes.Items;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Last_Hope.Helpers;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -18,6 +20,10 @@ public class Wolf : BaseEnemy
     private Vector2 _precisePosition;
     private AnimationManager _walkingAnimation;
     private bool _isFacingLeft = false;
+    private SoundEffect _attackSound;
+    private static SoundEffectInstance _sharedAttackInstance;
+    private static SoundEffectInstance _sharedHurtInstance;
+    private static SoundEffectInstance _sharedDeathInstance;
 
     // Lunge state machine
     private enum WolfState { Walking, Lunging, Recovering }
@@ -81,6 +87,9 @@ public class Wolf : BaseEnemy
         // Load dedicated wolf sprite when available; fall back to orc placeholder in the meantime
         try { _texture = content.Load<Texture2D>("wolf"); }
         catch { _texture = content.Load<Texture2D>("orc"); }
+        _attackSound = content.Load<SoundEffect>("sounds/Wolf_Attack");
+        _hurtSound = content.Load<SoundEffect>("sounds/Wolf_Hurt");
+        _deathSound = content.Load<SoundEffect>("sounds/Wolf_Dead");
 
         _walkingAnimation = new AnimationManager(
             WalkingFrameCount,
@@ -240,6 +249,7 @@ public class Wolf : BaseEnemy
         // Player contact damage is applied by Warrior.OnCollision — we only add the bleed on a lunge hit
         if (other is Warrior warrior && _state == WolfState.Lunging)
         {
+            AudioManager.PlaySfxOnce(ref _sharedAttackInstance, _attackSound);
             warrior.ApplyBleeding(dps: 2f, duration: 5f);
             EndLunge();
         }
@@ -275,6 +285,9 @@ public class Wolf : BaseEnemy
 
         base.Draw(gameTime, spriteBatch);
     }
+
+    protected override void PlayHurtSound() => AudioManager.PlaySfxOnce(ref _sharedHurtInstance, _hurtSound);
+    protected override void PlayDeathSound() => AudioManager.PlaySfxOnce(ref _sharedDeathInstance, _deathSound);
 
     public override Vector2 GetPosition() => _collider.shape.Center.ToVector2();
 }
