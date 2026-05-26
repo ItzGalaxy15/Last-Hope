@@ -1,7 +1,7 @@
 {
   "ClassId": "Warrior",
   "TotalPointsSpent": 10,
-  "UnspentSkillPoints": 41,
+  "UnspentSkillPoints": 43,
   "AllocatedNodes": {
     "warrior_haste_l0": 3,
     "sword_stance_l1": 1,

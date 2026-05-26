@@ -4,7 +4,9 @@ using Last_Hope.Classes.Spell;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
 using Last_Hope.Helpers;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -28,6 +30,10 @@ public class Boss : BaseEnemy
 
     private float _attackCooldownTimer = 0f;
     private const float AttackRange = 300f;
+    private SoundEffect _fireAttackSound;
+    private static SoundEffectInstance _sharedFireAttackInstance;
+    private static SoundEffectInstance _sharedHurtInstance;
+    private static SoundEffectInstance _sharedDeathInstance;
 
     // Sprite sheet: 64x64 per frame, 8 columns, 2 rows
     private const int FrameSize = 64;
@@ -85,6 +91,9 @@ public class Boss : BaseEnemy
         base.Load(content);
 
         _texture = content.Load<Texture2D>("demon");
+        _fireAttackSound = content.Load<SoundEffect>("sounds/Boss_Demon_Fire_Attack");
+        _hurtSound = content.Load<SoundEffect>("sounds/Boss_Demon_Hurt");
+        _deathSound = content.Load<SoundEffect>("sounds/Boss_Demon_Dead");
 
         ResetWalkAnimation(_isFacingLeft);
         ResetChargeAnimation(_isFacingLeft);
@@ -152,6 +161,7 @@ public class Boss : BaseEnemy
                 Vector2 dir = toTarget;
                 if (dir != Vector2.Zero) dir.Normalize();
                 gm.AddGameObject(new Fireball(GetPosition(), dir, this, CurrentDamage));
+                AudioManager.PlaySfxOnce(ref _sharedFireAttackInstance, _fireAttackSound);
             }
         }
         else
@@ -253,6 +263,9 @@ public class Boss : BaseEnemy
     /// Gets the current position of the boss based on its collision box.
     /// </summary>
     /// <returns>A Vector2 representing the exact center of the boss.</returns>
+    protected override void PlayHurtSound() => AudioManager.PlaySfxOnce(ref _sharedHurtInstance, _hurtSound);
+    protected override void PlayDeathSound() => AudioManager.PlaySfxOnce(ref _sharedDeathInstance, _deathSound);
+
     public override Vector2 GetPosition() => _collider.shape.Center.ToVector2();
 
     /// <summary>
