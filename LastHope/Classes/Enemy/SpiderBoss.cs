@@ -36,11 +36,11 @@ public class SpiderBoss : BaseEnemy
     private float HitboxSize => FullSize * 0.5f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-    public override float BaseMaxHp { get; } = 400f;
+    public override float BaseMaxHp { get; } = 800f;
     public override int BaseDamage { get; } = 15;
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 0.8f;
-    public override float BaseSpeed { get; } = 180f;
+    public override float BaseSpeed { get; } = 220f;
     public override float ExperienceValue { get; protected set; } = 100f;
 
     public override float CurrentMaxHp { get; protected set; }
