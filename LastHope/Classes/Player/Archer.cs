@@ -394,6 +394,9 @@ public class Archer : BasePlayer
             case "explosive_damage":
                 ((Bow)_Weapon).increasedExplosionDamage = true;
                 break;
+            case "unlock_triple_shot":
+                ((Bow)_Weapon).tripleShot = true;
+                break;
         }
         UpdateStats();
     }
@@ -434,6 +437,7 @@ public class Archer : BasePlayer
         ((Bow)_Weapon).explosiveArrows = false;
         ((Bow)_Weapon).increasedExplosionRadius = false;
         ((Bow)_Weapon).increasedExplosionDamage = false;
+        ((Bow)_Weapon).tripleShot = false;
         ActiveAbility = null;
 
         UpdateStats();

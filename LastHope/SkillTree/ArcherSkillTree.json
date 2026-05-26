@@ -97,10 +97,10 @@
       "Effects": [{ "EffectId": "unlock_poison_touch", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 2
     },
     {
-      "Id": "fortify_l2", "Name": "Fortify", "Description": "100% chance on hit taken to briefly increase your own damage reduction.",
-      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
+      "Id": "triple_shot_l2", "Name": "Triple Shot", "Description": "Fire 3 arrows at once.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_triple_shot",
       "Tags": ["Proc"], "Dependencies": ["explosive_radius_l1"],
-      "Effects": [{ "EffectId": "proc_fortify", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 2
+      "Effects": [{ "EffectId": "unlock_triple_shot", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 2
     },
     {
       "Id": "on_dodge_counter_l2", "Name": "Counter Shot", "Description": "Successfully dodging an attack instantly triggers a free counter-attack.",
@@ -124,7 +124,7 @@
     {
       "Id": "explosive_damage_l3", "Name": "Explosive Force", "Description": "Increases the damage of your explosive attacks by 50%.",
       "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_explosive_damage",
-      "Tags": ["Attack"], "Dependencies": [],
+      "Tags": ["Attack"], "Dependencies": ["triple_shot_l2"],
       "Effects": [{ "EffectId": "explosive_damage", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 3
     },
 
@@ -166,9 +166,9 @@
 
     { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_arrow_stance_l1" },
     { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "explosive_radius_l1" },
-    { "FromNodeId": "explosive_radius_l1", "ToNodeId": "fortify_l2" },
+    { "FromNodeId": "explosive_radius_l1", "ToNodeId": "triple_shot_l2" },
     { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "on_dodge_counter_l2" },
-    { "FromNodeId": "fortify_l2", "ToNodeId": "explosive_damage_l3" },
+    { "FromNodeId": "triple_shot_l2", "ToNodeId": "explosive_damage_l3" },
     { "FromNodeId": "on_dodge_counter_l2", "ToNodeId": "explosive_damage_l3" },
     { "FromNodeId": "explosive_damage_l3", "ToNodeId": "concussive_shot_l4" }
   ]

@@ -72,12 +72,7 @@ public class ArrowStormAbility : BaseAbility
 
         // https://stackoverflow.com/questions/14607640/rotating-a-vector-in-3d-space resource used for vector rotation
         float angleOffset = (float)(GameManager.GetGameManager().RNG.NextDouble() * MathHelper.ToRadians(30) - MathHelper.ToRadians(15));
-        float cos = (float)Math.Cos(angleOffset);
-        float sin = (float)Math.Sin(angleOffset);
-        Vector2 spreadDirection = new Vector2(
-            _firingDirection.X * cos - _firingDirection.Y * sin,
-            _firingDirection.X * sin + _firingDirection.Y * cos
-        );
+        Vector2 spreadDirection = VectorHelper.RotateVector(_firingDirection, MathHelper.ToDegrees(angleOffset));
 
         var arrow = new Arrow(center, spreadDirection, ArrowSpeed, archer, archer.CurrentDamage, archer.CurrentCritChance, bow.piercingArrows,
                               bow.poisonArrows, bow.spreadPoison, bow.increasedPoisonDamage, 

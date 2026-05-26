@@ -28,7 +28,7 @@ namespace Last_Hope.Classes.Weapon
         private bool hasIncreasedExplosionDamage;
         private Action<BaseEnemy> _onHitEnemy;
 
-        private float ExplosionRadius = 150f;
+        private float ExplosionRadius = 75f;
 
         private const float PoisonDamagePerTick = 5f;
         private const float ExplosionDamageMultiplier = 1.5f;
@@ -37,7 +37,10 @@ namespace Last_Hope.Classes.Weapon
 
         private HashSet<GameObject> _alreadyHit = new HashSet<GameObject>();
 
-        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage, float critChance, bool piercingArrows, bool poisonArrows, bool spreadPoison, bool increasedPoisonDamage, bool explosiveArrows, bool increasedExplosionRadius, bool increasedExplosionDamage, Action<BaseEnemy> onHitEnemy = null)
+        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage,
+                     float critChance, bool piercingArrows, bool poisonArrows, bool spreadPoison, 
+                     bool increasedPoisonDamage, bool explosiveArrows, bool increasedExplosionRadius, 
+                     bool increasedExplosionDamage, Action<BaseEnemy> onHitEnemy = null)
         {
             _owner = owner;
             _position = origin;
