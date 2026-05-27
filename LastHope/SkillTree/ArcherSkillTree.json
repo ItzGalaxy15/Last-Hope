@@ -73,13 +73,13 @@
     },
 
     {
-      "Id": "attack_speed_keystone_l2", "Name": "Rapid Fire Rhythm", "Description": "Increased attack speed for short duration after 5 hits.",
+      "Id": "attack_speed_keystone_l2", "Name": "Rapid Fire Rhythm", "Description": "Increased attack speed for short duration after 10 hits.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
       "Tags": ["Proc"], "Dependencies": ["crit_chance_l1"],
       "Effects": [{ "EffectId": "unlock_rapid_fire", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 2
     },
     {
-      "Id": "crit_guarantee_l2", "Name": "Lock On", "Description": "Guarentee Critical Hit after 2 hits.",
+      "Id": "crit_guarantee_l2", "Name": "Lock On", "Description": "Guarentees Critical Hits for a short duration after 5 hits.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_crit_guarantee",
       "Tags": ["Proc"], "Dependencies": ["Piercing_stance_l1"],
       "Effects": [{ "EffectId": "unlock_crit_guarantee", "ValuePerPoint": 1.0 }], "GridX": -1, "GridY": 2

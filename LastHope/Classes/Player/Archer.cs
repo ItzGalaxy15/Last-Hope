@@ -69,7 +69,7 @@ public class Archer : BasePlayer
     public bool hasRapidFire;
     private int _hitCounterAttackSpeed = 0;
     private int _hitCounterCritGuarantee = 0;
-    private const int HitsForAttackSpeed = 5;
+    private const int HitsForAttackSpeed = 10;
     private const int HitsForCritGuarentee = 5;
     private float _attackSpeedBoostTimer = 0f;
     private float _critGuaranteeTimer = 0f;
