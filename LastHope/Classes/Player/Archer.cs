@@ -426,7 +426,7 @@ public class Archer : BasePlayer
     {
         float prevDamageBonus = _levelDamageBonus;
         base.OnLevelUp();
-        CurrentMaxHp += LevelStatBonus;
+        CurrentMaxHp += LevelStatBonus * 1; // Each point in HP gives 10 max HP
         // Damage is int; apply only when the float crosses the next integer
         int dmgIncrease = (int)_levelDamageBonus - (int)prevDamageBonus;
         if (dmgIncrease > 0) CurrentDamage += dmgIncrease;
