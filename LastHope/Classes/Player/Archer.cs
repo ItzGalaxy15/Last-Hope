@@ -46,7 +46,7 @@ public class Archer : BasePlayer
     private const float BowDrawDuration = 0.35f;
     private bool _isDrawingBow;
     private float _bowDrawTimer;
-    private Vector2 _bowAimDirection;
+    public Vector2 _bowAimDirection;
     private const float ArrowSpeed = 600f;
 
     public BaseAbility ActiveAbility { get; set; }
@@ -300,6 +300,7 @@ public class Archer : BasePlayer
 
         DrawAimArrow(spriteBatch);
         base.Draw(gameTime, spriteBatch);
+        ActiveAbility?.Draw(spriteBatch);
     }
 
     public override void OnCollision(GameObject other)
@@ -394,6 +395,24 @@ public class Archer : BasePlayer
             case "unlock_arrow_storm":
                 ActiveAbility = new ArrowStormAbility();
                 break;
+            case "unlock_explosive_arrows":
+                ((Bow)_Weapon).explosiveArrows = true;
+                break;
+            case "explosive_radius":
+                ((Bow)_Weapon).increasedExplosionRadius = true;
+                break;
+            case "explosive_damage":
+                ((Bow)_Weapon).increasedExplosionDamage = true;
+                break;
+            case "unlock_triple_shot":
+                ((Bow)_Weapon).tripleShot = true;
+                break;
+            case "unlock_cluster_bomb":
+                ((Bow)_Weapon).clusterBomb = true;
+                break;
+            case "unlock_arrow_rain":
+                ActiveAbility = new ArrowRainAbility();
+                break;
         }
         UpdateStats();
     }
@@ -422,9 +441,19 @@ public class Archer : BasePlayer
         hasPiercingArrows = false;
         hasCritGuarantee = false;
         hasRapidFire = false;
+        _hasPoisonSpread = false;
+        _hasIncreasedPoisonDamage = false;
+        _hasPoisonTouch = false;
+        
         ((Bow)_Weapon).OnHitCallBack = null;
         ((Bow)_Weapon).piercingArrows = false;
         ((Bow)_Weapon).poisonArrows = false;
+        ((Bow)_Weapon).spreadPoison = false;
+        ((Bow)_Weapon).increasedPoisonDamage = false;
+        ((Bow)_Weapon).explosiveArrows = false;
+        ((Bow)_Weapon).increasedExplosionRadius = false;
+        ((Bow)_Weapon).increasedExplosionDamage = false;
+        ((Bow)_Weapon).tripleShot = false;
         ActiveAbility = null;
 
         UpdateStats();

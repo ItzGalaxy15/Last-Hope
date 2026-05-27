@@ -1,8 +1,7 @@
 using System;
-using Last_Hope.Animations;
-using Last_Hope.BaseModel;
 using Last_Hope.Collision;
 using Last_Hope.Engine;
+using Last_Hope.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -92,33 +91,8 @@ public class Bomb : GameObject
     private void Explode()
     {
         _exploded = true;
-        GameManager gm = GameManager.GetGameManager();
-
-        foreach (GameObject obj in gm.GetObjectsInRadius(_position, ExplosionRadius))
-        {
-            if (obj is not BaseEnemy enemy)
-                continue;
-
-            enemy.Damage(ExplosionDamage);
-            if (enemy._currentHp <= 0f)
-            {
-                gm._player?.AddExperience(enemy.ExperienceValue);
-                gm.RemoveGameObject(enemy);
-            }
-        }
-
-        // Explosion animation object (set textureName to your actual content asset name).
-        gm.AddGameObject(new Explosion(
-            position: _position.ToPoint(),
-            explosionFrameCount: 6,
-            explosionColumns: 6,
-            explosionRows: 1,
-            explosionInterval: 4,
-            scale: 2.0f,
-            textureName: "explosion",
-            hitboxRadius: ExplosionRadius));
-
-        gm.RemoveGameObject(this);
+        ExplosionHelper.Explode(_position, ExplosionRadius, ExplosionDamage);
+        GameManager.GetGameManager().RemoveGameObject(this);
     }
 
     /// <summary>
@@ -126,28 +100,28 @@ public class Bomb : GameObject
     /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-    if (_bombSpriteSheet is not null)
-    {
-        Rectangle source = new Rectangle(_currentFuseFrame * BombFrameSize, BombSpriteRowY, BombFrameSize, BombFrameSize);
-        Vector2 origin = new Vector2(BombFrameSize * 0.5f, BombFrameSize * 0.5f);
+        if (_bombSpriteSheet is not null)
+        {
+            Rectangle source = new Rectangle(_currentFuseFrame * BombFrameSize, BombSpriteRowY, BombFrameSize, BombFrameSize);
+            Vector2 origin = new Vector2(BombFrameSize * 0.5f, BombFrameSize * 0.5f);
 
-        spriteBatch.Draw(
-            _bombSpriteSheet,
-            _position,
-            source,
-            Color.White,
-            0f,
-            origin,
-            BombDrawScale,
-            SpriteEffects.None,
-            0f);
-    }
-    else
-    {
-        Texture2D pixel = GameManager.GetGameManager().Pixel;
-        spriteBatch.Draw(pixel, new Rectangle((int)_position.X - 6, (int)_position.Y - 6, 12, 12), Color.Black);
-    }
+            spriteBatch.Draw(
+                _bombSpriteSheet,
+                _position,
+                source,
+                Color.White,
+                0f,
+                origin,
+                BombDrawScale,
+                SpriteEffects.None,
+                0f);
+        }
+        else
+        {
+            Texture2D pixel = GameManager.GetGameManager().Pixel;
+            spriteBatch.Draw(pixel, new Rectangle((int)_position.X - 6, (int)_position.Y - 6, 12, 12), Color.Black);
+        }
 
-    base.Draw(gameTime, spriteBatch);
-}
+        base.Draw(gameTime, spriteBatch);
+    }
 }

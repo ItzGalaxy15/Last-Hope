@@ -61,21 +61,21 @@
 
     {
       "Id": "explosive_radius_l1", "Name": "Bigger BOOM", "Description": "Increases the radius of explosive attacks.",
-      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_crossbow",
-      "Tags": ["Stance"], "Dependencies": ["archer_hst_l0", "explosive_arrow_stance_l1"],
-      "Effects": [{ "EffectId": "unlock_crossbow_stance", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 1
+      "MaxPoints": 1, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_crossbow",
+      "Tags": ["Proc"], "Dependencies": ["explosive_arrow_stance_l1"],
+      "Effects": [{ "EffectId": "explosive_radius", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 1
     },
     {
-      "Id": "explosive_arrow_stance_l1", "Name": "Fleet Foot", "Description": "Increases Dodge Chance.",
-      "MaxPoints": 3, "Type": 0, "Layer": 1, "Rarity": "Common", "IconId": "icon_fleet_foot",
-      "Tags": ["Defense"], "Dependencies": ["archer_hst_l0"],
-      "Effects": [{ "EffectId": "dodge_chance", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 1
+      "Id": "explosive_arrow_stance_l1", "Name": "Booming Arrows", "Description": "Arrows explode on impact, dealing area damage.",
+      "MaxPoints": 1, "Type": 1, "Layer": 1, "Rarity": "Rare", "IconId": "icon_booming_arrows",
+      "Tags": ["Stance"], "Dependencies": ["archer_hst_l0"],
+      "Effects": [{ "EffectId": "unlock_explosive_arrows", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 1
     },
 
     {
       "Id": "attack_speed_keystone_l2", "Name": "Rapid Fire Rhythm", "Description": "Increased attack speed for short duration after 5 hits.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
-      "Tags": ["Proc"], "Dependencies": ["crit_chance_l1"],
+      "Tags": ["Stance"], "Dependencies": ["crit_chance_l1"],
       "Effects": [{ "EffectId": "unlock_rapid_fire", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 2
     },
     {
@@ -97,16 +97,16 @@
       "Effects": [{ "EffectId": "unlock_poison_touch", "ValuePerPoint": 1.0 }], "GridX": 0.5, "GridY": 2
     },
     {
-      "Id": "fortify_l2", "Name": "Fortify", "Description": "100% chance on hit taken to briefly increase your own damage reduction.",
-      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
+      "Id": "triple_shot_l2", "Name": "Triple Shot", "Description": "Fire 3 arrows at once.",
+      "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_triple_shot",
       "Tags": ["Proc"], "Dependencies": ["explosive_radius_l1"],
-      "Effects": [{ "EffectId": "proc_fortify", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 2
+      "Effects": [{ "EffectId": "unlock_triple_shot", "ValuePerPoint": 1.0 }], "GridX": 1, "GridY": 2
     },
     {
-      "Id": "on_dodge_counter_l2", "Name": "Counter Shot", "Description": "Successfully dodging an attack instantly triggers a free counter-attack.",
+      "Id": "cluster_bomb_l2", "Name": "Cluster Bomb", "Description": "After the first explosive arrow hits an enemy more explosions occur.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_def",
       "Tags": ["Proc"], "Dependencies": ["explosive_arrow_stance_l1"],
-      "Effects": [{ "EffectId": "proc_counter_shot", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 2
+      "Effects": [{ "EffectId": "unlock_cluster_bomb", "ValuePerPoint": 1.0 }], "GridX": 3, "GridY": 2
     },
 
     {
@@ -117,15 +117,15 @@
     },
     {
       "Id": "increased_poison_damage_l3", "Name": "Deadlier Poison", "Description": "Doubles the damage of your poison.",
-      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_keen_eye",
+      "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_keen_eye",
       "Tags": ["Damage"], "Dependencies": [],
       "Effects": [{ "EffectId": "poison_damage", "ValuePerPoint": 5.0 }], "GridX": 0, "GridY": 3
     },
     {
-      "Id": "archer_hp_l3", "Name": "Iron Will", "Description": "Further increases Maximum HP.",
-      "MaxPoints": 3, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_hardened_body",
-      "Tags": ["Defense"], "Dependencies": [],
-      "Effects": [{ "EffectId": "max_hp", "ValuePerPoint": 25.0 }], "GridX": 2, "GridY": 3
+      "Id": "explosive_damage_l3", "Name": "Explosive Force", "Description": "Increases the damage of your explosive attacks by 50%.",
+      "MaxPoints": 1, "Type": 0, "Layer": 3, "Rarity": "Common", "IconId": "icon_explosive_damage",
+      "Tags": ["Attack"], "Dependencies": ["triple_shot_l2", "cluster_bomb_l2"],
+      "Effects": [{ "EffectId": "explosive_damage", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 3
     },
 
     {
@@ -141,10 +141,10 @@
       "Effects": [{ "EffectId": "unlock_arrow_storm", "ValuePerPoint": 1.0 }], "GridX": 0, "GridY": 4
     },
     {
-      "Id": "concussive_shot_l4", "Name": "Concussive Shot", "Description": "Active: Fires a blunt-tipped bolt that deals moderate damage and applies a Stun effect.",
-      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_concussive_shot",
+      "Id": "arrow_rain_l4", "Name": "Arrow Rain", "Description": "Active: Fires a barrage of arrows that fall from the sky in a wide area.",
+      "MaxPoints": 1, "Type": 2, "Layer": 4, "Rarity": "Keystone", "IconId": "icon_arrow_rain",
       "Tags": ["Active", "Stun"], "Dependencies": [],
-      "Effects": [{ "EffectId": "unlock_concussive_shot", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 4
+      "Effects": [{ "EffectId": "unlock_arrow_rain", "ValuePerPoint": 1.0 }], "GridX": 2, "GridY": 4
     }
   ],
   "Connections": [
@@ -164,12 +164,12 @@
     { "FromNodeId": "poison_touch_l2", "ToNodeId": "increased_poison_damage_l3" },
     { "FromNodeId": "increased_poison_damage_l3", "ToNodeId": "arrow_storm_l4" },
 
-    { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_radius_l1" },
     { "FromNodeId": "archer_hst_l0", "ToNodeId": "explosive_arrow_stance_l1" },
-    { "FromNodeId": "explosive_radius_l1", "ToNodeId": "fortify_l2" },
-    { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "on_dodge_counter_l2" },
-    { "FromNodeId": "fortify_l2", "ToNodeId": "archer_hp_l3" },
-    { "FromNodeId": "on_dodge_counter_l2", "ToNodeId": "archer_hp_l3" },
-    { "FromNodeId": "archer_hp_l3", "ToNodeId": "concussive_shot_l4" }
+    { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "explosive_radius_l1" },
+    { "FromNodeId": "explosive_radius_l1", "ToNodeId": "triple_shot_l2" },
+    { "FromNodeId": "explosive_arrow_stance_l1", "ToNodeId": "cluster_bomb_l2" },
+    { "FromNodeId": "triple_shot_l2", "ToNodeId": "explosive_damage_l3" },
+    { "FromNodeId": "cluster_bomb_l2", "ToNodeId": "explosive_damage_l3" },
+    { "FromNodeId": "explosive_damage_l3", "ToNodeId": "arrow_rain_l4" }
   ]
 }

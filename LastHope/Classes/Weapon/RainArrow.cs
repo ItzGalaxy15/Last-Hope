@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Weapon
 {
-    internal class Arrow : GameObject
+    internal class RainArrow : GameObject
     {
         private RectangleCollider _collider;
         private Texture2D _sprite;
@@ -19,6 +19,8 @@ namespace Last_Hope.Classes.Weapon
         private GameObject _owner;
         private float _damage;
         private float _critChance;
+        private float _targetY;
+        private bool _landed;
         private bool hasPiercingArrows;
         private bool hasPoisonArrows;
         private bool hasSpreadPoison;
@@ -35,19 +37,22 @@ namespace Last_Hope.Classes.Weapon
         private const float ExplosionDamageMultiplier = 1.5f;
         private const float ExplosionRadiusMultiplier = 1.5f;
         private const float ExplosionSplashMultiplier = 0.5f;
+        private const float PenetrationDepth = 80f;
 
         private HashSet<GameObject> _alreadyHit = new HashSet<GameObject>();
 
-        public Arrow(Vector2 origin, Vector2 direction, float speed, GameObject owner, float damage,
-                     float critChance, bool piercingArrows, bool poisonArrows, bool spreadPoison, 
-                     bool increasedPoisonDamage, bool explosiveArrows, bool increasedExplosionRadius, 
+        public RainArrow(Vector2 origin, float targetY, float speed, GameObject owner, float damage,
+                     float critChance, bool piercingArrows, bool poisonArrows, bool spreadPoison,
+                     bool increasedPoisonDamage, bool explosiveArrows, bool increasedExplosionRadius,
                      bool increasedExplosionDamage, bool clusterBomb, Action<BaseEnemy> onHitEnemy = null)
         {
             _owner = owner;
             _position = origin;
-            _velocity = direction * speed;
+            _velocity = new Vector2(0f, speed); // always falls straight down
             _damage = damage;
             _critChance = critChance;
+            _targetY = targetY;
+            _landed = false;
             hasPiercingArrows = piercingArrows;
             hasPoisonArrows = poisonArrows;
             hasSpreadPoison = spreadPoison;
@@ -57,67 +62,64 @@ namespace Last_Hope.Classes.Weapon
             hasIncreasedExplosionDamage = increasedExplosionDamage;
             _hasClusterBomb = clusterBomb;
             _onHitEnemy = onHitEnemy;
-            _collider = new RectangleCollider(new Rectangle(origin.ToPoint(), new Point(10, 10)));
-            SetCollider(_collider);
+
+            // No collider until landed
+            _collider = null;
         }
 
         public override void Load(ContentManager content)
         {
-            if (hasPoisonArrows)
-            {
-                _sprite = content.Load<Texture2D>("PoisonArrow");
-            }
-            else
-            {
-                _sprite = content.Load<Texture2D>("Arrow");
-            }
-            _collider.shape.Size = _sprite.Bounds.Size;
+            _sprite = content.Load<Texture2D>(hasPoisonArrows ? "PoisonArrow" : "Arrow");
             base.Load(content);
         }
 
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _position += _velocity * dt;
 
-            Vector2 nextPosition = _position + _velocity * dt;
+            // Activate hitbox once the arrow reaches its target Y
+            if (!_landed && _position.Y >= _targetY)
+            {
+                _landed = true;
+                _collider = new RectangleCollider(
+                    new Rectangle(_position.ToPoint(), new Point(10, 10)));
+                SetCollider(_collider);
+            }
 
-            Rectangle nextRect = new Rectangle(
-                (int)(nextPosition.X - _collider.shape.Width / 2f),
-                (int)(nextPosition.Y - _collider.shape.Height / 2f),
-                _collider.shape.Width,
-                _collider.shape.Height
-            );
+            // Sync collider position while active
+            if (_landed && _collider != null)
+            {
+                _collider.shape.Location = _position.ToPoint();
+                SetCollider(_collider);
+            }
 
-            var testCollider = new RectangleCollider(nextRect);
-
-            // 🧱 BLOCKED BY WORLD
-            if (CollisionWorld.CollidesWithStatic(testCollider))
+            // Despawn after sticking into the ground
+            if (_position.Y >= _targetY + PenetrationDepth)
             {
                 GameManager.GetGameManager().RemoveGameObject(this);
                 return;
             }
 
-            // Move if no collision
-            _position = nextPosition;
-            _collider.shape.Location = nextRect.Location;
-
             base.Update(gameTime);
         }
+
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            float angle = (float)System.Math.Atan2(_velocity.Y, _velocity.X);
-            Vector2 origin = new Vector2(_sprite.Width / 2f, _sprite.Height / 2f);
+            if (_sprite is null) return;
 
-            spriteBatch.Draw(_sprite, _position, null, Color.White, angle, origin, 1f, SpriteEffects.None, 0f);
+            float angle = (float)Math.Atan2(_velocity.Y, _velocity.X);
+            Vector2 origin = new Vector2(_sprite.Width / 2f, _sprite.Height / 2f);
+            spriteBatch.Draw(_sprite, _position, null, Color.Blue, angle, origin, 1f, SpriteEffects.None, 0f);
             base.Draw(gameTime, spriteBatch);
         }
 
         public override void OnCollision(GameObject other)
         {
-            if (_alreadyHit.Contains(other))
-            {
-                return;
-            }
+            // Ignore all collisions until landed
+            if (!_landed) return;
+
+            if (_alreadyHit.Contains(other)) return;
             _alreadyHit.Add(other);
 
             int damage = CalculateDamage();
@@ -129,37 +131,31 @@ namespace Last_Hope.Classes.Weapon
                     {
                         enemy.Damage(damage);
                         _onHitEnemy?.Invoke(enemy);
+
                         if (enemy._currentHp <= 0)
                         {
                             GameManager.GetGameManager()._player?.AddExperience(enemy.ExperienceValue);
                             GameManager.GetGameManager().RemoveGameObject(enemy);
                         }
+
                         if (hasPoisonArrows)
                         {
-                            if (hasIncreasedPoisonDamage)
-                            {
-                                enemy.isPoisoned(true, PoisonDamagePerTick * 2);
-                            }
-                            else
-                            {
-                                enemy.isPoisoned(true, PoisonDamagePerTick);
-                            }
+                            enemy.isPoisoned(true, hasIncreasedPoisonDamage
+                                ? PoisonDamagePerTick * 2
+                                : PoisonDamagePerTick);
                         }
+
                         if (hasSpreadPoison)
-                        {
                             enemy.EnablePoisonSpreading();
-                        }
+
                         if (hasExplosiveArrows)
                         {
                             if (hasIncreasedExplosionRadius)
-                            {
                                 ExplosionRadius *= ExplosionRadiusMultiplier;
-                            }
 
                             if (hasIncreasedExplosionDamage)
-                            {
                                 damage = (int)(damage * ExplosionDamageMultiplier);
-                            }
+
                             int splashDamage = (int)(damage * ExplosionSplashMultiplier);
                             ExplosionHelper.Explode(_position, ExplosionRadius, splashDamage, enemy);
 
@@ -177,14 +173,13 @@ namespace Last_Hope.Classes.Weapon
                                 ExplosionHelper.Explode(behindPosition - perpendicular * sideOffset, clusterRadius, splashDamage, enemy);
                                 ExplosionHelper.Explode(behindPosition + perpendicular * sideOffset, clusterRadius, splashDamage, enemy);
                             }
+
                             GameManager.GetGameManager().RemoveGameObject(this);
                             return;
                         }
-                        if (hasPiercingArrows)
-                        {
-                            // Piercing arrows continue flying, so we don't remove it on hit
-                            return;
-                        }
+
+                        if (hasPiercingArrows) return;
+
                         GameManager.GetGameManager().RemoveGameObject(this);
                     }
                     break;
@@ -193,11 +188,9 @@ namespace Last_Hope.Classes.Weapon
 
         private int CalculateDamage()
         {
-            if (GameManager.GetGameManager().RNG.NextSingle() < _critChance)
-            {
-                return (int)(_damage * 1.5f);
-            }
-            return (int)_damage;
+            return GameManager.GetGameManager().RNG.NextSingle() < _critChance
+                ? (int)(_damage * 1.5f)
+                : (int)_damage;
         }
     }
 }
