@@ -449,7 +449,6 @@ public class Archer : BasePlayer
         _hasPoisonSpread = false;
         _hasIncreasedPoisonDamage = false;
         _hasPoisonTouch = false;
-        
         ((Bow)_Weapon).OnHitCallBack = null;
         ((Bow)_Weapon).piercingArrows = false;
         ((Bow)_Weapon).poisonArrows = false;
@@ -459,6 +458,7 @@ public class Archer : BasePlayer
         ((Bow)_Weapon).increasedExplosionRadius = false;
         ((Bow)_Weapon).increasedExplosionDamage = false;
         ((Bow)_Weapon).tripleShot = false;
+        ((Bow)_Weapon).clusterBomb = false;
         ActiveAbility = null;
 
         UpdateStats();
