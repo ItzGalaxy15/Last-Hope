@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Last_Hope.BaseModel;
+using Microsoft.Xna.Framework.Content;
 
 namespace Last_Hope.Classes.Abilities;
 
@@ -9,8 +10,14 @@ public class WhirlwindAbility : BaseAbility
     private float _tickTimer;
     private const float Duration = 2.0f;
     private const float TickInterval = 0.15f;
+    public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
 
     public WhirlwindAbility() : base(8.0f) { }
+
+    public override void Load(ContentManager content)
+    {
+        
+    }
 
     public override void Update(BasePlayer player, GameTime gameTime)
     {

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Last_Hope.BaseModel;
 using Last_Hope.Engine;
+using Microsoft.Xna.Framework.Content;
 
 namespace Last_Hope.Classes.Abilities;
 
@@ -9,8 +10,14 @@ public class AxeSlamAbility : BaseAbility
     private const float DamageMultiplier = 3.0f;
     private const float Range = 140f;
     private const float StunDuration = 1.0f;
+    public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
 
     public AxeSlamAbility() : base(8.0f) { }
+
+    public override void Load(ContentManager content)
+    {
+        
+    }
 
     protected override void OnExecute(BasePlayer player)
     {

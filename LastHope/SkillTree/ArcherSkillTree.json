@@ -75,7 +75,7 @@
     {
       "Id": "attack_speed_keystone_l2", "Name": "Rapid Fire Rhythm", "Description": "Increased attack speed for short duration after 5 hits.",
       "MaxPoints": 1, "Type": 1, "Layer": 2, "Rarity": "Rare", "IconId": "icon_proc_speed",
-      "Tags": ["Stance"], "Dependencies": ["crit_chance_l1"],
+      "Tags": ["Proc"], "Dependencies": ["crit_chance_l1"],
       "Effects": [{ "EffectId": "unlock_rapid_fire", "ValuePerPoint": 1.0 }], "GridX": -3, "GridY": 2
     },
     {

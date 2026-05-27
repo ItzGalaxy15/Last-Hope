@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using Last_Hope.Classes.Abilities;
+using Microsoft.Xna.Framework.Content;
 
 namespace Last_Hope.BaseModel;
 
@@ -27,6 +29,7 @@ public abstract class BasePlayer : GameObject
     public abstract float BaseHaste { get; } // Attack cooldown
     public abstract float BaseSpeed { get; }
     public BaseWeapon _Weapon { get; protected set; }
+    public BaseAbility ActiveAbility { get; set; }
 
     // Current Player stats (after buffs/debuffs)
     public abstract float CurrentMaxHp { get; protected set; }
@@ -43,6 +46,10 @@ public abstract class BasePlayer : GameObject
     public bool IsStunned => _stunTimer > 0f;
     public float StunVisualProgress => _stunVisualTotalDuration > 0f
         ? MathHelper.Clamp(_stunTimer / _stunVisualTotalDuration, 0f, 1f)
+        : 0f;
+    
+    public float ActiveAbilityCooldownProgress => ActiveAbility != null
+        ? MathHelper.Clamp(ActiveAbility.CooldownTimer / ActiveAbility.Cooldown, 0f, 1f)
         : 0f;
 
     public void ApplyStun(float duration)

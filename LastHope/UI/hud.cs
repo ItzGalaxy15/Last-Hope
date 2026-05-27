@@ -16,7 +16,7 @@ public class Hud
 	private readonly List<UIElement> _elements;
 	private BossWarningIndicator _bossWarningIndicator;
 
-	public Hud(BasePlayer? player, Texture2D pixel, Texture2D? itemSpriteSheet = null, Texture2D? dashIcon = null, Texture2D? teleportIcon = null, Effect? cooldownShader = null, ContentManager content = null)
+	public Hud(BasePlayer? player, Texture2D pixel, Texture2D? itemSpriteSheet = null, Texture2D? dashIcon = null, Texture2D? teleportIcon = null, Effect? cooldownShader = null, ContentManager content = null, Texture2D? rapidFireIcon = null, Texture2D? critGuaranteeIcon = null)
 	{
 		_bossWarningIndicator = new BossWarningIndicator();
 		if (content != null)
@@ -44,6 +44,18 @@ public class Hud
 			if (teleportIcon != null)
 				_elements.Add(new AbilityCooldownIcon(teleportIcon, cooldownShader, pixel,
 					() => GameManager.GetGameManager()._player?.TeleportCooldownProgress ?? 0f,
+					slotIndex: 1));
+
+			_elements.Add(new ActiveAbilityIcon(cooldownShader, pixel, slotIndex: 2));
+
+			if (rapidFireIcon != null)
+				_elements.Add(new HitSkillCooldownIcon(rapidFireIcon, cooldownShader, pixel,
+					() => (GameManager.GetGameManager()._player as Archer)?.RapidFireProgress ?? 0f,
+					slotIndex: 0));
+
+			if (critGuaranteeIcon != null)
+				_elements.Add(new HitSkillCooldownIcon(critGuaranteeIcon, cooldownShader, pixel,
+					() => (GameManager.GetGameManager()._player as Archer)?.CritGuaranteeProgress ?? 0f,
 					slotIndex: 1));
 		}
 	}
