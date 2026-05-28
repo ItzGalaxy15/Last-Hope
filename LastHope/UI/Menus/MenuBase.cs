@@ -120,6 +120,8 @@ public abstract class MenuBase
         new[] { Segment.T("Combat") },
         new[] { Segment.B(KeybindId.Attack), Segment.T(" -> Attack") },
         new[] { Segment.B(KeybindId.KeyboardAttack), Segment.T(" -> Attack (KB)") },
+        new[] { Segment.B(KeybindId.Ability1), Segment.T(" -> Ultimate") },
+        new[] { Segment.B(KeybindId.Teleport), Segment.T(" -> Teleport") },
         Array.Empty<Segment>(),
         new[] { Segment.T("Aim") },
         new[] {
@@ -357,15 +359,22 @@ public abstract class MenuBase
         if (_specialTexture == null) _specialTexture = _content.Load<Texture2D>("menu/special");
 
         SpriteFont textFont = MenuUiFont;
+        float resolvedTextScale = textScale;
+        Viewport vp = Game.GraphicsDevice.Viewport;
+        float availableHeight = Math.Max(120f, vp.Height - basePos.Y - 20f);
+        float minScale = textScale * 0.68f;
+        while (resolvedTextScale > minScale && lines.Length * textFont.LineSpacing * resolvedTextScale > availableHeight)
+            resolvedTextScale *= 0.95f;
+
         var (bodyFont, bodyMul) = BodyFontForMenuText(textFont);
-        float bodyTs = textScale * bodyMul;
-        float lineHeight = textFont.LineSpacing * textScale;
+        float bodyTs = resolvedTextScale * bodyMul;
+        float lineHeight = textFont.LineSpacing * resolvedTextScale;
         float spriteScale = (lineHeight * 1.4f) / FrameSize;
         float spriteSize = FrameSize * spriteScale;
         float spriteYOffset = -(spriteSize - lineHeight) / 2f;
         int frame = (int)(gameTime.TotalGameTime.TotalSeconds / FrameDuration) % FrameCount;
 
-        float maxWidth = MeasureControlsLinesWidth(textFont, textScale, lines);
+        float maxWidth = MeasureControlsLinesWidth(textFont, resolvedTextScale, lines);
         float totalHeight = lines.Length * lineHeight;
 
         Rectangle backgroundRect = new Rectangle(
