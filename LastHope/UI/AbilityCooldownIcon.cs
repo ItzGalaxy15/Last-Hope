@@ -8,20 +8,22 @@ namespace Last_Hope.UI;
 public class AbilityCooldownIcon : UIElement
 {
     private readonly Texture2D _icon;
-    private readonly Effect _cooldownShader;
+    protected virtual Texture2D? GetIcon() => _icon;
+    protected readonly Effect _cooldownShader;
     private readonly Texture2D? _pixel;
-    private readonly Func<float> _getCooldownProgress;
-    private readonly int _slotIndex;
+    protected readonly Func<float> _getCooldownProgress;
+    protected readonly int _slotIndex;
     private Texture2D? _fallbackPixel;
 
-    private Rectangle _iconRect;
-    private Rectangle _frameRect;
+    // Parameters for where to draw the icon
+    protected Rectangle _iconRect;
+    protected Rectangle _frameRect;
 
-    private const int SlotSize = 64;
-    private const int SlotGap = 3;
-    private const int SideMargin = 48;
-    private const int BottomMargin = 28;
-    private const int ItemInset = 6;
+    protected const int SlotSize = 64;
+    protected const int SlotGap = 3;
+    protected const int SideMargin = 48;
+    protected const int BottomMargin = 28;
+    protected const int ItemInset = 6;
 
     public AbilityCooldownIcon(Texture2D icon, Effect cooldownShader, Texture2D? pixel, Func<float> getCooldownProgress, int slotIndex = 0)
     {
@@ -47,16 +49,18 @@ public class AbilityCooldownIcon : UIElement
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
+        Texture2D? icon = GetIcon();
+        if (icon == null)
+        {
+            return;
+        }
         GameManager gm = GameManager.GetGameManager();
-
         float cooldown = _getCooldownProgress();
-
         Color frame = new Color(210, 210, 210, 245);
         Color background = new Color(28, 28, 28, 245);
 
         Texture2D pixel = GetPixel(spriteBatch);
         spriteBatch.Draw(pixel, _frameRect, frame);
-
         Rectangle innerRect = new Rectangle(
             _frameRect.X + 1, _frameRect.Y + 1,
             _frameRect.Width - 2, _frameRect.Height - 2);
@@ -65,7 +69,7 @@ public class AbilityCooldownIcon : UIElement
         spriteBatch.End();
         _cooldownShader.Parameters["CooldownPercent"].SetValue(cooldown);
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, effect: _cooldownShader);
-        spriteBatch.Draw(_icon, _iconRect, Color.White);
+        spriteBatch.Draw(icon, _iconRect, Color.White);
         spriteBatch.End();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
     }

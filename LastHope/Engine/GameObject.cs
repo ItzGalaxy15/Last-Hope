@@ -15,6 +15,7 @@ namespace Last_Hope.Engine;
 /// </remarks>
 public abstract class GameObject
 {
+    protected ContentManager _content;
     /// <summary>
     /// Retrieves the active spatial collider for this object.
     /// </summary>
@@ -68,7 +69,7 @@ public abstract class GameObject
     /// </example>
     public virtual void Load(ContentManager content)
     {
-
+        _content = content;
     }
 
     /// <summary>

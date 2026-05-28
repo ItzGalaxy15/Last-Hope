@@ -4,6 +4,8 @@ using Last_Hope.Engine;
 using Last_Hope.Classes.Weapon;
 using Last_Hope.Helpers;
 using System;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Abilities;
 
@@ -17,8 +19,14 @@ public class ArrowStormAbility : BaseAbility
     private int _arrowsFired = 0;
     private bool _isFiring = false;
     private Vector2 _firingDirection;
+    public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
 
     public ArrowStormAbility() : base(15.0f) { }
+
+    public override void Load(ContentManager content)
+    {
+        Icon = content.Load<Texture2D>("icons/ArrowStorm");
+    }
 
     public override void Update(BasePlayer player, GameTime gameTime)
     {

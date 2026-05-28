@@ -4,6 +4,7 @@ using Last_Hope.BaseModel;
 using Last_Hope.Classes.Weapon;
 using Last_Hope.Engine;
 using System;
+using Microsoft.Xna.Framework.Content;
 
 namespace Last_Hope.Classes.Abilities;
 
@@ -22,10 +23,15 @@ public class ArrowRainAbility : BaseAbility
     private float _intervalTimer;
     private Vector2 _targetCenter;
     private Archer _caster;
-
+    public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
     private Texture2D _circleTexture;
 
     public ArrowRainAbility() : base(cooldown: 12f) { }
+
+    public override void Load(ContentManager content)
+    {
+        Icon = content.Load<Texture2D>("icons/ArrowRain");
+    }
 
     protected override void OnExecute(BasePlayer player)
     {

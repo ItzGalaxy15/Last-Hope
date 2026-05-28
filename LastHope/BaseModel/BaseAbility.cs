@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Last_Hope.BaseModel;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Content;
 
 namespace Last_Hope.Classes.Abilities;
 
@@ -14,6 +15,9 @@ namespace Last_Hope.Classes.Abilities;
 /// </remarks>
 public abstract class BaseAbility
 {
+    public Texture2D Icon { get; protected set; }
+    public abstract float CooldownProgress { get; }
+
     /// <summary>
     /// The total duration, in seconds, before the ability can be used again.
     /// </summary>
@@ -64,6 +68,8 @@ public abstract class BaseAbility
             CooldownTimer = Cooldown;
         }
     }
+
+    public abstract void Load(ContentManager content);
 
     /// <summary>
     /// The underlying implementation of the ability's gameplay effect. Must be overridden by subclasses.

@@ -49,8 +49,6 @@ public class Archer : BasePlayer
     public Vector2 _bowAimDirection;
     private const float ArrowSpeed = 600f;
 
-    public BaseAbility ActiveAbility { get; set; }
-
     //Base Archer Stats
     public override float BaseMaxHp { get; } = 80f;
     public override int BaseDamage { get; } = 25;
@@ -71,8 +69,8 @@ public class Archer : BasePlayer
     public bool hasRapidFire;
     private int _hitCounterAttackSpeed = 0;
     private int _hitCounterCritGuarantee = 0;
-    private const int HitsForAttackSpeed = 1;
-    private const int HitsForCritGuarentee = 1;
+    private const int HitsForAttackSpeed = 10;
+    private const int HitsForCritGuarentee = 5;
     private float _attackSpeedBoostTimer = 0f;
     private float _critGuaranteeTimer = 0f;
     private bool _hasPoisonTouch;
@@ -84,6 +82,10 @@ public class Archer : BasePlayer
     private const float PoisonDamagePerTick = 5f;
     private SoundEffect _attackSound;
     private SoundEffect _specialSound;
+
+    public float RapidFireProgress => MathHelper.Clamp(_attackSpeedBoostTimer / AttackSpeedBoostDuration, 0f, 1f);
+
+    public float CritGuaranteeProgress => MathHelper.Clamp(_critGuaranteeTimer / CritGuaranteeDuration, 0f, 1f);
     
 
     public Archer(Vector2 startPosition)
@@ -377,6 +379,7 @@ public class Archer : BasePlayer
                 break;
             case "unlock_giant_arrow":
                 ActiveAbility = new GiantArrowAbility();
+                ActiveAbility.Load(_content);
                 break;
             case "unlock_poison_arrows":
                 ((Bow)_Weapon).poisonArrows = true;
@@ -394,6 +397,7 @@ public class Archer : BasePlayer
                 break;
             case "unlock_arrow_storm":
                 ActiveAbility = new ArrowStormAbility();
+                ActiveAbility.Load(_content);
                 break;
             case "unlock_explosive_arrows":
                 ((Bow)_Weapon).explosiveArrows = true;
@@ -412,6 +416,7 @@ public class Archer : BasePlayer
                 break;
             case "unlock_arrow_rain":
                 ActiveAbility = new ArrowRainAbility();
+                ActiveAbility.Load(_content);
                 break;
         }
         UpdateStats();
@@ -421,7 +426,7 @@ public class Archer : BasePlayer
     {
         float prevDamageBonus = _levelDamageBonus;
         base.OnLevelUp();
-        CurrentMaxHp += LevelStatBonus;
+        CurrentMaxHp += LevelStatBonus * 100; // Each point in HP gives 10 max HP
         // Damage is int; apply only when the float crosses the next integer
         int dmgIncrease = (int)_levelDamageBonus - (int)prevDamageBonus;
         if (dmgIncrease > 0) CurrentDamage += dmgIncrease;
@@ -444,7 +449,6 @@ public class Archer : BasePlayer
         _hasPoisonSpread = false;
         _hasIncreasedPoisonDamage = false;
         _hasPoisonTouch = false;
-        
         ((Bow)_Weapon).OnHitCallBack = null;
         ((Bow)_Weapon).piercingArrows = false;
         ((Bow)_Weapon).poisonArrows = false;
@@ -454,6 +458,7 @@ public class Archer : BasePlayer
         ((Bow)_Weapon).increasedExplosionRadius = false;
         ((Bow)_Weapon).increasedExplosionDamage = false;
         ((Bow)_Weapon).tripleShot = false;
+        ((Bow)_Weapon).clusterBomb = false;
         ActiveAbility = null;
 
         UpdateStats();

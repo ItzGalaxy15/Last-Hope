@@ -95,8 +95,6 @@ public class Warrior : BasePlayer
     public int HasteLevel { get; set; }
     public int DmgLevel { get; set; }
 
-    public BaseAbility ActiveAbility { get; set; }
-
     // Base Warrior stats
     public override float BaseMaxHp { get; } = 100f;
     public override int BaseDamage { get; } = 20;
