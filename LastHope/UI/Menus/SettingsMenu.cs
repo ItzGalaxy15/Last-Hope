@@ -506,6 +506,7 @@ public sealed class SettingsMenu : MenuBase
         BindingRow("Attack", KeybindId.Attack, ref yR, rightX, colW);
         if (keyboardOnly)
             BindingRow("Attack (KB)", KeybindId.KeyboardAttack, ref yR, rightX, colW);
+        BindingRow("Ultimate", KeybindId.Ability1, ref yR, rightX, colW);
         BindingRow("Place Item:", KeybindId.PlaceItem, ref yR, rightX, colW);
         BindingRow("Throw Item:", KeybindId.ThrowItem, ref yR, rightX, colW);
 
@@ -761,6 +762,7 @@ public sealed class SettingsMenu : MenuBase
         RegisterRow(KeybindId.Attack, ref yR, rightX, colW);
         if (keyboardOnly)
             RegisterRow(KeybindId.KeyboardAttack, ref yR, rightX, colW);
+        RegisterRow(KeybindId.Ability1, ref yR, rightX, colW);
         RegisterRow(KeybindId.PlaceItem, ref yR, rightX, colW);
         RegisterRow(KeybindId.ThrowItem, ref yR, rightX, colW);
 
