@@ -668,14 +668,6 @@ public class Warrior : BasePlayer
             }
         }
 
-        bool isBehindAbilityCasting = _isCastingAbility && (_castingAbility is ShieldSlamAbility || _castingAbility is AxeSlamAbility);
-        if (isBehindAbilityCasting && _abilityAnimation != null && _abilitySprite != null)
-        {
-            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
-            float rotation = _abilityRotate ? _abilityRotation : 0f;
-            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
-        }
-
         spriteBatch.Draw(WarriorSprite, _position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
         if (IsShieldActive && _walkRow == 0)
@@ -684,10 +676,11 @@ public class Warrior : BasePlayer
             spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, equipmentColor, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
         }
 
-        if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null && !isBehindAbilityCasting)
+        if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null)
         {
             Rectangle abilitySource = _abilityAnimation.GetSourceRect();
             float rotation = _abilityRotate ? _abilityRotation : 0f;
+            // Draw ability over everything else related to the player
             spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
         }
 

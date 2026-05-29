@@ -31,7 +31,9 @@ public class ShieldSlamAbility : BaseAbility
         if (player is Warrior warrior)
         {
             int damage = (int)(warrior.CurrentDamage * DamageMultiplier);
-            warrior.HitRadialArea(Radius, damage, StunDuration);
+            Vector2 aimDir = warrior.GetAbilityAimDirection();
+            Vector2 castAnchor = warrior.GetCastAnchor();
+            warrior.HitFrontalArea(castAnchor, aimDir, Radius, damage, StunDuration);
 
             warrior.PlayAttackSound();
             warrior.ResetAttackTimer();

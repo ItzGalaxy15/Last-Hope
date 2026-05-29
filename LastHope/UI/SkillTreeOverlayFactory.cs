@@ -58,7 +58,7 @@ internal static class SkillTreeOverlayFactory
             tree.OnTreeRespec += warrior.RevertAllSkillStats;
         }
 
-        if (Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
         {
             tree.RecalculateStats();
         }
@@ -112,7 +112,7 @@ internal static class SkillTreeOverlayFactory
             tree.OnTreeRespec += archer.RevertAllSkillStats;
         }
 
-        if (Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
         {
             tree.RecalculateStats();
         }

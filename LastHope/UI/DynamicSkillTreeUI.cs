@@ -319,7 +319,7 @@ namespace Last_Hope.UI
             _topBarRect = new Rectangle(_mainPanel.X, _mainPanel.Y, _mainPanel.Width, 75);
             _bottomBarRect = new Rectangle(_mainPanel.X, _mainPanel.Bottom - 85, _mainPanel.Width, 85);
 
-            int btnWidth = 130;
+            int btnWidth = 175;
             int btnHeight = 44;
             int btnY = _bottomBarRect.Center.Y - (btnHeight / 2);
 
@@ -488,7 +488,7 @@ namespace Last_Hope.UI
                 }
 
                 // Draw Bottom Buttons
-                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM", new Color(30, 80, 40), new Color(60, 150, 70), _btnConfirmHover, globalAlpha);
+                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM POINTS", new Color(30, 80, 40), new Color(60, 150, 70), _btnConfirmHover, globalAlpha);
                 DrawPremiumButton(spriteBatch, font, _btnCancel, "CLOSE", new Color(40, 45, 50), new Color(80, 85, 95), _btnCancelHover, globalAlpha);
                 DrawPremiumButton(spriteBatch, font, _btnReset, "RESET", new Color(90, 30, 25), new Color(160, 50, 40), _btnResetHover, globalAlpha);
                 
@@ -605,7 +605,10 @@ namespace Last_Hope.UI
                 if (_hoveredNode.CurrentState == NodeState.Locked)
                 {
                     tooltips.Add("---");
-                    tooltips.Add("[LOCKED] Requires active path or sufficient points.");
+                    var missing = _tree.GetUnlockMissingRequirements(_hoveredNode.Data.Id, true);
+                    foreach(var m in missing) {
+                        tooltips.Add("[LOCKED] " + m);
+                    }
                 }
 
                 float tipScale = 0.4f;

@@ -494,9 +494,9 @@ public class GameManager
     /// </summary>
     public void ResetGame()
     {
-        if (!Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (!global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
         {
-            Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
+            global::Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
         }
         _gameObjects.Clear();
         _toBeAdded.Clear();
@@ -520,7 +520,7 @@ public class GameManager
         _player.OnTalentPointEarned += Menu.AwardTalentPoint;
         AddGameObject(_player);
 
-        if (Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
         {
             Menu.LoadSkillTreeSilently();
         }
