@@ -139,6 +139,27 @@ public class Menu
         }
     }
 
+    public void LoadSkillTreeSilently()
+    {
+        if (_skillTreeCanvas == null)
+        {
+            GameManager gm = GameManager.GetGameManager();
+            Viewport vp = gm.Game != null
+                ? gm.Game.GraphicsDevice.Viewport
+                : new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
+
+            switch (gm._player)
+            {
+                case Warrior:
+                    _skillTreeCanvas = SkillTreeOverlayFactory.CreateWarriorOverlay(gm, vp);
+                    break;
+                case Archer:
+                    _skillTreeCanvas = SkillTreeOverlayFactory.CreateArcherOverlay(gm, vp);
+                    break;
+            }
+        }
+    }
+
     public void ForceOpenSkillTree()
     {
         if (!_showSkillTree)
