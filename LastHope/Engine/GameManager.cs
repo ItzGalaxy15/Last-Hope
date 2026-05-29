@@ -515,6 +515,7 @@ public class GameManager
         _player = CreatePlayerFromSelection(spawn);
         _player.OnTalentPointEarned += Menu.AwardTalentPoint;
         AddGameObject(_player);
+
     }
 
     /// <summary>Matches player draw scale (32px frame × 3) for spawn search and clamping.</summary>

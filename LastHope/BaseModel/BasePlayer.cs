@@ -289,7 +289,10 @@ public abstract class BasePlayer : GameObject
         _levelHasteBonus  += LevelStatBonus;
         _levelSpeedBonus  += LevelStatBonus;
         if (_Level % TalentPointInterval == 0)
+        {
             OnTalentPointEarned?.Invoke();
+            GameManager.GetGameManager().Menu.ForceOpenSkillTree();
+        }
     }
 
     protected void Dash(Vector2 direction, float distance)
