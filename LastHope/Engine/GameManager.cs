@@ -1,3 +1,9 @@
+// References:
+//   CheckCollision broad-phase AABB pre-cull (Step 1, performance):
+//     Christer Ericson, "Real-Time Collision Detection", Morgan Kaufmann, 2005
+//     (ISBN 978-1558607323). Chapter 4 covers AABB-vs-AABB intersection; Chapter 6
+//     covers broad-phase bounding-volume hierarchies and the cheap-AABB-first pattern.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -228,18 +234,28 @@ public class GameManager
     }
 
     /// <summary>
-    /// Performs a naive O(N^2) broad-phase collision check across all active GameObjects.
+    /// Performs an O(N^2) pair iteration with an AABB broad-phase pre-cull so that
+    /// the expensive narrow-phase intersection test only runs on pairs whose bounding
+    /// boxes actually overlap.
     /// </summary>
     /// <remarks>
-    /// Based on a standard brute-force collision checking approach. 
-    /// Iterates through all unique pairs of objects and delegates intersection testing to their colliders.
+    /// The cheap AABB-vs-AABB rejection is the broad-phase pattern from Ericson,
+    /// "Real-Time Collision Detection" (2005), Ch. 6.
     /// </remarks>
     public void CheckCollision()
     {
         for (int i = 0; i < _gameObjects.Count; i++)
         {
+            var aColl = _gameObjects[i].GetCollider();
+            if (aColl == null) continue;
+            Rectangle aBox = aColl.GetBoundingBox();
+
             for (int j = i + 1; j < _gameObjects.Count; j++)
             {
+                var bColl = _gameObjects[j].GetCollider();
+                if (bColl == null) continue;
+                if (!aBox.Intersects(bColl.GetBoundingBox())) continue;
+
                 if (_gameObjects[i].CheckCollision(_gameObjects[j]))
                 {
                     _gameObjects[i].OnCollision(_gameObjects[j]);
@@ -247,7 +263,6 @@ public class GameManager
                 }
             }
         }
-
     }
 
     /// <summary>
