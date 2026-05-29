@@ -190,7 +190,7 @@ public class EnemySpawner
             else
             {
                 if (gm.RNG.NextDouble() < 0.5)
-                    gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", speed: 200f, owner: null)));
+                    gm.AddGameObject(new Goblin(spawnPosition, new Bow(name: "Goblin Bow", speed: 300f, owner: null)));
                 else
                     gm.AddGameObject(new Orc(spawnPosition));
             }

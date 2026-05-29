@@ -59,7 +59,7 @@ public class Wolf : BaseEnemy
     public override int BaseDamage { get; } = 5;
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 2f; // Attack cooldown
-    public override float BaseSpeed { get; } = 100f;
+    public override float BaseSpeed { get; } = 150f;
     public override float ExperienceValue { get; protected set; } = 2f;
 
     // Current Goblin Stats
