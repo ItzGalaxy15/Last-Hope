@@ -1,3 +1,9 @@
+// References:
+//   ShouldCollideWith pair filter (Step 3, performance):
+//     Inspired by the collision-filtering pattern in Erin Catto, "Box2D v2.3.0 User Manual"
+//     (category bits / mask bits / group indices). This is a much simpler form: a single
+//     virtual predicate per object instead of a full bitmask layer matrix.
+
 using Last_Hope.Collision;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -90,8 +96,20 @@ public abstract class GameObject
     {
         if (other == null || collider == null || other.collider == null)
             return false;
+        if (!ShouldCollideWith(other) || !other.ShouldCollideWith(this))
+            return false;
         return collider.CheckIntersection(other.collider);
     }
+
+    /// <summary>
+    /// Per-object filter consulted by <see cref="CheckCollision"/> before running the
+    /// narrow-phase intersection test. Override to opt this object out of collision
+    /// pairs that can never produce a meaningful <see cref="OnCollision"/> reaction
+    /// (e.g. a damaging projectile that only cares about enemies).
+    /// </summary>
+    /// <param name="other">The other object the pair test would run against.</param>
+    /// <returns><c>true</c> by default; override to return <c>false</c> for skipped pairs.</returns>
+    protected virtual bool ShouldCollideWith(GameObject other) => true;
 
     /// <summary>
     /// Override this to execute specific logic when a collision occurs.

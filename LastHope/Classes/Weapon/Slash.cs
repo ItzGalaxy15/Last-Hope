@@ -75,6 +75,11 @@ namespace Last_Hope.Classes.Weapon
                 GameManager.GetGameManager().RemoveGameObject(this);
         }
 
+        // Slash only meaningfully reacts to BaseEnemy. Skipping all other pair tests
+        // (slash-vs-slash, slash-vs-player, slash-vs-itemdrop, etc.) cuts a large
+        // chunk of N^2 work during Whirlwind when ~22 slashes are alive at once.
+        protected override bool ShouldCollideWith(GameObject other) => other is BaseEnemy;
+
         public override void OnCollision(GameObject other)
         {
             // Only hit each enemy once per slash

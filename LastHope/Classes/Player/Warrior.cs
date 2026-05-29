@@ -373,12 +373,20 @@ public class Warrior : BasePlayer
     public void FireRadialSlashes()
     {
         Vector2 castAnchor = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
-        for (int i = 0; i < 8; i++) // 8 directions
+
+        // Previously this spawned 8 real Slash objects per tick, each with a 12-segment
+        // ArcCollider. Their 216-degree arcs overlapped, so any enemy near the player
+        // was struck by ~4-5 of them per tick. We approximate that total with a single
+        // radial damage check and keep the 8 cosmetic slashes for the visual.
+        const int WhirlwindOverlapApprox = 4;
+        HitRadialArea(SlashDistance + 95f, BaseDamage * WhirlwindOverlapApprox, 0f);
+
+        for (int i = 0; i < 8; i++)
         {
             float angle = i * MathHelper.TwoPi / 8f;
             Vector2 dir = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
             Vector2 slashOrigin = castAnchor + dir * SlashDistance;
-            _Weapon.Attack(dir, slashOrigin, BaseDamage, BaseCritChance);
+            Weapon.AttackVisual(dir, slashOrigin);
         }
     }
 

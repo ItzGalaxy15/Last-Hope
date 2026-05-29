@@ -25,6 +25,18 @@ public class Weapon : BaseWeapon
         GameManager.GetGameManager().AddGameObject(slash);
     }
 
+    /// <summary>
+    /// Spawns a cosmetic-only Slash (no collider, no damage) used when the damage
+    /// is being applied by some other means (e.g. Whirlwind's single radial AoE).
+    /// The Slash's CheckCollision short-circuits on the null collider, so these
+    /// objects never enter the narrow-phase collision loop.
+    /// </summary>
+    public static void AttackVisual(Vector2 direction, Vector2 origin)
+    {
+        var slash = new Slash(null, 0, 0f, origin, direction, SlashVisualExpand, SlashHitboxExpand);
+        GameManager.GetGameManager().AddGameObject(slash);
+    }
+
     public override void SetOwner(GameObject owner)
     {
         _owner = owner;

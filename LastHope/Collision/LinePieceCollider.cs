@@ -1,3 +1,11 @@
+// References:
+//   Segment-vs-segment math reused by Intersects(RectangleCollider) (Step 2, performance):
+//     Same standard-form (Ax+By+C=0) line intersection algorithm already cited inline
+//     at Intersects(LinePieceCollider) below
+//     (https://stackoverflow.com/questions/4543506/algorithm-for-intersection-of-2-lines).
+//     The Step 2 refactor moves that algorithm into a static helper that operates on
+//     raw Vector2 endpoints so no LinePieceCollider objects are allocated per call.
+
 using System;
 using Microsoft.Xna.Framework;
 
@@ -142,23 +150,62 @@ public class LinePieceCollider : Collider, IEquatable<LinePieceCollider>
     /// </summary>
     /// <param name="other">The Rectangle to check for intersection.</param>
     /// <returns>true there is any overlap between the Line and the Rectangle.</returns>
+    /// <remarks>
+    /// Hot path during Whirlwind (12 arc segments per Slash). Uses the static
+    /// SegmentsIntersect helper instead of allocating four LinePieceColliders per call.
+    /// </remarks>
     public override bool Intersects(RectangleCollider other)
     {
-        var A = new Vector2(other.shape.Left, other.shape.Top);
-        var B = new Vector2(other.shape.Right, other.shape.Top);
-        var C = new Vector2(other.shape.Right, other.shape.Bottom);
-        var D = new Vector2(other.shape.Left, other.shape.Bottom);
+        float left = other.shape.Left;
+        float top = other.shape.Top;
+        float right = other.shape.Right;
+        float bottom = other.shape.Bottom;
 
-        var AB = new LinePieceCollider(A, B);
-        var AD = new LinePieceCollider(A, D);
-        var BC = new LinePieceCollider(B, C);
-        var CD = new LinePieceCollider(C, D);
+        Vector2 tl = new Vector2(left, top);
+        Vector2 tr = new Vector2(right, top);
+        Vector2 br = new Vector2(right, bottom);
+        Vector2 bl = new Vector2(left, bottom);
 
-        if (this.Intersects(AB) || this.Intersects(AD) || this.Intersects(BC) || this.Intersects(CD) || other.Contains(Start) || other.Contains(End))
-        {
-            return true;
-        }
+        if (SegmentsIntersect(Start, End, tl, tr)) return true; // top edge
+        if (SegmentsIntersect(Start, End, tl, bl)) return true; // left edge
+        if (SegmentsIntersect(Start, End, tr, br)) return true; // right edge
+        if (SegmentsIntersect(Start, End, bl, br)) return true; // bottom edge
+        if (other.Contains(Start)) return true;
+        if (other.Contains(End)) return true;
         return false;
+    }
+
+    /// <summary>
+    /// Allocation-free segment-vs-segment intersection on raw Vector2 endpoints.
+    /// Same standard-form line intersection algorithm as Intersects(LinePieceCollider),
+    /// extracted so RectangleCollider's four edges can be tested without allocating
+    /// new LinePieceCollider instances.
+    /// </summary>
+    private static bool SegmentsIntersect(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2)
+    {
+        float aA = a1.Y - a2.Y;
+        float aB = a2.X - a1.X;
+        float aC = a1.X * a2.Y - a1.Y * a2.X;
+
+        float bA = b1.Y - b2.Y;
+        float bB = b2.X - b1.X;
+        float bC = b1.X * b2.Y - b1.Y * b2.X;
+
+        float delta = aA * bB - bA * aB;
+        if (delta == 0f) return false;
+
+        float ix = (bB * aC - aB * bC) / delta;
+        float iy = (aA * bC - bA * aC) / delta;
+
+        return PointWithinSegmentBox(ix, iy, a1, a2)
+            && PointWithinSegmentBox(ix, iy, b1, b2);
+    }
+
+    private static bool PointWithinSegmentBox(float x, float y, Vector2 a, Vector2 b)
+    {
+        bool xIn = (x >= a.X && x <= b.X) || (x >= b.X && x <= a.X);
+        bool yIn = (y >= a.Y && y <= b.Y) || (y >= b.Y && y <= a.Y);
+        return xIn && yIn;
     }
 
     /// <summary>
