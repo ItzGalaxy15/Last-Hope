@@ -54,15 +54,15 @@ public class Wolf : BaseEnemy
     private float HitboxSize => FullSize * 0.55f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-        // Base Goblin stats
-    public override float BaseMaxHp { get; } = 20f;
+        // Base Wolf stats
+    public override float BaseMaxHp { get; } = 75f;
     public override int BaseDamage { get; } = 5;
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 2f; // Attack cooldown
     public override float BaseSpeed { get; } = 150f;
     public override float ExperienceValue { get; protected set; } = 2f;
 
-    // Current Goblin Stats
+    // Current Wolf Stats
     public override float CurrentMaxHp { get; protected set; }
     public override int CurrentDamage { get; protected set; }
     public override float CurrentCritChance { get; protected set; }
