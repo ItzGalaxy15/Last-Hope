@@ -56,7 +56,7 @@ public class Boss : BaseEnemy
     private const int LaunchFrameCount = 1;
 
     // Base Orc stats
-    public override float BaseMaxHp { get; } = 400f;
+    public override float BaseMaxHp { get; } = 1500;
     public override int BaseDamage { get; } = 25;
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 3f; // Attack cooldown
