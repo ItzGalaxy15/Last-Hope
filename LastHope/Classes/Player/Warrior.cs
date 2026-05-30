@@ -142,7 +142,7 @@ public class Warrior : BasePlayer
         
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
         try { WarriorAbilitySprite = content.Load<Texture2D>("WarriorAbilitySheet"); } catch { WarriorAbilitySprite = null; }
-        try { ShieldSlamSprite = content.Load<Texture2D>("ShieldSlam"); } catch { ShieldSlamSprite = null; }
+        try { ShieldSlamSprite = content.Load<Texture2D>("NewShieldSlam"); } catch { ShieldSlamSprite = null; }
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
         _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
         _hurtSound = content.Load<SoundEffect>("sounds/Warrior_Hurt");
@@ -678,10 +678,14 @@ public class Warrior : BasePlayer
 
         if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null)
         {
-            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
-            float rotation = _abilityRotate ? _abilityRotation : 0f;
-            // Draw ability over everything else related to the player
-            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
+            bool isShieldSlam = _castingAbility is ShieldSlamAbility;
+            if (!isShieldSlam) // Shield Slam is drawn in the background layer instead
+            {
+                Rectangle abilitySource = _abilityAnimation.GetSourceRect();
+                float rotation = _abilityRotate ? _abilityRotation : 0f;
+                // Draw ability over everything else related to the player
+                spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
+            }
         }
 
         if (IsSwordActive && DualWieldUnlocked)
@@ -806,18 +810,19 @@ public class Warrior : BasePlayer
             _abilityAimDir = new Vector2(1f, 0f);
             _abilityRotation = 0f;
             _abilityRotate = false;
-            _abilityDrawPos = _position;
-            _abilityOrigin = Vector2.Zero;
+            // Center the shield slam effect on the player
+            _abilityOrigin = new Vector2(FrameSize / 2f, FrameSize / 2f);
+            _abilityDrawPos = _position + new Vector2(_bodyWidth / 2f, _bodyWidth / 2f);
             _abilityDrawScale = AbilityDrawScale * 1.25f;
 
             _abilityAnimation = new AnimationManager(
-                AbilityFrames,
-                AbilityColumns,
+                5, // 5 frames total (3 on first row, 2 on second row)
+                3, // 3 columns max per row
                 new Vector2(FrameSize, FrameSize),
                 8, // interval
                 false, // loop
-                0,
-                ShieldSlamSheetRow * FrameSize
+                0, // offsetX
+                ShieldSlamSheetRow * FrameSize // offsetY
             );
 
             return;
@@ -869,6 +874,24 @@ public class Warrior : BasePlayer
         }
 
         return direction;
+    }
+
+    public override void AppendBackgroundDrawItems(System.Collections.Generic.List<(float sortY, System.Action<SpriteBatch> draw)> items)
+    {
+        if (_isCastingAbility && _castingAbility is ShieldSlamAbility && _abilityAnimation != null && _abilitySprite != null)
+        {
+            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
+            float rotation = _abilityRotate ? _abilityRotation : 0f;
+            Color drawColor = DrawTint; // Not using freeze tints etc. for ground effects
+            
+            Action<SpriteBatch> drawAction = sb =>
+            {
+                sb.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
+            };
+
+            // extremely negative sortY forces it to the very back of the Y-sorted layer
+            items.Add((-99999f, drawAction));
+        }
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)
