@@ -17,19 +17,28 @@ public class OneUpIcon : UIElement
     private const int BottomMargin = 28;
     private const int ItemInset = 6;
 
-    private readonly int _slotIndex;
+    private readonly bool _hasDash;
+    private readonly bool _hasTeleport;
     private Rectangle _frameRect;
     private Rectangle _iconRect;
 
-    public OneUpIcon(Texture2D? pixel, int slotIndex = 3)
+    public OneUpIcon(Texture2D? pixel, bool hasDash = false, bool hasTeleport = false)
     {
         _pixel = pixel;
-        _slotIndex = slotIndex;
+        _hasDash = hasDash;
+        _hasTeleport = hasTeleport;
     }
 
     public override void Update(GameTime gameTime, Viewport viewport)
     {
-        int slotX = SideMargin + _slotIndex * (SlotSize + SlotGap);
+        var gm = GameManager.GetGameManager();
+
+        int slotIndex = 0;
+        if (_hasDash) slotIndex++;
+        if (_hasTeleport) slotIndex++;
+        if (gm._player?.ActiveAbility?.Icon != null) slotIndex++;
+
+        int slotX = SideMargin + slotIndex * (SlotSize + SlotGap);
         int slotY = viewport.Height - BottomMargin - SlotSize;
 
         _frameRect = new Rectangle(slotX, slotY, SlotSize, SlotSize);

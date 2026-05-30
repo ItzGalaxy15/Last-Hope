@@ -15,7 +15,7 @@ namespace Last_Hope.Engine;
 public class EnemySpawner
 {
     /// <summary>The total number of waves per zone (village runs 1..N, then forest runs 1..N).</summary>
-    public int TotalWaves { get; set; } = 6;
+    public int TotalWaves { get; set; } = 1;
     
     /// <summary>The exponential multiplier applied to the base enemy count per wave.</summary>
     public float EnemyMultiplierPerWave { get; set; } = 1.5f;
