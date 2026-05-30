@@ -729,11 +729,29 @@ namespace Last_Hope.UI
                 tipWidth += 30;
                 tipHeight += 20;
 
-                Rectangle bgTip = new Rectangle((int)mousePos.X + 20, (int)mousePos.Y + 20, (int)tipWidth, (int)tipHeight);
+                Vector2 tooltipBasePos;
+                if (_isKeyboardMode)
+                {
+                    // Place it to the right of the node safely so it doesn't overlap the node itself
+                    tooltipBasePos = new Vector2(_hoveredNode.Position.X + 60, _hoveredNode.Position.Y - tipHeight / 2);
+                }
+                else
+                {
+                    tooltipBasePos = new Vector2(mousePos.X + 20, mousePos.Y + 20);
+                }
+
+                Rectangle bgTip = new Rectangle((int)tooltipBasePos.X, (int)tooltipBasePos.Y, (int)tipWidth, (int)tipHeight);
                 
                 // Clamp to screen bounds
-                if (bgTip.Right > viewport.Width) bgTip.X -= (bgTip.Width + 40);
-                if (bgTip.Bottom > viewport.Height) bgTip.Y -= (bgTip.Height + 40);
+                if (bgTip.Right > viewport.Width) 
+                {
+                    // If it goes off the right edge, pop it to the left side of the node/cursor instead
+                    bgTip.X = _isKeyboardMode 
+                        ? (int)(_hoveredNode.Position.X - bgTip.Width - 60) 
+                        : (int)(mousePos.X - bgTip.Width - 20);
+                }
+                if (bgTip.Bottom > viewport.Height) bgTip.Y -= (int)(bgTip.Bottom - viewport.Height + 10);
+                if (bgTip.Y < 0) bgTip.Y = 10;
                 
                 DrawPremiumPanel(spriteBatch, bgTip, new Color(18, 20, 24, 250), new Color(130, 120, 100), new Color(200, 180, 120), globalAlpha, 2);
                 
