@@ -129,6 +129,9 @@ namespace Last_Hope.SkillTree
 
         // Fast lookup cache
         private readonly Dictionary<string, SkillNodeData> _nodeMap;
+        
+        // Caches the Layer 0 root node ID for each node in the tree
+        private readonly Dictionary<string, string> _nodeRoots = new Dictionary<string, string>();
 
         // --- The Stats Bus ---
         
@@ -158,6 +161,37 @@ namespace Last_Hope.SkillTree
             _data = data;
             _state = state;
             _nodeMap = _data.Nodes.ToDictionary(n => n.Id);
+            
+            // Precompute root for each node
+            foreach (var rootNode in _data.Nodes.Where(n => n.Layer == 0))
+            {
+                var queue = new Queue<string>();
+                queue.Enqueue(rootNode.Id);
+                while (queue.Count > 0)
+                {
+                    var current = queue.Dequeue();
+                    _nodeRoots[current] = rootNode.Id; 
+                    
+                    var children = _data.Connections.Where(c => c.FromNodeId == current).Select(c => c.ToNodeId);
+                    foreach (var child in children)
+                    {
+                        if (!_nodeRoots.ContainsKey(child))
+                            queue.Enqueue(child);
+                    }
+                }
+            }
+        }
+
+        private string GetActiveRoot(bool includePending)
+        {
+            foreach (var kvp in _state.AllocatedNodes)
+                if (kvp.Value > 0 && _nodeRoots.TryGetValue(kvp.Key, out string rootId)) return rootId;
+            
+            if (includePending)
+                foreach (var kvp in _pendingAllocations)
+                    if (kvp.Value > 0 && _nodeRoots.TryGetValue(kvp.Key, out string rootId)) return rootId;
+            
+            return null;
         }
 
         /// <summary>
@@ -224,6 +258,10 @@ namespace Last_Hope.SkillTree
 
             if (SkillTreeConfig.EnableBranchLocking)
             {
+                string activeRoot = GetActiveRoot(includePending);
+                if (activeRoot != null && _nodeRoots.TryGetValue(nodeId, out string nodeRoot) && activeRoot != nodeRoot)
+                    missing.Add("Locked: You have already specialized into another tree branch.");
+
                 if (node.Tags.Contains("Stance") && HasOtherAllocatedNodeWithTag("Stance", nodeId, includePending)) 
                     missing.Add("Locked: You can only choose one Stance branch.");
             }
@@ -284,6 +322,10 @@ namespace Last_Hope.SkillTree
             // Check 4: Exclusivity rules (Only 1 Stance and 1 Active allowed across the whole tree)
             if (SkillTreeConfig.EnableBranchLocking)
             {
+                string activeRoot = GetActiveRoot(includePending);
+                if (activeRoot != null && _nodeRoots.TryGetValue(nodeId, out string nodeRoot) && activeRoot != nodeRoot)
+                    return false;
+
                 if (node.Tags.Contains("Stance") && HasOtherAllocatedNodeWithTag("Stance", nodeId, includePending)) return false;
             }
             if (node.Tags.Contains("Active") && HasOtherAllocatedNodeWithTag("Active", nodeId, includePending)) return false;
