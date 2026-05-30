@@ -32,7 +32,7 @@ public class AxeSlamAbility : BaseAbility
         if (player is Warrior warrior)
         {
             Vector2 aimDir = warrior.GetAbilityAimDirection(); // Gebruik de richting waarin je castte
-            Vector2 castAnchor = warrior.GetCastAnchor();
+            Vector2 castAnchor = warrior.GetCollider()?.GetBoundingBox().Center.ToVector2() ?? warrior.GetPosition();
 
             int damage = (int)(warrior.CurrentDamage * DamageMultiplier);
             warrior.HitFrontalArea(castAnchor, aimDir, Range, damage, StunDuration);
