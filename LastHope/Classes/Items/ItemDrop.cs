@@ -24,6 +24,7 @@ public class ItemDrop : GameObject
     private RectangleCollider _collider;
     private Texture2D? _itemSpriteSheet;
     private Texture2D? _hearthSprite;
+    private Texture2D? _heartDropSprite;
     private const float PickupRadius = 150f;
     private const float Speed = 350f;
 
@@ -60,6 +61,15 @@ public class ItemDrop : GameObject
         catch (ContentLoadException)
         {
             _hearthSprite = null;
+        }
+
+        try
+        {
+            _heartDropSprite = content.Load<Texture2D>("Heart-32-pixels");
+        }
+        catch (ContentLoadException)
+        {
+            _heartDropSprite = null;
         }
     }
 
@@ -116,14 +126,18 @@ public class ItemDrop : GameObject
         float bounceOffset = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4f) * 6f;
         Vector2 drawPos = _position + new Vector2(0, bounceOffset);
 
-        if (Type == ItemType.OneUp && _hearthSprite != null)
+        if (Type == ItemType.OneUp)
         {
-            Rectangle sourceRect = new Rectangle(0, 0, _hearthSprite.Width, _hearthSprite.Height);
-            Vector2 origin = new Vector2(_hearthSprite.Width / 2f, _hearthSprite.Height / 2f);
-            
-            // Draw red glow behind the item
-            spriteBatch.Draw(_hearthSprite, drawPos, sourceRect, Color.Red * 0.5f, 0f, origin, 1.4f, SpriteEffects.None, 0f);
-            spriteBatch.Draw(_hearthSprite, drawPos, sourceRect, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
+            // Prefer the smaller in-world drop sprite if available, otherwise fall back to the HUD heart.
+            Texture2D? dropSprite = _heartDropSprite ?? _hearthSprite;
+            if (dropSprite != null)
+            {
+                Rectangle sourceRect = new Rectangle(0, 0, dropSprite.Width, dropSprite.Height);
+                Vector2 origin = new Vector2(dropSprite.Width / 2f, dropSprite.Height / 2f);
+
+                // Draw small heart without the yellow highlight used in the HUD.
+                spriteBatch.Draw(dropSprite, drawPos, sourceRect, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
+            }
         }
         else if (_itemSpriteSheet != null)
         {

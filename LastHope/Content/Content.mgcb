@@ -255,6 +255,18 @@
 /processorParam:TextureFormat=Color
 /build:Goblin spritesheet attempt-sheet.png
 
+#begin Heart-32-pixels.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Heart-32-pixels.png
+
 #begin Heart.png
 /importer:TextureImporter
 /processor:TextureProcessor
