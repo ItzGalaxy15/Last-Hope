@@ -404,6 +404,10 @@ public abstract class BasePlayer : GameObject
     public override bool IsYSorted => true;
     public override float GetSortY() => GetPosition().Y + _bodyWidth;
 
+    public virtual void AppendBackgroundDrawItems(System.Collections.Generic.List<(float sortY, System.Action<Microsoft.Xna.Framework.Graphics.SpriteBatch> draw)> items)
+    {
+    }
+
     public Vector2 GetPosition()
     {
         return _position;
