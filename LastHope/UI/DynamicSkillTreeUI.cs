@@ -354,7 +354,10 @@ namespace Last_Hope.UI
             if (input.IsKeyPress(Keys.Escape))
             {
                 IsClosed = true;
-                _tree.CancelPendingPoints();
+                if (_tree.PendingPoints > 0)
+                {
+                    _tree.ConfirmPendingPoints(); // Auto-save for ease of use
+                }
                 return;
             }
             if (input.IsKeyPress(Keys.R))
@@ -369,7 +372,15 @@ namespace Last_Hope.UI
             // Bottom Bar Button Clicks
             if (isLeftClickPressed)
             {
-                if (_btnCancel.Contains(mousePos)) { _tree.CancelPendingPoints(); IsClosed = true; return; }
+                if (_btnCancel.Contains(mousePos)) 
+                { 
+                    if (_tree.PendingPoints > 0)
+                    {
+                        _tree.ConfirmPendingPoints(); // Auto-save for ease of use
+                    }
+                    IsClosed = true; 
+                    return; 
+                }
                 if (_btnReset.Contains(mousePos)) { _tree.Respec(); return; }
                 if (_btnConfirm.Contains(mousePos)) { _tree.ConfirmPendingPoints(); return; }
             }
@@ -488,12 +499,21 @@ namespace Last_Hope.UI
                 }
 
                 // Draw Bottom Buttons
-                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM POINTS", new Color(30, 80, 40), new Color(60, 150, 70), _btnConfirmHover, globalAlpha);
-                DrawPremiumButton(spriteBatch, font, _btnCancel, "CLOSE", new Color(40, 45, 50), new Color(80, 85, 95), _btnCancelHover, globalAlpha);
+                float pulse = 0f;
+                if (_tree.PendingPoints > 0)
+                {
+                    pulse = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4.0) * 0.5f + 0.5f; // 0 to 1 pulse
+                }
+
+                Color confirmBase = Color.Lerp(new Color(30, 80, 40), new Color(100, 160, 50), pulse);
+                Color confirmHigh = Color.Lerp(new Color(60, 150, 70), new Color(150, 255, 80), pulse);
+                
+                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM POINTS", confirmBase, confirmHigh, _btnConfirmHover, globalAlpha);
+                DrawPremiumButton(spriteBatch, font, _btnCancel, "SAVE & CLOSE", new Color(40, 45, 50), new Color(80, 85, 95), _btnCancelHover, globalAlpha);
                 DrawPremiumButton(spriteBatch, font, _btnReset, "RESET", new Color(90, 30, 25), new Color(160, 50, 40), _btnResetHover, globalAlpha);
                 
                 // Instructions
-                string hint = "LMB: Assign   |   RMB: Remove   |   ENTER / SPACE: Confirm   |   ESC: Close";
+                string hint = "LMB: Assign   |   RMB: Remove   |   ENTER / SPACE: Confirm   |   ESC: Save & Close";
                 Vector2 hintSize = font.MeasureString(hint) * 0.3f;
                 spriteBatch.DrawString(font, hint, new Vector2(_bottomBarRect.Center.X - hintSize.X/2, _bottomBarRect.Center.Y - hintSize.Y/2), Fade(new Color(120, 125, 130), globalAlpha), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
