@@ -29,6 +29,7 @@ public class Hud
 			new ExperienceBar(player, pixel),
 			new HealthBar(player, pixel),
 			new ItemSlotsBar(pixel, itemSpriteSheet),
+			new OneUpIcon(pixel),
 			new WaveIndicator(),
 			_bossWarningIndicator,
 			new ToastNotification(pixel)
@@ -47,6 +48,7 @@ public class Hud
 					slotIndex: 1));
 
 			_elements.Add(new ActiveAbilityIcon(cooldownShader, pixel, slotIndex: 2));
+
 
 			if (rapidFireIcon != null)
 				_elements.Add(new HitSkillCooldownIcon(rapidFireIcon, cooldownShader, pixel,
