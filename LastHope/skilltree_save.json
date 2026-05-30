@@ -6,8 +6,8 @@
     "warrior_hp_l0": 1,
     "shield_stance_l1": 1,
     "block_chance_l1": 1,
-    "on_block_heal_l2": 1,
     "adrenaline_rush_l2": 1,
+    "on_block_heal_l2": 1,
     "warrior_hp_l3": 1,
     "shield_slam_l4": 1
   }

@@ -803,7 +803,7 @@ public class Warrior : BasePlayer
         if (BlockLevel > 0 && gm.RNG.NextDouble() < (BlockLevel * 0.10)) // 10% per point
         {
             amount *= 0.5f; // Mitigate half damage
-            if (HasBulwark) Heal(0.25f); // Reduced further due to high block frequency
+            if (HasBulwark) Heal(0.15f); // Reduced further due to high block frequency
         }
 
         // --- ON HIT TAKEN PROCS ---
@@ -837,7 +837,7 @@ public class Warrior : BasePlayer
             _abilityDrawPos = _position + new Vector2(_bodyWidth / 2f, _bodyWidth / 2f);
             
             // Further scaled up because the sprite's core visual content has empty padding
-            _abilityDrawScale = AbilityDrawScale * 2.2f;
+            _abilityDrawScale = AbilityDrawScale * 2.5f;
 
             _abilityAnimation = new AnimationManager(
                 5, // 5 frames total (3 on first row, 2 on second row)
