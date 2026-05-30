@@ -10,7 +10,6 @@ public class OneUpIcon : UIElement
     private Texture2D? _heartSprite;
     private bool _triedLoadingHeart;
 
-    // Layout constants matching AbilityCooldownIcon for alignment
     private const int SlotSize = 64;
     private const int SlotGap = 3;
     private const int SideMargin = 48;
