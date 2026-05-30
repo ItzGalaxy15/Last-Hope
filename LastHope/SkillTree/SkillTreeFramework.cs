@@ -282,7 +282,10 @@ namespace Last_Hope.SkillTree
             }
 
             // Check 4: Exclusivity rules (Only 1 Stance and 1 Active allowed across the whole tree)
-            if (node.Tags.Contains("Stance") && HasOtherAllocatedNodeWithTag("Stance", nodeId, includePending)) return false;
+            if (SkillTreeConfig.EnableBranchLocking)
+            {
+                if (node.Tags.Contains("Stance") && HasOtherAllocatedNodeWithTag("Stance", nodeId, includePending)) return false;
+            }
             if (node.Tags.Contains("Active") && HasOtherAllocatedNodeWithTag("Active", nodeId, includePending)) return false;
 
             return true;

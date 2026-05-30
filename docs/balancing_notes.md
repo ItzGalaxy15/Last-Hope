@@ -19,8 +19,16 @@ Here are the original node values for reference:
 - Layer 4: 15 points
 - Layer 5: 20 points
 
-### New Target Balance (1 Point Max)
-If the player only needs 1 point to max a node, they will reach the bottom of the tree much faster.
-*Considerations:*
-- We should either triple the value of the 1 point, OR keep it the same and expect players to branch out.
-- Layer unlock requirements will need to drop dramatically (e.g. 1, 2, 3, 4 points).
+### Current Balance Strategy (May 2026)
+Decision: **Lower overall stats temporarily**. 
+By keeping standard node values at their 1x baseline (instead of tripling them to compensate for the `MaxPoints` 3 -> 1 shift), the overall stat inflations are strictly nerfed. Players are forced to branch out to gain power.
+
+**Current 1-Point Baseline (e.g., Warrior):**
+- **Haste/Agility:** 1.0% total
+- **Base Damage:** 5.0 total
+- **Max HP:** 25.0 total
+- **Dodge Chance:** 1.0% total
+- **Armor Pen:** 1.0% total
+- **Block Chance:** 1.0% total
+
+*Note: These baseline values are subject to change. We can scale this up if playtesting shows the game has become too difficult. Layer unlock requirements remain aggressively scaled down (0, 1, 2, 3...) to allow faster late-game ability access without severe stat bloat.*
