@@ -269,6 +269,12 @@ namespace Last_Hope.UI
 
         public void AddTalentPoint() => _tree.AddUnspentPoint();
 
+        // Keyboard Navigation State
+        private bool _isKeyboardMode = false;
+        private SkillNodeUI _selectedNode;
+        private Vector2 _lastMousePosition;
+        private float _kbInputCooldown = 0f;
+
         // Animations
         private float _entranceProgress = 0f;
         private float _btnConfirmHover = 0f;
@@ -284,6 +290,7 @@ namespace Last_Hope.UI
             _tree = tree;
             _theme = theme;
             _pixel = pixel;
+            _lastMousePosition = Mouse.GetState().Position.ToVector2();
 
             // 1. Instantiate UI Nodes
             foreach (var nodeData in tree.GetData().Nodes)
@@ -342,6 +349,13 @@ namespace Last_Hope.UI
             bool isLeftClickPressed = input.LeftMousePress();
             bool isRightClickPressed = input.RightMousePress();
 
+            // Detect Mouse Movement
+            if (Vector2.DistanceSquared(mousePos, _lastMousePosition) > 1f)
+            {
+                _isKeyboardMode = false;
+                _lastMousePosition = mousePos;
+            }
+
             IsClosed = false;
 
             // Transitions
@@ -367,6 +381,44 @@ namespace Last_Hope.UI
             if (input.IsKeyPress(Keys.Enter) || input.IsKeyPress(Keys.Space))
             {
                 _tree.ConfirmPendingPoints();
+            }
+
+            // Keyboard Navigation (WASD/Arrows)
+            Vector2 navDir = Vector2.Zero;
+            if (input.IsKeyPress(Keys.W) || input.IsKeyPress(Keys.Up)) navDir = new Vector2(0, -1);
+            if (input.IsKeyPress(Keys.S) || input.IsKeyPress(Keys.Down)) navDir = new Vector2(0, 1);
+            if (input.IsKeyPress(Keys.A) || input.IsKeyPress(Keys.Left)) navDir = new Vector2(-1, 0);
+            if (input.IsKeyPress(Keys.D) || input.IsKeyPress(Keys.Right)) navDir = new Vector2(1, 0);
+
+            if (navDir != Vector2.Zero && _uiNodes.Count > 0)
+            {
+                _isKeyboardMode = true;
+                if (_selectedNode == null)
+                    _selectedNode = _uiNodes.FirstOrDefault(n => n.Data.Layer == 0) ?? _uiNodes[0];
+                else
+                {
+                    SkillNodeUI bestNode = null;
+                    float bestDist = float.MaxValue;
+                    foreach(var node in _uiNodes)
+                    {
+                        if (node == _selectedNode) continue;
+                        Vector2 diff = node.Position - _selectedNode.Position;
+                        if (diff.LengthSquared() < 1) continue;
+                        diff.Normalize();
+                        
+                        // Check if node is in the general direction
+                        if (Vector2.Dot(diff, navDir) > 0.4f)
+                        {
+                            float dist = Vector2.Distance(node.Position, _selectedNode.Position);
+                            if (dist < bestDist)
+                            {
+                                bestDist = dist;
+                                bestNode = node;
+                            }
+                        }
+                    }
+                    if (bestNode != null) _selectedNode = bestNode;
+                }
             }
 
             // Bottom Bar Button Clicks
@@ -395,17 +447,29 @@ namespace Last_Hope.UI
                 
                 node.UpdateState(state, pts, node.Data.MaxPoints, hasPending);
                 
-                // Broad hover check (Radius 25)
-                bool isHovered = Vector2.Distance(mousePos, node.Position) <= 25f;
+                // Set Hover Check (Mouse or Keyboard)
+                bool isHovered = false;
+                if (_isKeyboardMode)
+                {
+                    isHovered = (_selectedNode == node);
+                }
+                else
+                {
+                    isHovered = Vector2.Distance(mousePos, node.Position) <= 25f;
+                }
+
                 if (isHovered) 
                 {
                     _hoveredNode = node;
 
-                    if (isLeftClickPressed && state != NodeState.Locked && pts < node.Data.MaxPoints)
+                    bool assignInput = (!_isKeyboardMode && isLeftClickPressed) || (_isKeyboardMode && input.IsKeyPress(Keys.E));
+                    bool removeInput = (!_isKeyboardMode && isRightClickPressed) || (_isKeyboardMode && input.IsKeyPress(Keys.Q));
+
+                    if (assignInput && state != NodeState.Locked && pts < node.Data.MaxPoints)
                     {
                         _tree.AddPendingPoint(node.Data.Id);
                     }
-                    else if (isRightClickPressed && hasPending)
+                    else if (removeInput && hasPending)
                     {
                         _tree.RemovePendingPoint(node.Data.Id);
                     }
@@ -513,7 +577,9 @@ namespace Last_Hope.UI
                 DrawPremiumButton(spriteBatch, font, _btnReset, "RESET", new Color(90, 30, 25), new Color(160, 50, 40), _btnResetHover, globalAlpha);
                 
                 // Instructions
-                string hint = "LMB: Assign   |   RMB: Remove   |   ENTER / SPACE: Confirm   |   ESC: Save & Close";
+                string hint = _isKeyboardMode 
+                    ? "E: Assign   |   Q: Remove   |   ENTER / SPACE: Confirm   |   ESC: Save & Close" 
+                    : "LMB: Assign   |   RMB: Remove   |   ENTER / SPACE: Confirm   |   ESC: Save & Close";
                 Vector2 hintSize = font.MeasureString(hint) * 0.3f;
                 spriteBatch.DrawString(font, hint, new Vector2(_bottomBarRect.Center.X - hintSize.X/2, _bottomBarRect.Center.Y - hintSize.Y/2), Fade(new Color(120, 125, 130), globalAlpha), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
@@ -600,6 +666,16 @@ namespace Last_Hope.UI
                     string rankTxt = $"{_tree.GetAllocatedPoints(node.Data.Id, true)}/{node.Data.MaxPoints}";
                     Vector2 rSize = font.MeasureString(rankTxt) * 0.35f;
                     spriteBatch.DrawString(font, rankTxt, new Vector2(pos.X - rSize.X/2, pos.Y - rSize.Y/2 + 1), Fade(Color.White, globalAlpha), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+                }
+
+                // Keyboard Selected Square
+                if (_isKeyboardMode && _selectedNode == node)
+                {
+                    int selSize = (int)(60 * currentScale);
+                    Rectangle selBox = new Rectangle(pos.X - selSize/2, pos.Y - selSize/2, selSize, selSize);
+                    float pulse = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 6) * 0.5 + 0.5);
+                    Color selColor = Color.Lerp(Color.LightYellow, Color.Goldenrod, pulse);
+                    DrawRectangleOutline(spriteBatch, selBox, 3, Fade(selColor, globalAlpha));
                 }
             }
 
