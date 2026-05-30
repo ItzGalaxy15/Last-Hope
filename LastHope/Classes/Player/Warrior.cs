@@ -326,6 +326,28 @@ public class Warrior : BasePlayer
         }
     }
 
+    public void HitCircularArea(Vector2 center, float radius, int damage, float stunDuration)
+    {
+        var gm = GameManager.GetGameManager();
+
+        foreach (var obj in gm._gameObjects.ToList())
+        {
+            if (obj is BaseEnemy enemy)
+            {
+                var collider = enemy.GetCollider();
+                if (collider != null)
+                {
+                    Vector2 toEnemy = collider.GetBoundingBox().Center.ToVector2() - center;
+                    if (toEnemy.Length() <= radius)
+                    {
+                        enemy.Damage(damage);
+                        if (stunDuration > 0f) enemy.ApplyStun(stunDuration);
+                    }
+                }
+            }
+        }
+    }
+
     public void UseWeapon()
     {
         Vector2 castAnchor = _position + new Vector2(_bodyWidth * 0.5f, _bodyWidth * 0.5f - SlashCastHeightOffset);
