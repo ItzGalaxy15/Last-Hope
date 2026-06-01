@@ -27,6 +27,8 @@ public class ItemDrop : GameObject
     private Texture2D? _heartDropSprite;
     private const float PickupRadius = 150f;
     private const float Speed = 350f;
+    private const float LifetimeSeconds = 30f;
+    private float _ageSeconds;
 
     /// <summary>
     /// Creates an item drop of the given type at the given world position.
@@ -84,6 +86,13 @@ public class ItemDrop : GameObject
         ItemType[]? inv = PlayerInventoryHelper.GetInventorySlots(player);
         if (player is null || inv is null)
             return;
+
+        _ageSeconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (_ageSeconds >= LifetimeSeconds)
+        {
+            gm.RemoveGameObject(this);
+            return;
+        }
 
         bool hasInventorySpace = false;
         for (int i = 0; i < inv.Length; i++)
