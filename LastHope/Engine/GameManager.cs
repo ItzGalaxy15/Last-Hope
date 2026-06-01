@@ -69,10 +69,10 @@ public class GameManager
     // --- Configurable Item Drop Chances ---
     public readonly Dictionary<ItemType, double> ItemDropChances = new Dictionary<ItemType, double>
     {
-        { ItemType.Bomb, 0.10 },          // 10% chance
-        { ItemType.Decoy, 0.05 },         // 5% chance
-        { ItemType.HealingPotion, 0.12 }, // 12% chance
-        { ItemType.OneUp, 0.03 }          // 3% chance
+        { ItemType.Bomb, 0.06 },          // 6% chance
+        { ItemType.Decoy, 0.03 },         // 3% chance
+        { ItemType.HealingPotion, 0.06 }, // 6% chance
+        { ItemType.OneUp, 0.02 }          // 2% chance
     };
     public Texture2D Pixel { get; private set; }
 
