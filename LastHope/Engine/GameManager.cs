@@ -503,6 +503,10 @@ public class GameManager
     /// </summary>
     public void ResetGame()
     {
+        if (!global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        {
+            global::Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
+        }
         _gameObjects.Clear();
         _toBeAdded.Clear();
         _toBeRemoved.Clear();
@@ -525,6 +529,12 @@ public class GameManager
         _player = CreatePlayerFromSelection(spawn);
         _player.OnTalentPointEarned += Menu.AwardTalentPoint;
         AddGameObject(_player);
+
+        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        {
+            Menu.LoadSkillTreeSilently();
+        }
+
     }
 
     /// <summary>Matches player draw scale (32px frame × 3) for spawn search and clamping.</summary>

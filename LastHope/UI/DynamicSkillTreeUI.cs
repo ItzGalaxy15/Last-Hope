@@ -269,6 +269,12 @@ namespace Last_Hope.UI
 
         public void AddTalentPoint() => _tree.AddUnspentPoint();
 
+        // Keyboard Navigation State
+        private bool _isKeyboardMode = false;
+        private SkillNodeUI _selectedNode;
+        private Vector2 _lastMousePosition;
+        private float _kbInputCooldown = 0f;
+
         // Animations
         private float _entranceProgress = 0f;
         private float _btnConfirmHover = 0f;
@@ -284,6 +290,7 @@ namespace Last_Hope.UI
             _tree = tree;
             _theme = theme;
             _pixel = pixel;
+            _lastMousePosition = Mouse.GetState().Position.ToVector2();
 
             // 1. Instantiate UI Nodes
             foreach (var nodeData in tree.GetData().Nodes)
@@ -319,7 +326,7 @@ namespace Last_Hope.UI
             _topBarRect = new Rectangle(_mainPanel.X, _mainPanel.Y, _mainPanel.Width, 75);
             _bottomBarRect = new Rectangle(_mainPanel.X, _mainPanel.Bottom - 85, _mainPanel.Width, 85);
 
-            int btnWidth = 130;
+            int btnWidth = 175;
             int btnHeight = 44;
             int btnY = _bottomBarRect.Center.Y - (btnHeight / 2);
 
@@ -342,6 +349,13 @@ namespace Last_Hope.UI
             bool isLeftClickPressed = input.LeftMousePress();
             bool isRightClickPressed = input.RightMousePress();
 
+            // Detect Mouse Movement
+            if (Vector2.DistanceSquared(mousePos, _lastMousePosition) > 1f)
+            {
+                _isKeyboardMode = false;
+                _lastMousePosition = mousePos;
+            }
+
             IsClosed = false;
 
             // Transitions
@@ -354,7 +368,10 @@ namespace Last_Hope.UI
             if (input.IsKeyPress(Keys.Escape))
             {
                 IsClosed = true;
-                _tree.CancelPendingPoints();
+                if (_tree.PendingPoints > 0)
+                {
+                    _tree.ConfirmPendingPoints(); // Auto-save for ease of use
+                }
                 return;
             }
             if (input.IsKeyPress(Keys.R))
@@ -366,10 +383,56 @@ namespace Last_Hope.UI
                 _tree.ConfirmPendingPoints();
             }
 
+            // Keyboard Navigation (WASD/Arrows)
+            Vector2 navDir = Vector2.Zero;
+            if (input.IsKeyPress(Keys.W) || input.IsKeyPress(Keys.Up)) navDir = new Vector2(0, -1);
+            if (input.IsKeyPress(Keys.S) || input.IsKeyPress(Keys.Down)) navDir = new Vector2(0, 1);
+            if (input.IsKeyPress(Keys.A) || input.IsKeyPress(Keys.Left)) navDir = new Vector2(-1, 0);
+            if (input.IsKeyPress(Keys.D) || input.IsKeyPress(Keys.Right)) navDir = new Vector2(1, 0);
+
+            if (navDir != Vector2.Zero && _uiNodes.Count > 0)
+            {
+                _isKeyboardMode = true;
+                if (_selectedNode == null)
+                    _selectedNode = _uiNodes.FirstOrDefault(n => n.Data.Layer == 0) ?? _uiNodes[0];
+                else
+                {
+                    SkillNodeUI bestNode = null;
+                    float bestDist = float.MaxValue;
+                    foreach(var node in _uiNodes)
+                    {
+                        if (node == _selectedNode) continue;
+                        Vector2 diff = node.Position - _selectedNode.Position;
+                        if (diff.LengthSquared() < 1) continue;
+                        diff.Normalize();
+                        
+                        // Check if node is in the general direction
+                        if (Vector2.Dot(diff, navDir) > 0.4f)
+                        {
+                            float dist = Vector2.Distance(node.Position, _selectedNode.Position);
+                            if (dist < bestDist)
+                            {
+                                bestDist = dist;
+                                bestNode = node;
+                            }
+                        }
+                    }
+                    if (bestNode != null) _selectedNode = bestNode;
+                }
+            }
+
             // Bottom Bar Button Clicks
             if (isLeftClickPressed)
             {
-                if (_btnCancel.Contains(mousePos)) { _tree.CancelPendingPoints(); IsClosed = true; return; }
+                if (_btnCancel.Contains(mousePos)) 
+                { 
+                    if (_tree.PendingPoints > 0)
+                    {
+                        _tree.ConfirmPendingPoints(); // Auto-save for ease of use
+                    }
+                    IsClosed = true; 
+                    return; 
+                }
                 if (_btnReset.Contains(mousePos)) { _tree.Respec(); return; }
                 if (_btnConfirm.Contains(mousePos)) { _tree.ConfirmPendingPoints(); return; }
             }
@@ -384,17 +447,29 @@ namespace Last_Hope.UI
                 
                 node.UpdateState(state, pts, node.Data.MaxPoints, hasPending);
                 
-                // Broad hover check (Radius 25)
-                bool isHovered = Vector2.Distance(mousePos, node.Position) <= 25f;
+                // Set Hover Check (Mouse or Keyboard)
+                bool isHovered = false;
+                if (_isKeyboardMode)
+                {
+                    isHovered = (_selectedNode == node);
+                }
+                else
+                {
+                    isHovered = Vector2.Distance(mousePos, node.Position) <= 25f;
+                }
+
                 if (isHovered) 
                 {
                     _hoveredNode = node;
 
-                    if (isLeftClickPressed && state != NodeState.Locked && pts < node.Data.MaxPoints)
+                    bool assignInput = (!_isKeyboardMode && isLeftClickPressed) || (_isKeyboardMode && input.IsKeyPress(Keys.E));
+                    bool removeInput = (!_isKeyboardMode && isRightClickPressed) || (_isKeyboardMode && input.IsKeyPress(Keys.Q));
+
+                    if (assignInput && state != NodeState.Locked && pts < node.Data.MaxPoints)
                     {
                         _tree.AddPendingPoint(node.Data.Id);
                     }
-                    else if (isRightClickPressed && hasPending)
+                    else if (removeInput && hasPending)
                     {
                         _tree.RemovePendingPoint(node.Data.Id);
                     }
@@ -488,12 +563,23 @@ namespace Last_Hope.UI
                 }
 
                 // Draw Bottom Buttons
-                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM", new Color(30, 80, 40), new Color(60, 150, 70), _btnConfirmHover, globalAlpha);
-                DrawPremiumButton(spriteBatch, font, _btnCancel, "CLOSE", new Color(40, 45, 50), new Color(80, 85, 95), _btnCancelHover, globalAlpha);
+                float pulse = 0f;
+                if (_tree.PendingPoints > 0)
+                {
+                    pulse = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4.0) * 0.5f + 0.5f; // 0 to 1 pulse
+                }
+
+                Color confirmBase = Color.Lerp(new Color(30, 80, 40), new Color(100, 160, 50), pulse);
+                Color confirmHigh = Color.Lerp(new Color(60, 150, 70), new Color(150, 255, 80), pulse);
+                
+                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM POINTS", confirmBase, confirmHigh, _btnConfirmHover, globalAlpha);
+                DrawPremiumButton(spriteBatch, font, _btnCancel, "SAVE & CLOSE", new Color(40, 45, 50), new Color(80, 85, 95), _btnCancelHover, globalAlpha);
                 DrawPremiumButton(spriteBatch, font, _btnReset, "RESET", new Color(90, 30, 25), new Color(160, 50, 40), _btnResetHover, globalAlpha);
                 
                 // Instructions
-                string hint = "LMB: Assign   |   RMB: Remove   |   ENTER / SPACE: Confirm   |   ESC: Close";
+                string hint = _isKeyboardMode 
+                    ? "E: Assign   |   Q: Remove   |   ENTER / SPACE: Confirm   |   ESC: Save & Close" 
+                    : "LMB: Assign   |   RMB: Remove   |   ENTER / SPACE: Confirm   |   ESC: Save & Close";
                 Vector2 hintSize = font.MeasureString(hint) * 0.3f;
                 spriteBatch.DrawString(font, hint, new Vector2(_bottomBarRect.Center.X - hintSize.X/2, _bottomBarRect.Center.Y - hintSize.Y/2), Fade(new Color(120, 125, 130), globalAlpha), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
@@ -581,6 +667,16 @@ namespace Last_Hope.UI
                     Vector2 rSize = font.MeasureString(rankTxt) * 0.35f;
                     spriteBatch.DrawString(font, rankTxt, new Vector2(pos.X - rSize.X/2, pos.Y - rSize.Y/2 + 1), Fade(Color.White, globalAlpha), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
                 }
+
+                // Keyboard Selected Square
+                if (_isKeyboardMode && _selectedNode == node)
+                {
+                    int selSize = (int)(60 * currentScale);
+                    Rectangle selBox = new Rectangle(pos.X - selSize/2, pos.Y - selSize/2, selSize, selSize);
+                    float pulse = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 6) * 0.5 + 0.5);
+                    Color selColor = Color.Lerp(Color.LightYellow, Color.Goldenrod, pulse);
+                    DrawRectangleOutline(spriteBatch, selBox, 3, Fade(selColor, globalAlpha));
+                }
             }
 
             // 5. Draw Hover Tooltip on Top
@@ -605,7 +701,10 @@ namespace Last_Hope.UI
                 if (_hoveredNode.CurrentState == NodeState.Locked)
                 {
                     tooltips.Add("---");
-                    tooltips.Add("[LOCKED] Requires active path or sufficient points.");
+                    var missing = _tree.GetUnlockMissingRequirements(_hoveredNode.Data.Id, true);
+                    foreach(var m in missing) {
+                        tooltips.Add("[LOCKED] " + m);
+                    }
                 }
 
                 float tipScale = 0.4f;
@@ -630,11 +729,29 @@ namespace Last_Hope.UI
                 tipWidth += 30;
                 tipHeight += 20;
 
-                Rectangle bgTip = new Rectangle((int)mousePos.X + 20, (int)mousePos.Y + 20, (int)tipWidth, (int)tipHeight);
+                Vector2 tooltipBasePos;
+                if (_isKeyboardMode)
+                {
+                    // Place it to the right of the node safely so it doesn't overlap the node itself
+                    tooltipBasePos = new Vector2(_hoveredNode.Position.X + 60, _hoveredNode.Position.Y - tipHeight / 2);
+                }
+                else
+                {
+                    tooltipBasePos = new Vector2(mousePos.X + 20, mousePos.Y + 20);
+                }
+
+                Rectangle bgTip = new Rectangle((int)tooltipBasePos.X, (int)tooltipBasePos.Y, (int)tipWidth, (int)tipHeight);
                 
                 // Clamp to screen bounds
-                if (bgTip.Right > viewport.Width) bgTip.X -= (bgTip.Width + 40);
-                if (bgTip.Bottom > viewport.Height) bgTip.Y -= (bgTip.Height + 40);
+                if (bgTip.Right > viewport.Width) 
+                {
+                    // If it goes off the right edge, pop it to the left side of the node/cursor instead
+                    bgTip.X = _isKeyboardMode 
+                        ? (int)(_hoveredNode.Position.X - bgTip.Width - 60) 
+                        : (int)(mousePos.X - bgTip.Width - 20);
+                }
+                if (bgTip.Bottom > viewport.Height) bgTip.Y -= (int)(bgTip.Bottom - viewport.Height + 10);
+                if (bgTip.Y < 0) bgTip.Y = 10;
                 
                 DrawPremiumPanel(spriteBatch, bgTip, new Color(18, 20, 24, 250), new Color(130, 120, 100), new Color(200, 180, 120), globalAlpha, 2);
                 

@@ -58,6 +58,11 @@ internal static class SkillTreeOverlayFactory
             tree.OnTreeRespec += warrior.RevertAllSkillStats;
         }
 
+        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        {
+            tree.RecalculateStats();
+        }
+
         var theme = new UIThemeData
         {
             LockedDesaturation = new Color(80, 85, 95),
@@ -105,6 +110,11 @@ internal static class SkillTreeOverlayFactory
         {
             tree.OnEffectApplied += archer.ApplyNodeEffect;
             tree.OnTreeRespec += archer.RevertAllSkillStats;
+        }
+
+        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        {
+            tree.RecalculateStats();
         }
 
         var theme = new UIThemeData

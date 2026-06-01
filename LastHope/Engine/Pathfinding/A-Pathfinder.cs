@@ -54,31 +54,35 @@ public static class AStarPathfinder
         int goalIdx = ToIndex(goal.X, goal.Y, width);
 
         int total = width * height;
-        var dist = new float[total];
-        var parent = new int[total];
-        for (int i = 0; i < total; i++)
+        
+        float[] dist = System.Buffers.ArrayPool<float>.Shared.Rent(total);
+        int[] parent = System.Buffers.ArrayPool<int>.Shared.Rent(total);
+        bool[] closed = System.Buffers.ArrayPool<bool>.Shared.Rent(total);
+
+        try
         {
-            dist[i] = float.PositiveInfinity;
-            parent[i] = -1;
-        }
+            for (int i = 0; i < total; i++)
+            {
+                dist[i] = float.PositiveInfinity;
+                parent[i] = -1;
+                closed[i] = false;
+            }
 
-        dist[startIdx] = 0f;
+            dist[startIdx] = 0f;
 
-        var pq = new PriorityQueue<int, float>();
-        pq.Enqueue(startIdx, Heuristic(start.X, start.Y, goal.X, goal.Y));
+            var pq = new PriorityQueue<int, float>();
+            pq.Enqueue(startIdx, Heuristic(start.X, start.Y, goal.X, goal.Y));
 
-        var closed = new bool[total];
+            while (pq.Count > 0)
+            {
+                pq.TryDequeue(out int u, out float _);
+                if (closed[u])
+                    continue;
+                closed[u] = true;
+                float d = dist[u];
 
-        while (pq.Count > 0)
-        {
-            pq.TryDequeue(out int u, out float _);
-            if (closed[u])
-                continue;
-            closed[u] = true;
-            float d = dist[u];
-
-            if (u == goalIdx)
-                break;
+                if (u == goalIdx)
+                    break;
 
             int ux = u % width;
             int uy = u / width;
@@ -117,6 +121,13 @@ public static class AStarPathfinder
             return null;
 
         return ReconstructPath(parent, width, startIdx, goalIdx);
+        }
+        finally
+        {
+            System.Buffers.ArrayPool<float>.Shared.Return(dist);
+            System.Buffers.ArrayPool<int>.Shared.Return(parent);
+            System.Buffers.ArrayPool<bool>.Shared.Return(closed);
+        }
     }
 
     /// <summary>
