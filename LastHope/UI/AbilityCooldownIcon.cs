@@ -12,7 +12,8 @@ public class AbilityCooldownIcon : UIElement
     protected readonly Effect _cooldownShader;
     private readonly Texture2D? _pixel;
     protected readonly Func<float> _getCooldownProgress;
-    protected readonly int _slotIndex;
+    protected int _slotIndex;
+    public int SlotIndex { get => _slotIndex; set => _slotIndex = value; }
     private Texture2D? _fallbackPixel;
 
     // Parameters for where to draw the icon

@@ -29,6 +29,7 @@ public class Hud
 			new ExperienceBar(player, pixel),
 			new HealthBar(player, pixel),
 			new ItemSlotsBar(pixel, itemSpriteSheet),
+			new OneUpIcon(pixel),
 			new WaveIndicator(),
 			_bossWarningIndicator,
 			new ToastNotification(pixel)
@@ -36,17 +37,31 @@ public class Hud
 
 		if (cooldownShader != null)
 		{
+			int nextSlot = 0;
+
 			if (dashIcon != null)
+			{
 				_elements.Add(new AbilityCooldownIcon(dashIcon, cooldownShader, pixel,
 					() => GameManager.GetGameManager()._player?.DashCooldownProgress ?? 0f,
-					slotIndex: 0));
+					slotIndex: nextSlot));
+				nextSlot++;
+			}
 
 			if (teleportIcon != null)
+			{
 				_elements.Add(new AbilityCooldownIcon(teleportIcon, cooldownShader, pixel,
 					() => GameManager.GetGameManager()._player?.TeleportCooldownProgress ?? 0f,
-					slotIndex: 1));
+					slotIndex: nextSlot));
+				nextSlot++;
+			}
 
-			_elements.Add(new ActiveAbilityIcon(cooldownShader, pixel, slotIndex: 2));
+			// Active ability slot (always present when cooldown shader is available)
+			_elements.Add(new ActiveAbilityIcon(cooldownShader, pixel, slotIndex: nextSlot));
+			nextSlot++;
+
+			// One-up indicator (shows only when player has an extra life)
+			_elements.Add(new OneUpIcon(pixel, dashIcon != null, teleportIcon != null));
+			nextSlot++;
 
 			if (rapidFireIcon != null)
 				_elements.Add(new HitSkillCooldownIcon(rapidFireIcon, cooldownShader, pixel,

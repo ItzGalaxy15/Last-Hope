@@ -89,28 +89,7 @@ public class HealthBar : UIElement
         if (_healthFillRect.Width > 0)
             spriteBatch.Draw(pixel, _healthFillRect, fill);
 
-        if (player is not null && PlayerInventoryHelper.GetHudExtraLives(player) > 0)
-        {
-            if (!_triedLoadingHeart && _heartSprite == null)
-            {
-                _triedLoadingHeart = true;
-                try { _heartSprite = GameManager.GetGameManager()._content.Load<Texture2D>("Heart"); } catch { }
-            }
-            
-            int badgeX = _healthFrameRect.Right + 12;
-            int badgeY = _healthFrameRect.Y + (_healthFrameRect.Height / 2) - 8;
-            
-            if (_heartSprite != null)
-            {
-                spriteBatch.Draw(_heartSprite, new Rectangle(badgeX, badgeY, 16, 16), Color.White);
-            }
-            
-            SpriteFont font = GameManager.GetGameManager()._font;
-            if (font != null)
-            {
-                spriteBatch.DrawString(font, "+1", new Vector2(badgeX + 20, badgeY - 2), Color.LimeGreen, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
-            }
-        }
+
     }
 
 	private Texture2D GetPixel(SpriteBatch spriteBatch)

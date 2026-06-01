@@ -59,6 +59,8 @@ public class GameManager
     public int Score { get; set; } = 0;
     public Decoy ActiveDecoy { get; set; }
     public bool HasUsedOneUp { get; set; } = false;
+    // Set to true once a One-Up has been dropped this run; prevents further OneUp drops for the remainder of the run.
+    public bool HasOneUpDropped { get; set; } = false;
     public int SelectedItemSlot { get; private set; } = 0;
 
     public const int WorldWidth = 4000;
@@ -462,9 +464,16 @@ public class GameManager
 
                 if (droppedType != ItemType.None)
                 {
-                    if (droppedType == ItemType.OneUp && IsOneUpAlreadyActive())
+                    if (droppedType == ItemType.OneUp)
                     {
-                        droppedType = ItemType.HealingPotion;
+                        if (HasOneUpDropped || IsOneUpAlreadyActive())
+                        {
+                            droppedType = ItemType.HealingPotion;
+                        }
+                        else
+                        {
+                            HasOneUpDropped = true;
+                        }
                     }
 
                     AddGameObject(new ItemDrop(enemy.GetPosition(), droppedType));
@@ -504,6 +513,7 @@ public class GameManager
         ActiveDecoy = null;
         SelectedItemSlot = 0;
         HasUsedOneUp = false;
+        HasOneUpDropped = false;
 
         EnemySpawner.Reset();
         CurrentZone = Zone.Village;
