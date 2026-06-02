@@ -21,7 +21,11 @@ public class WinnerMenu : MenuBase
                 gm.ResetGame();
                 _state = GameState.Running;
             },
-            onQuit: () => Game.Exit());
+            onMainMenu: () =>
+            {
+                gm.ResetGame();
+                _state = GameState.MainMenu;
+            });
     }
 
     /// <summary>Draws the running world then winner text and end-game buttons.</summary>

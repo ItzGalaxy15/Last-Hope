@@ -29,7 +29,12 @@ public class GameOverMenu : MenuBase
                 gm.ResetGame();
                 _state = GameState.Running;
             },
-            onQuit: () => Game.Exit());
+            onMainMenu: () =>
+            {
+                _fadeAmount = 0f;
+                gm.ResetGame();
+                _state = GameState.MainMenu;
+            });
     }
 
     /// <summary>Applies death fade shader, draws world, then title and <see cref="MenuBase.EndGameMenuLabels"/> buttons.</summary>
