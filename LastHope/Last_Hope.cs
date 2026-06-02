@@ -202,6 +202,12 @@ public class Last_Hope : Game
         {
             var captured = obj;
             ySortList.Add((captured.GetSortY(), sb => captured.Draw(gameTime, sb)));
+            
+            // Allow objects like Warrior to inject background effects (e.g. Shield Slam) into the Y-sort layer
+            if (captured is BaseModel.BasePlayer player)
+            {
+                player.AppendBackgroundDrawItems(ySortList);
+            }
         }
 
         ySortList.Sort((a, b) => a.sortY.CompareTo(b.sortY));

@@ -10,6 +10,12 @@ namespace Last_Hope.SkillTree
     /// <summary>
     /// Represents the tier or importance of a skill node.
     /// </summary>
+    public static class SkillTreeConfig
+    {
+        public static bool PersistSkillTreeOnDeath = false;
+        public static bool EnableBranchLocking = true;
+    }
+
     public enum SkillNodeType { Standard = 0, Minor = 1, Major = 2 }
     
     /// <summary>
@@ -123,6 +129,9 @@ namespace Last_Hope.SkillTree
 
         // Fast lookup cache
         private readonly Dictionary<string, SkillNodeData> _nodeMap;
+        
+        // Caches the Layer 0 root node ID for each node in the tree
+        private readonly Dictionary<string, string> _nodeRoots = new Dictionary<string, string>();
 
         // --- The Stats Bus ---
         
@@ -152,6 +161,37 @@ namespace Last_Hope.SkillTree
             _data = data;
             _state = state;
             _nodeMap = _data.Nodes.ToDictionary(n => n.Id);
+            
+            // Precompute root for each node
+            foreach (var rootNode in _data.Nodes.Where(n => n.Layer == 0))
+            {
+                var queue = new Queue<string>();
+                queue.Enqueue(rootNode.Id);
+                while (queue.Count > 0)
+                {
+                    var current = queue.Dequeue();
+                    _nodeRoots[current] = rootNode.Id; 
+                    
+                    var children = _data.Connections.Where(c => c.FromNodeId == current).Select(c => c.ToNodeId);
+                    foreach (var child in children)
+                    {
+                        if (!_nodeRoots.ContainsKey(child))
+                            queue.Enqueue(child);
+                    }
+                }
+            }
+        }
+
+        private string GetActiveRoot(bool includePending)
+        {
+            foreach (var kvp in _state.AllocatedNodes)
+                if (kvp.Value > 0 && _nodeRoots.TryGetValue(kvp.Key, out string rootId)) return rootId;
+            
+            if (includePending)
+                foreach (var kvp in _pendingAllocations)
+                    if (kvp.Value > 0 && _nodeRoots.TryGetValue(kvp.Key, out string rootId)) return rootId;
+            
+            return null;
         }
 
         /// <summary>
@@ -184,6 +224,56 @@ namespace Last_Hope.SkillTree
                 pts += pend;
             }
             return pts;
+        }
+
+        public List<string> GetUnlockMissingRequirements(string nodeId, bool includePending = true)
+        {
+            var node = _nodeMap[nodeId];
+            List<string> missing = new List<string>();
+
+            if (_data.LayerUnlockRequirements.TryGetValue(node.Layer, out int reqPoints))
+            {
+                int totalSpent = _state.TotalPointsSpent + (includePending ? PendingPoints : 0);
+                if (totalSpent < reqPoints) 
+                    missing.Add($"Requires {reqPoints} total points spent (have {totalSpent}).");
+            }
+
+            foreach (var depId in node.Dependencies)
+            {
+                var depNode = _nodeMap[depId];
+                if (GetAllocatedPoints(depId, includePending) < depNode.MaxPoints)
+                {
+                    missing.Add($"Requires '{depNode.Name}' to be maxed.");
+                }
+            }
+
+            var parentConnections = _data.Connections.Where(c => c.ToNodeId == nodeId).ToList();
+            if (parentConnections.Count > 0)
+            {
+                if (!parentConnections.Any(conn => GetAllocatedPoints(conn.FromNodeId, includePending) > 0))
+                {
+                    missing.Add("Requires an active path connected to this node.");
+                }
+            }
+
+            if (SkillTreeConfig.EnableBranchLocking)
+            {
+                string activeRoot = GetActiveRoot(includePending);
+                if (activeRoot != null && _nodeRoots.TryGetValue(nodeId, out string nodeRoot) && activeRoot != nodeRoot)
+                    missing.Add("Locked: You have already specialized into another tree branch.");
+
+                if (node.Tags.Contains("Stance") && HasOtherAllocatedNodeWithTag("Stance", nodeId, includePending)) 
+                    missing.Add("Locked: You can only choose one Stance branch.");
+            }
+            if (node.Tags.Contains("Active") && HasOtherAllocatedNodeWithTag("Active", nodeId, includePending)) 
+                missing.Add("Locked: You can only choose one Active ability.");
+
+            if (missing.Count == 0 && !CanUnlockNode(nodeId, includePending))
+            {
+                missing.Add("Locked by unknown requirement.");
+            }
+
+            return missing;
         }
 
         /// <summary>
@@ -230,7 +320,14 @@ namespace Last_Hope.SkillTree
             }
 
             // Check 4: Exclusivity rules (Only 1 Stance and 1 Active allowed across the whole tree)
-            if (node.Tags.Contains("Stance") && HasOtherAllocatedNodeWithTag("Stance", nodeId, includePending)) return false;
+            if (SkillTreeConfig.EnableBranchLocking)
+            {
+                string activeRoot = GetActiveRoot(includePending);
+                if (activeRoot != null && _nodeRoots.TryGetValue(nodeId, out string nodeRoot) && activeRoot != nodeRoot)
+                    return false;
+
+                if (node.Tags.Contains("Stance") && HasOtherAllocatedNodeWithTag("Stance", nodeId, includePending)) return false;
+            }
             if (node.Tags.Contains("Active") && HasOtherAllocatedNodeWithTag("Active", nodeId, includePending)) return false;
 
             return true;
@@ -372,7 +469,7 @@ namespace Last_Hope.SkillTree
             SkillTreeSaveManager.Save(_state);
         }
         
-        public ClassSkillTreeData GetData() => _data;
+        public void RecalculateStats() { foreach (var kvp in _state.AllocatedNodes) { string nodeId = kvp.Key; int points = kvp.Value; if (_nodeMap.TryGetValue(nodeId, out var node)) { for (int i = 0; i < points; i++) { foreach(var effect in node.Effects) OnEffectApplied?.Invoke(effect); } } } } public ClassSkillTreeData GetData() => _data;
 
         public void AddUnspentPoint()
         {
@@ -406,6 +503,14 @@ namespace Last_Hope.SkillTree
         /// </summary>
         /// <param name="classId">The character class ID to assign if creating a new state.</param>
         /// <returns>The loaded or newly created <see cref="SkillTreeState"/>.</returns>
+        public static void DeleteSave()
+        {
+            if (File.Exists(SaveFile))
+            {
+                File.Delete(SaveFile);
+            }
+        }
+
         public static SkillTreeState Load(string classId)
         {
             var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -430,7 +535,7 @@ namespace Last_Hope.SkillTree
             }
 
             // Return default fresh state if no save exists. Starts with 5 points for testing.
-            return new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 5 };
+            return new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 15 };
         }
     }
 }

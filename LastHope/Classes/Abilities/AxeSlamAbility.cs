@@ -8,7 +8,7 @@ namespace Last_Hope.Classes.Abilities;
 public class AxeSlamAbility : BaseAbility
 {
     private const float DamageMultiplier = 3.0f;
-    private const float Range = 140f;
+    private const float Range = 330f;
     private const float StunDuration = 1.0f;
     public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
 
@@ -32,7 +32,7 @@ public class AxeSlamAbility : BaseAbility
         if (player is Warrior warrior)
         {
             Vector2 aimDir = warrior.GetAbilityAimDirection(); // Gebruik de richting waarin je castte
-            Vector2 castAnchor = warrior.GetCastAnchor();
+            Vector2 castAnchor = warrior.GetCollider()?.GetBoundingBox().Center.ToVector2() ?? warrior.GetPosition();
 
             int damage = (int)(warrior.CurrentDamage * DamageMultiplier);
             warrior.HitFrontalArea(castAnchor, aimDir, Range, damage, StunDuration);

@@ -111,6 +111,7 @@ public class Warrior : BasePlayer
     
     public Texture2D WarriorAbilitySprite { get; private set; }
     public Texture2D ShieldSlamSprite { get; private set; }
+    public Texture2D AxeSlamSprite { get; private set; }
     private AnimationManager _abilityAnimation;
     private bool _isCastingAbility;
     private bool _abilityHitTriggered;
@@ -143,7 +144,8 @@ public class Warrior : BasePlayer
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
         AimArrowSprite = content.Load<Texture2D>("AimArrow");
         try { WarriorAbilitySprite = content.Load<Texture2D>("WarriorAbilitySheet"); } catch { WarriorAbilitySprite = null; }
-        try { ShieldSlamSprite = content.Load<Texture2D>("ShieldSlam"); } catch { ShieldSlamSprite = null; }
+        try { ShieldSlamSprite = content.Load<Texture2D>("NewShieldSlam"); } catch { ShieldSlamSprite = null; }
+        try { AxeSlamSprite = content.Load<Texture2D>("NewAxeSlam"); } catch { AxeSlamSprite = null; }
         _deathSound = content.Load<SoundEffect>("sounds/Death sound");
         _attackSound = content.Load<SoundEffect>("sounds/Warrior Attack");
         _hurtSound = content.Load<SoundEffect>("sounds/Warrior_Hurt");
@@ -323,6 +325,28 @@ public class Warrior : BasePlayer
                             enemy.Damage(damage);
                             if (stunDuration > 0f) enemy.ApplyStun(stunDuration);
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    public void HitCircularArea(Vector2 center, float radius, int damage, float stunDuration)
+    {
+        var gm = GameManager.GetGameManager();
+
+        foreach (var obj in gm._gameObjects.ToList())
+        {
+            if (obj is BaseEnemy enemy)
+            {
+                var collider = enemy.GetCollider();
+                if (collider != null)
+                {
+                    Vector2 toEnemy = collider.GetBoundingBox().Center.ToVector2() - center;
+                    if (toEnemy.Length() <= radius)
+                    {
+                        enemy.Damage(damage);
+                        if (stunDuration > 0f) enemy.ApplyStun(stunDuration);
                     }
                 }
             }
@@ -671,14 +695,6 @@ public class Warrior : BasePlayer
             }
         }
 
-        bool isBehindAbilityCasting = _isCastingAbility && (_castingAbility is ShieldSlamAbility || _castingAbility is AxeSlamAbility);
-        if (isBehindAbilityCasting && _abilityAnimation != null && _abilitySprite != null)
-        {
-            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
-            float rotation = _abilityRotate ? _abilityRotation : 0f;
-            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
-        }
-
         spriteBatch.Draw(WarriorSprite, _position, warriorSource, drawColor, 0f, Vector2.Zero, WarriorDrawScale, SpriteEffects.None, 0f);
 
         if (IsShieldActive && _walkRow == 0)
@@ -687,11 +703,16 @@ public class Warrior : BasePlayer
             spriteBatch.Draw(ShieldSprite, shieldPos, shieldSource, equipmentColor, 0f, weaponOrigin, shieldScale, SpriteEffects.None, 0f);
         }
 
-        if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null && !isBehindAbilityCasting)
+        if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null)
         {
-            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
-            float rotation = _abilityRotate ? _abilityRotation : 0f;
-            spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
+            bool isBackgroundAbility = _castingAbility is ShieldSlamAbility || _castingAbility is AxeSlamAbility;
+            if (!isBackgroundAbility) // These are drawn in the background layer instead
+            {
+                Rectangle abilitySource = _abilityAnimation.GetSourceRect();
+                float rotation = _abilityRotate ? _abilityRotation : 0f;
+                // Draw ability over everything else related to the player
+                spriteBatch.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
+            }
         }
 
         if (IsSwordActive && DualWieldUnlocked)
@@ -787,7 +808,7 @@ public class Warrior : BasePlayer
         if (BlockLevel > 0 && gm.RNG.NextDouble() < (BlockLevel * 0.10)) // 10% per point
         {
             amount *= 0.5f; // Mitigate half damage
-            if (HasBulwark) Heal(5f);
+            if (HasBulwark) Heal(0.15f); // Reduced further due to high block frequency
         }
 
         // --- ON HIT TAKEN PROCS ---
@@ -816,18 +837,53 @@ public class Warrior : BasePlayer
             _abilityAimDir = new Vector2(1f, 0f);
             _abilityRotation = 0f;
             _abilityRotate = false;
-            _abilityDrawPos = _position;
-            _abilityOrigin = Vector2.Zero;
-            _abilityDrawScale = AbilityDrawScale * 1.25f;
+            // Center the shield slam effect on the player
+            _abilityOrigin = new Vector2(FrameSize / 2f, FrameSize / 2f);
+            _abilityDrawPos = _position + new Vector2(_bodyWidth / 2f, _bodyWidth / 2f);
+            
+            // Further scaled up because the sprite's core visual content has empty padding
+            _abilityDrawScale = AbilityDrawScale * 2.5f;
 
             _abilityAnimation = new AnimationManager(
-                AbilityFrames,
-                AbilityColumns,
+                5, // 5 frames total (3 on first row, 2 on second row)
+                3, // 3 columns max per row
                 new Vector2(FrameSize, FrameSize),
                 8, // interval
                 false, // loop
-                0,
-                ShieldSlamSheetRow * FrameSize
+                0, // offsetX
+                ShieldSlamSheetRow * FrameSize // offsetY
+            );
+
+            return;
+        }
+
+        bool isAxeSlam = ability is AxeSlamAbility;
+        if (isAxeSlam)
+        {
+            _abilitySprite = AxeSlamSprite ?? WarriorAbilitySprite;
+            Vector2 castAnchor = _collider?.GetBoundingBox().Center.ToVector2() ?? _position; // Axe slam center
+            _abilityAimDir = GetAbilityAimDirection(castAnchor);
+            
+            // For a cone attacking outwards, we point towards the aim dir. 
+            // Depending on the sprite, we may need a rotation offset. Assuming +PiOver2 like old axe slam.
+            _abilityRotation = (float)Math.Atan2(_abilityAimDir.Y, _abilityAimDir.X) + MathHelper.PiOver2;
+            _abilityRotate = true;
+            
+            // Positioning it outwards based on aim direction
+            _abilityDrawPos = castAnchor + _abilityAimDir * 20f;
+            
+            // Origin at the base so it scales matching the cone radius
+            _abilityOrigin = new Vector2(FrameSize / 2f, FrameSize); 
+            _abilityDrawScale = AbilityDrawScale * 3.0f;
+
+            _abilityAnimation = new AnimationManager(
+                5, // Assuming 5 frames like NewShieldSlam (3 columns) 
+                3, 
+                new Vector2(FrameSize, FrameSize),
+                8, // interval
+                false, // loop
+                0, // offsetX
+                0 // offsetY
             );
 
             return;
@@ -835,13 +891,13 @@ public class Warrior : BasePlayer
 
         _abilitySprite = WarriorAbilitySprite;
 
-        Vector2 castAnchor = GetAbilityCastAnchorForAbility(ability);
-        _abilityAimDir = GetAbilityAimDirection(castAnchor);
+        Vector2 baseCastAnchor = GetAbilityCastAnchorForAbility(ability);
+        _abilityAimDir = GetAbilityAimDirection(baseCastAnchor);
         _abilityRotation = (float)Math.Atan2(_abilityAimDir.Y, _abilityAimDir.X) + MathHelper.PiOver2;
         _abilityRotate = true;
-        _abilityDrawPos = castAnchor;
+        _abilityDrawPos = baseCastAnchor;
         _abilityOrigin = new Vector2(FrameSize * 0.5f, FrameSize);
-        _abilityDrawScale = ability is AxeSlamAbility ? AbilityDrawScale * 1.15f : AbilityDrawScale;
+        _abilityDrawScale = AbilityDrawScale;
 
         _abilityAnimation = new AnimationManager(
             AbilityFrames,
@@ -879,6 +935,24 @@ public class Warrior : BasePlayer
         }
 
         return direction;
+    }
+
+    public override void AppendBackgroundDrawItems(System.Collections.Generic.List<(float sortY, System.Action<SpriteBatch> draw)> items)
+    {
+        if (_isCastingAbility && (_castingAbility is ShieldSlamAbility || _castingAbility is AxeSlamAbility) && _abilityAnimation != null && _abilitySprite != null)
+        {
+            Rectangle abilitySource = _abilityAnimation.GetSourceRect();
+            float rotation = _abilityRotate ? _abilityRotation : 0f;
+            Color drawColor = DrawTint; // Not using freeze tints etc. for ground effects
+            
+            Action<SpriteBatch> drawAction = sb =>
+            {
+                sb.Draw(_abilitySprite, _abilityDrawPos, abilitySource, drawColor, rotation, _abilityOrigin, _abilityDrawScale, SpriteEffects.None, 0f);
+            };
+
+            // extremely negative sortY forces it to the very back of the Y-sorted layer
+            items.Add((-99999f, drawAction));
+        }
     }
 
     private void SetWalkRowFromDirection(Vector2 dir)

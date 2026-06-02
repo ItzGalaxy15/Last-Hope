@@ -7,7 +7,7 @@ namespace Last_Hope.Classes.Abilities;
 public class ShieldSlamAbility : BaseAbility
 {
     private const float DamageMultiplier = 0.5f; // Low damage
-    private const float Radius = 150f;
+    private const float Radius = 180f; // Significantly increased radius since your complaint was that it's too small
     private const float StunDuration = 3.0f; // Stun AoE
     public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
 
@@ -31,7 +31,10 @@ public class ShieldSlamAbility : BaseAbility
         if (player is Warrior warrior)
         {
             int damage = (int)(warrior.CurrentDamage * DamageMultiplier);
-            warrior.HitRadialArea(Radius, damage, StunDuration);
+            Vector2 aimDir = warrior.GetAbilityAimDirection();
+            // Shield slam needs a center. Using the center of the player instead of looking for aim direction anchor.
+            Vector2 castAnchor = warrior.GetCollider()?.GetBoundingBox().Center.ToVector2() ?? warrior.GetPosition();
+            warrior.HitCircularArea(castAnchor, Radius, damage, StunDuration);
 
             warrior.PlayAttackSound();
             warrior.ResetAttackTimer();

@@ -61,6 +61,9 @@ public sealed class NavigationGrid
     public Vector2 TileCenterToWorld(Point tile) =>
         new Vector2(tile.X * TileSize + TileSize * 0.5f, tile.Y * TileSize + TileSize * 0.5f);
 
+    private readonly HashSet<Point> _visitedPool = new HashSet<Point>();
+    private readonly Queue<Point> _frontierPool = new Queue<Point>();
+
     // BFS outward from `seed` for the closest walkable tile. Returns (-1,-1) if none found within the ring budget.
     private Point FindNearestWalkable(Point seed)
     {
@@ -68,17 +71,19 @@ public sealed class NavigationGrid
         if (IsWalkable(seed.X, seed.Y))
             return seed;
 
-        var visited = new HashSet<Point> { seed };
-        var frontier = new Queue<Point>();
-        frontier.Enqueue(seed);
+        _visitedPool.Clear();
+        _frontierPool.Clear();
+        
+        _visitedPool.Add(seed);
+        _frontierPool.Enqueue(seed);
         int ring = 0;
         int countThisRing = 1;
         int countNextRing = 0;
 
         Span<Point> neighbors = stackalloc Point[8];
-        while (frontier.Count > 0 && ring < MaxRings)
+        while (_frontierPool.Count > 0 && ring < MaxRings)
         {
-            Point p = frontier.Dequeue();
+            Point p = _frontierPool.Dequeue();
             countThisRing--;
 
             neighbors[0] = new Point(p.X + 1, p.Y);
@@ -94,11 +99,11 @@ public sealed class NavigationGrid
             {
                 if (n.X < 0 || n.X >= WidthInTiles || n.Y < 0 || n.Y >= HeightInTiles)
                     continue;
-                if (!visited.Add(n))
+                if (!_visitedPool.Add(n))
                     continue;
                 if (_walkable[n.X, n.Y])
                     return n;
-                frontier.Enqueue(n);
+                _frontierPool.Enqueue(n);
                 countNextRing++;
             }
 
