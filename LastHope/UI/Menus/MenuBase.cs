@@ -26,61 +26,61 @@ public abstract class MenuBase
 
     protected enum KeySheet { Letters, Numbers, Special }
 
-    /// <summary>Labels for the shared restart/quit pair on <see cref="GameOverMenu"/> and <see cref="WinnerMenu"/>.</summary>
+    /// <summary>Labels for the shared restart/main-menu pair on <see cref="GameOverMenu"/> and <see cref="WinnerMenu"/>.</summary>
     protected static class EndGameMenuLabels
     {
         public const string Restart = "Restart Game";
-        public const string Quit = "Quit Game";
+        public const string MainMenu = "Main Menu";
     }
 
     /// <summary>Hit boxes and text positions for <see cref="LayoutEndGameTwoButtonMenu"/>.</summary>
     protected readonly record struct EndGameMenuLayout(
         Vector2 TitlePosition,
         Vector2 RestartTextPosition,
-        Vector2 QuitTextPosition,
+        Vector2 MainMenuTextPosition,
         Rectangle RestartHitBox,
-        Rectangle QuitHitBox);
+        Rectangle MainMenuHitBox);
 
     /// <summary>
-    /// Computes centered title position plus stacked restart/quit rows (used by <see cref="GameOverMenu"/> and <see cref="WinnerMenu"/>).
+    /// Computes centered title position plus stacked restart/main-menu rows (used by <see cref="GameOverMenu"/> and <see cref="WinnerMenu"/>).
     /// </summary>
-    protected EndGameMenuLayout LayoutEndGameTwoButtonMenu(string titleText, float restartOffsetY = 100f, float quitOffsetY = 200f)
+    protected EndGameMenuLayout LayoutEndGameTwoButtonMenu(string titleText, float restartOffsetY = 100f, float mainMenuOffsetY = 200f)
     {
         Vector2 titlePos = GetFontPosition(titleText);
         Vector2 restartPos = GetFontPosition(EndGameMenuLabels.Restart) + new Vector2(0, restartOffsetY);
-        Vector2 quitPos = GetFontPosition(EndGameMenuLabels.Quit) + new Vector2(0, quitOffsetY);
+        Vector2 mainMenuPos = GetFontPosition(EndGameMenuLabels.MainMenu) + new Vector2(0, mainMenuOffsetY);
         return new EndGameMenuLayout(
             titlePos,
             restartPos,
-            quitPos,
+            mainMenuPos,
             GetTextRectangle(EndGameMenuLabels.Restart, restartPos),
-            GetTextRectangle(EndGameMenuLabels.Quit, quitPos));
+            GetTextRectangle(EndGameMenuLabels.MainMenu, mainMenuPos));
     }
 
     /// <summary>
     /// Mouse handling for end-game buttons. Invoked from <see cref="GameOverMenu.Update"/> / <see cref="WinnerMenu.Update"/>.
     /// </summary>
-    protected void HandleEndGameMenuClicks(in EndGameMenuLayout layout, Action onRestart, Action onQuit)
+    protected void HandleEndGameMenuClicks(in EndGameMenuLayout layout, Action onRestart, Action onMainMenu)
     {
         if (!InputManager.LeftMousePress())
             return;
         Point m = InputManager.CurrentMouseState.Position;
         if (layout.RestartHitBox.Contains(m))
             onRestart();
-        else if (layout.QuitHitBox.Contains(m))
-            onQuit();
+        else if (layout.MainMenuHitBox.Contains(m))
+            onMainMenu();
     }
 
     /// <summary>
-    /// Draws title + dim button rects + restart/quit labels. Used by <see cref="GameOverMenu.Draw"/> and <see cref="WinnerMenu.Draw"/>.
+    /// Draws title + dim button rects + restart/main-menu labels. Used by <see cref="GameOverMenu.Draw"/> and <see cref="WinnerMenu.Draw"/>.
     /// </summary>
-    protected void DrawEndGameTwoButtonOverlay(SpriteBatch spriteBatch, string titleText, Color titleColor, Color quitLabelColor, in EndGameMenuLayout layout)
+    protected void DrawEndGameTwoButtonOverlay(SpriteBatch spriteBatch, string titleText, Color titleColor, Color mainMenuLabelColor, in EndGameMenuLayout layout)
     {
         gm.DrawUiString(spriteBatch, _font, titleText, layout.TitlePosition, titleColor);
         spriteBatch.Draw(Pixel, layout.RestartHitBox, Color.DarkSlateGray);
-        spriteBatch.Draw(Pixel, layout.QuitHitBox, Color.DarkSlateGray);
+        spriteBatch.Draw(Pixel, layout.MainMenuHitBox, Color.DarkSlateGray);
         gm.DrawUiString(spriteBatch, _font, EndGameMenuLabels.Restart, layout.RestartTextPosition, Color.White);
-        gm.DrawUiString(spriteBatch, _font, EndGameMenuLabels.Quit, layout.QuitTextPosition, quitLabelColor);
+        gm.DrawUiString(spriteBatch, _font, EndGameMenuLabels.MainMenu, layout.MainMenuTextPosition, mainMenuLabelColor);
     }
 
     private enum SegKind { Text, ItemSprite, BoundKey }
