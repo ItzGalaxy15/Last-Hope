@@ -27,6 +27,8 @@ public class ItemDrop : GameObject
     private Texture2D? _heartDropSprite;
     private const float PickupRadius = 150f;
     private const float Speed = 350f;
+    private const float LifetimeSeconds = 30f;
+    private float _ageSeconds;
 
     /// <summary>
     /// Creates an item drop of the given type at the given world position.
@@ -85,10 +87,29 @@ public class ItemDrop : GameObject
         if (player is null || inv is null)
             return;
 
+        _ageSeconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (_ageSeconds >= LifetimeSeconds)
+        {
+            gm.RemoveGameObject(this);
+            return;
+        }
+
+        bool hasInventorySpace = false;
+        for (int i = 0; i < inv.Length; i++)
+        {
+            if (inv[i] == ItemType.None)
+            {
+                hasInventorySpace = true;
+                break;
+            }
+        }
+
+        bool canBePickedUp = Type == ItemType.OneUp || hasInventorySpace;
+
         Vector2 playerPos = player.GetPosition();
         float distance = Vector2.Distance(_position, playerPos);
 
-        if (distance < PickupRadius)
+        if (canBePickedUp && distance < PickupRadius)
         {
             Vector2 direction = playerPos - _position;
             if (direction != Vector2.Zero)
@@ -104,17 +125,17 @@ public class ItemDrop : GameObject
                 if (Type == ItemType.OneUp)
                 {
                     player.AddLife(1);
-                    // TODO: Consider adding a visual/sound effect here for pickup feedback.
+                    gm.RemoveGameObject(this);
+                    return;
                 }
-                else
+
+                if (PlayerInventoryHelper.TryPickup(player, Type))
                 {
-                    // For other items, try to add to inventory. If full, grant fallback XP.
-                    if (!PlayerInventoryHelper.TryPickup(player, Type))
-                        player.AddExperience(10);
+                    gm.RemoveGameObject(this);
                 }
-                gm.RemoveGameObject(this);
             }
         }
+
         base.Update(gameTime);
     }
 
