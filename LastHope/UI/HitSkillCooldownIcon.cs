@@ -6,10 +6,12 @@ namespace Last_Hope.UI;
 
 public class HitSkillCooldownIcon : AbilityCooldownIcon
 {
-    public HitSkillCooldownIcon(Texture2D icon, Effect cooldownShader, Texture2D? pixel, Func<float> getProgress, int slotIndex)
-        : base(icon, cooldownShader, pixel, getProgress, slotIndex)
+    public HitSkillCooldownIcon(Texture2D icon, Effect cooldownShader, Texture2D? pixel, Func<float> getProgress)
+        : base(icon, cooldownShader, pixel, getProgress)
     {
     }
+
+    public bool IsActive => _getCooldownProgress() > 0f;
 
     public override void Update(GameTime gameTime, Viewport viewport)
     {
