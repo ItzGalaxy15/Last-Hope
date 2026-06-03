@@ -315,6 +315,18 @@
 /processorParam:TextureFormat=Color
 /build:icons/AtkSpdUpTemp.png
 
+#begin icons/AxeSlamAbilityIcon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:icons/AxeSlamAbilityIcon.png
+
 #begin icons/dash.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -351,6 +363,30 @@
 /processorParam:TextureFormat=Color
 /build:icons/GuarenteedCrit.png
 
+#begin icons/RegenHpIcon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:icons/RegenHpIcon.png
+
+#begin icons/ShieldSlamAbilityIcon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:icons/ShieldSlamAbilityIcon.png
+
 #begin icons/teleport.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -362,6 +398,42 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:icons/teleport.png
+
+#begin icons/WarriorAtkSpdUp.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:icons/WarriorAtkSpdUp.png
+
+#begin icons/WarriorDamageUp.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:icons/WarriorDamageUp.png
+
+#begin icons/WhirlwindAbilityIcon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:icons/WhirlwindAbilityIcon.png
 
 #begin ItemSpriteSheet.png
 /importer:TextureImporter
