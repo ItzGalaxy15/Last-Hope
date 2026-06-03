@@ -151,7 +151,16 @@ public class Last_Hope : Game
         Texture2D? critGuaranteeIcon = null;
         try { critGuaranteeIcon = Content.Load<Texture2D>("icons/GuarenteedCrit"); } catch { }
 
-        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon, Content, rapidFireIcon, critGuaranteeIcon);
+        Texture2D? WarriorAtkSpdUp = null;
+        try { WarriorAtkSpdUp = Content.Load<Texture2D>("icons/WarriorAtkSpdUp"); } catch { }
+
+        Texture2D? RegenHpIcon = null;
+        try { RegenHpIcon = Content.Load<Texture2D>("icons/RegenHpIcon"); } catch { }
+
+        Texture2D? WarriorDamageUp = null;
+        try { WarriorDamageUp = Content.Load<Texture2D>("icons/WarriorDamageUp"); } catch { }
+
+        _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon, Content, rapidFireIcon, critGuaranteeIcon, WarriorAtkSpdUp, RegenHpIcon, WarriorDamageUp);
 
         GumBootstrap.Initialize(this, Content);
     }
