@@ -30,7 +30,11 @@
       "Effects": [
         {
           "EffectId": "haste_percent",
-          "ValuePerPoint": 1.0
+          "ValuePerPoint": 0.1
+        },
+        {
+          "EffectId": "base_damage",
+          "ValuePerPoint": 15.0
         }
       ],
       "GridX": -1,
@@ -52,7 +56,7 @@
       "Effects": [
         {
           "EffectId": "base_damage",
-          "ValuePerPoint": 5.0
+          "ValuePerPoint": 30.0
         }
       ],
       "GridX": 0,
@@ -74,7 +78,11 @@
       "Effects": [
         {
           "EffectId": "max_hp",
-          "ValuePerPoint": 25.0
+          "ValuePerPoint": 50.0
+        },
+        {
+          "EffectId": "base_damage",
+          "ValuePerPoint": 5.0
         }
       ],
       "GridX": 1,
@@ -384,7 +392,11 @@
       "Effects": [
         {
           "EffectId": "haste_percent",
-          "ValuePerPoint": 1.0
+          "ValuePerPoint": 0.2
+        },
+        {
+          "EffectId": "base_damage",
+          "ValuePerPoint": 25.0
         }
       ],
       "GridX": -2,
@@ -406,7 +418,7 @@
       "Effects": [
         {
           "EffectId": "base_damage",
-          "ValuePerPoint": 5.0
+          "ValuePerPoint": 40.0
         }
       ],
       "GridX": 0,
@@ -428,7 +440,11 @@
       "Effects": [
         {
           "EffectId": "max_hp",
-          "ValuePerPoint": 25.0
+          "ValuePerPoint": 75.0
+        },
+        {
+          "EffectId": "base_damage",
+          "ValuePerPoint": 10.0
         }
       ],
       "GridX": 2,
