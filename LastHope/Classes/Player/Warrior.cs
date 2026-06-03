@@ -260,7 +260,15 @@ public class Warrior : BasePlayer
             _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
             bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
                 || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
+            bool attackHold = _inputManager.IsGameplayKeyDown(KeybindId.Attack)
+                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyDown(KeybindId.KeyboardAttack));
             if (attackPressed && _timeSinceLastAttack >= CurrentHaste && !_isCastingAbility)
+            {
+                UseWeapon();
+                AudioManager.PlaySfx(_attackSound);
+                _timeSinceLastAttack = 0;
+            }
+            else if (attackHold && _timeSinceLastAttack >= CurrentHaste && !_isCastingAbility)
             {
                 UseWeapon();
                 AudioManager.PlaySfx(_attackSound);
