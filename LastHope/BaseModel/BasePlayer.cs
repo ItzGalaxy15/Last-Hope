@@ -15,14 +15,14 @@ namespace Last_Hope.BaseModel;
 public abstract class BasePlayer : GameObject
 {
     public Texture2D AimArrowSprite;
-    public Vector2 _position { get; protected set; }
+    public Vector2 _position { get; set; }
 
     // Fraction of the body size used as the hitbox — tune this to adjust fairness.
     protected const float HitboxFraction = 0.55f;
     public abstract float _bodyWidth { get; }
 
     // Base Player stats
-    public float _currentHp { get; protected set; }
+    public float _currentHp { get; set; }
     public abstract float BaseMaxHp { get; }
     public abstract int BaseDamage { get; }
     public abstract float BaseCritChance { get; }
@@ -116,8 +116,8 @@ public abstract class BasePlayer : GameObject
     protected abstract void ApplyDashOffset(Vector2 delta);
 
     /// <summary>Two-slot utility hotbar. When null, pickups and the item HUD skip this player.</summary>
-    public ItemType[]? Inventory { get; protected set; }
-    public int ExtraLives { get; protected set; } = 0;
+    public ItemType[]? Inventory { get; set; }
+    public int ExtraLives { get; set; } = 0;
 
     // Teleportation parameters
     private const float TeleportMinTileDistance = 20f;
@@ -141,8 +141,8 @@ public abstract class BasePlayer : GameObject
 
 
     // Level EXP
-    public int _Level { get; protected set; }
-    public float _Experience { get; protected set; }
+    public int _Level { get; set; }
+    public float _Experience { get; set; }
     private const float XpPerLevel = 10f;
     private const float LevelUpFlashDuration = 0.45f;
     private float _levelUpFlashTimer;

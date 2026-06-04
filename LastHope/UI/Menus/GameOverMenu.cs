@@ -26,12 +26,14 @@ public class GameOverMenu : MenuBase
             onRestart: () =>
             {
                 _fadeAmount = 0f;
+                Systems.RunSaveManager.DeleteSave();
                 gm.ResetGame();
                 _state = GameState.Running;
             },
             onMainMenu: () =>
             {
                 _fadeAmount = 0f;
+                Systems.RunSaveManager.DeleteSave();
                 gm.ResetGame();
                 _state = GameState.MainMenu;
             });

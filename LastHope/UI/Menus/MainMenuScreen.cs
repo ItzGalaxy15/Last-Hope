@@ -11,14 +11,7 @@ namespace Last_Hope.UI.Menus;
 /// <summary>Title hub: stylized full-screen backdrop + Gum Forms entry list (MonoGame Gum tutorial pattern).</summary>
 public sealed class MainMenuScreen : MenuBase
 {
-    private static readonly string[] Entries =
-    {
-        "Start Game",
-        "Characters",
-        "Items Index",
-        "Settings",
-        "Quit Game",
-    };
+    private static string[] GetEntries() { if (Systems.RunSaveManager.HasSave()) { return new[] { "Continue Run", "New Run", "Characters", "Items Index", "Settings", "Quit Game" }; } return new[] { "Start Game", "Characters", "Items Index", "Settings", "Quit Game" }; }
 
     private static readonly Color AccentLine = new(120, 175, 255, 90);
 
@@ -66,10 +59,11 @@ public sealed class MainMenuScreen : MenuBase
         float buttonHeight = 48f * ui;
 
         MenuAnimatedButton first = null;
-        for (int i = 0; i < Entries.Length; i++)
+        var entries = GetEntries();
+        for (int i = 0; i < entries.Length; i++)
         {
             var btn = new MenuAnimatedButton(Game.GraphicsDevice, buttonWidth, buttonHeight);
-            btn.Text = Entries[i];
+            btn.Text = entries[i];
             btn.X = marginX;
             btn.Y = startY + i * (buttonHeight + rowGap);
             btn.Width = buttonWidth;
@@ -87,14 +81,14 @@ public sealed class MainMenuScreen : MenuBase
         accent.X = marginX - 4f;
         accent.Y = startY - 8f * ui;
         accent.Width = 4f;
-        accent.Height = Entries.Length * (buttonHeight + rowGap) - rowGap + 16f * ui;
+        accent.Height = entries.Length * (buttonHeight + rowGap) - rowGap + 16f * ui;
         accent.Color = AccentLine;
         _rootPanel.AddChild(accent);
 
         var hint = new TextRuntime();
         hint.Text = "Up/Down or W/S  |  Tab  |  Enter / Click";
         hint.X = marginX;
-        hint.Y = startY + Entries.Length * (buttonHeight + rowGap) + 22f * ui;
+        hint.Y = startY + entries.Length * (buttonHeight + rowGap) + 22f * ui;
         hint.Color = new Color(200, 210, 230, 200);
         _rootPanel.AddChild(hint);
         _hintAdded = true;
@@ -102,26 +96,33 @@ public sealed class MainMenuScreen : MenuBase
 
     private void ApplySelection(int index)
     {
-        // Gum processes clicks after GameManager.Update; clear UI here so the hub
-        // disappears immediately when leaving the main menu.
         ReleaseGumUi();
-
-        switch (index)
+        var entries = GetEntries();
+        string sel = entries[index];
+        switch (sel)
         {
-            case 0:
+            case "Continue Run":
+                gm.LoadRun();
+                _state = GameState.Running;
+                break;
+            case "New Run":
+                Systems.RunSaveManager.DeleteSave();
                 _state = GameState.CharacterSelect;
                 break;
-            case 1:
+            case "Start Game":
+                _state = GameState.CharacterSelect;
+                break;
+            case "Characters":
                 _state = GameState.Characters;
                 break;
-            case 2:
+            case "Items Index":
                 _state = GameState.ItemsIndex;
                 break;
-            case 3:
+            case "Settings":
                 gm.StateAfterClosingSettings = GameState.MainMenu;
                 _state = GameState.SettingsMenu;
                 break;
-            case 4:
+            case "Quit Game":
                 Game.Exit();
                 break;
         }

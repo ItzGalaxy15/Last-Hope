@@ -12,7 +12,7 @@ namespace Last_Hope.SkillTree
     /// </summary>
     public static class SkillTreeConfig
     {
-        public static bool PersistSkillTreeOnDeath = false;
+        public static bool PersistSkillTreeOnDeath = true;
         public static bool EnableBranchLocking = true;
     }
 
@@ -535,7 +535,7 @@ namespace Last_Hope.SkillTree
             }
 
             // Return default fresh state if no save exists. Starts with 5 points for testing.
-            return new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 0 };
+            return new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 15 };
         }
     }
 }
