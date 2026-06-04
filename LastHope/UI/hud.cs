@@ -14,9 +14,10 @@ namespace Last_Hope.UI;
 public class Hud
 {
 	private readonly List<UIElement> _elements;
+	private readonly List<HitSkillCooldownIcon> _hitIcons = new();
 	private BossWarningIndicator _bossWarningIndicator;
 
-	public Hud(BasePlayer? player, Texture2D pixel, Texture2D? itemSpriteSheet = null, Texture2D? dashIcon = null, Texture2D? teleportIcon = null, Effect? cooldownShader = null, ContentManager content = null, Texture2D? rapidFireIcon = null, Texture2D? critGuaranteeIcon = null)
+	public Hud(BasePlayer? player, Texture2D pixel, Texture2D? itemSpriteSheet = null, Texture2D? dashIcon = null, Texture2D? teleportIcon = null, Effect? cooldownShader = null, ContentManager content = null, Texture2D? rapidFireIcon = null, Texture2D? critGuaranteeIcon = null, Texture2D? warriorAtkSpdUp = null, Texture2D? regenHpIcon = null, Texture2D? warriorDamageUp = null)
 	{
 		_bossWarningIndicator = new BossWarningIndicator();
 		if (content != null)
@@ -64,19 +65,61 @@ public class Hud
 			nextSlot++;
 
 			if (rapidFireIcon != null)
-				_elements.Add(new HitSkillCooldownIcon(rapidFireIcon, cooldownShader, pixel,
-					() => (GameManager.GetGameManager()._player as Archer)?.RapidFireProgress ?? 0f,
-					slotIndex: 0));
+			{
+				var icon = new HitSkillCooldownIcon(rapidFireIcon, cooldownShader, pixel,
+				() => (GameManager.GetGameManager()._player as Archer)?.RapidFireProgress ?? 0f);
+
+				_hitIcons.Add(icon);
+				_elements.Add(icon);
+			}
 
 			if (critGuaranteeIcon != null)
-				_elements.Add(new HitSkillCooldownIcon(critGuaranteeIcon, cooldownShader, pixel,
-					() => (GameManager.GetGameManager()._player as Archer)?.CritGuaranteeProgress ?? 0f,
-					slotIndex: 1));
+			{
+				var icon = new HitSkillCooldownIcon(critGuaranteeIcon, cooldownShader, pixel,
+				() => (GameManager.GetGameManager()._player as Archer)?.CritGuaranteeProgress ?? 0f);
+
+				_hitIcons.Add(icon);
+				_elements.Add(icon);
+			}
+
+			if (warriorAtkSpdUp != null)
+			{
+				var icon = new HitSkillCooldownIcon(warriorAtkSpdUp, cooldownShader, pixel,
+				() => (GameManager.GetGameManager()._player as Warrior)?.AttackSpeedUpProgress ?? 0f);
+
+				_hitIcons.Add(icon);
+				_elements.Add(icon);
+			}
+
+			if (regenHpIcon != null)
+			{
+				var icon = new HitSkillCooldownIcon(regenHpIcon, cooldownShader, pixel,
+				() => (GameManager.GetGameManager()._player as Warrior)?.RegenHpProgress ?? 0f);
+				
+				_hitIcons.Add(icon);
+				_elements.Add(icon);
+			}
+
+			if (warriorDamageUp != null)
+			{
+				var icon = new HitSkillCooldownIcon(warriorDamageUp, cooldownShader, pixel,
+				() => (GameManager.GetGameManager()._player as Warrior)?.DamageUpProgress ?? 0f);
+				
+				_hitIcons.Add(icon);
+				_elements.Add(icon);
+			}
 		}
 	}
 
 	public void Update(GameTime gameTime, Viewport viewport)
 	{
+		int activeSlot = 0;
+		foreach (var icon in _hitIcons)
+		{
+			if (icon.IsActive)
+				icon.SlotIndex = activeSlot++;
+		}
+
 		foreach (UIElement element in _elements)
 			element.Update(gameTime, viewport);
 	}

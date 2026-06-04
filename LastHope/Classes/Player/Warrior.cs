@@ -54,6 +54,10 @@ public class Warrior : BasePlayer
     private float _bleedDps = 0f;
     private const float BleedTickInterval = 0.5f;
 
+    public float RegenHpProgress => MathHelper.Clamp(_defBuffTimer / BuffDurationSeconds, 0f, 1f);
+    public float DamageUpProgress => MathHelper.Clamp(_dmgBuffTimer / BuffDurationSeconds, 0f, 1f);
+    public float AttackSpeedUpProgress => MathHelper.Clamp(_speedBuffTimer / BuffDurationSeconds, 0f, 1f);
+
     // --- STATE & PHYSICS ---
     private bool _facingLeft;
     private RectangleCollider _collider;
@@ -518,14 +522,17 @@ public class Warrior : BasePlayer
             case "unlock_whirlwind":
                 WhirlwindUnlocked = true;
                 ActiveAbility = new WhirlwindAbility();
+                ActiveAbility.Load(_content);
                 break;
             case "unlock_axe_slam":
                 AxeSlamUnlocked = true;
                 ActiveAbility = new AxeSlamAbility();
+                ActiveAbility.Load(_content);
                 break;
             case "unlock_shield_slam":
                 ShieldSlamUnlocked = true;
                 ActiveAbility = new ShieldSlamAbility();
+                ActiveAbility.Load(_content);
                 break;
             case "dodge_chance":
                 DodgeLevel++;

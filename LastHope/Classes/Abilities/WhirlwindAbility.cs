@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Last_Hope.BaseModel;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Abilities;
 
@@ -16,7 +17,7 @@ public class WhirlwindAbility : BaseAbility
 
     public override void Load(ContentManager content)
     {
-        
+        Icon = content.Load<Texture2D>("icons/WhirlwindAbilityIcon");
     }
 
     public override void Update(BasePlayer player, GameTime gameTime)
