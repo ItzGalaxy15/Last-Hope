@@ -535,7 +535,7 @@ namespace Last_Hope.SkillTree
             }
 
             // Return default fresh state if no save exists. Starts with 5 points for testing.
-            return new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 15 };
+            return new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 0 };
         }
     }
 }
