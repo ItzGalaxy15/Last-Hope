@@ -254,9 +254,9 @@ public class Warrior : BasePlayer
         if (_inputManager is not null)
         {
             _timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
-                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
-            if (attackPressed && _timeSinceLastAttack >= CurrentHaste && !_isCastingAbility)
+            bool attackHeld = _inputManager.IsGameplayKeyDown(KeybindId.Attack)
+                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyDown(KeybindId.KeyboardAttack));
+            if (attackHeld && _timeSinceLastAttack >= CurrentHaste && !_isCastingAbility)
             {
                 UseWeapon();
                 AudioManager.PlaySfx(_attackSound);
