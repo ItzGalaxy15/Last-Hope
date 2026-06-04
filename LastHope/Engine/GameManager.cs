@@ -8,18 +8,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
 using Last_Hope;
 using Last_Hope.BaseModel;
+using Last_Hope.Classes.Camera;
 using Last_Hope.Classes.Items;
+using Last_Hope.Collision;
+using Last_Hope.Engine.Pathfinding;
 using Last_Hope.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Last_Hope.Classes.Camera;
-using Last_Hope.Collision;
-using Last_Hope.Engine.Pathfinding;
 
 namespace Last_Hope.Engine;
 
@@ -494,7 +493,9 @@ public class GameManager
 
     public void SetSelectedItemSlot(int slotIndex)
     {
-        SelectedItemSlot = Math.Clamp(slotIndex, 0, 1);
+        int slotCount = PlayerInventoryHelper.GetInventorySlots(_player)?.Length ?? 2;
+        int maxSlot = Math.Max(0, slotCount - 1);
+        SelectedItemSlot = Math.Clamp(slotIndex, 0, maxSlot);
     }
 
     /// <summary>
@@ -644,5 +645,16 @@ public class GameManager
             return Vector2.Transform(screenMousePos, Matrix.Invert(Camera.ViewMatrix));
         }
         return screenMousePos;
+    }
+
+
+    public void CycleSelectedItemSlot(int direction)
+    {
+        int count = PlayerInventoryHelper.GetInventorySlots(_player)?.Length ?? 2;
+        if (count <= 0) return;
+        int next = SelectedItemSlot + direction;
+        if (next < 0) next = count - 1;
+        if (next >= count) next = 0;
+        SelectedItemSlot = next;
     }
 }

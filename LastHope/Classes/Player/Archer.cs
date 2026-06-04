@@ -180,19 +180,12 @@ public class Archer : BasePlayer
         if (_inputManager is not null)
         {
             timeSinceLastAttack += gameTime.ElapsedGameTime.TotalSeconds;
-            bool attackPressed = _inputManager.IsGameplayKeyPress(KeybindId.Attack)
-                || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyPress(KeybindId.KeyboardAttack));
-            bool attackHold = _inputManager.IsGameplayKeyDown(KeybindId.Attack)
+            bool attackHeld = _inputManager.IsGameplayKeyDown(KeybindId.Attack)
                 || (KeybindStore.CurrentScheme == ControlScheme.KeyboardOnly && _inputManager.IsGameplayKeyDown(KeybindId.KeyboardAttack));
 
             float effectiveHaste = _attackSpeedBoostTimer > 0f ? Math.Max(0.1f, CurrentHaste - AttackSpeedBoostAmount) : CurrentHaste;
 
-            if (attackPressed && timeSinceLastAttack >= effectiveHaste && !_isDrawingBow)
-            {
-                StartBowDraw();
-                timeSinceLastAttack = 0;
-            }
-            else if (attackHold && timeSinceLastAttack >= effectiveHaste && !_isDrawingBow)
+            if (attackHeld && timeSinceLastAttack >= effectiveHaste && !_isDrawingBow)
             {
                 StartBowDraw();
                 timeSinceLastAttack = 0;
