@@ -19,16 +19,22 @@ Here are the original node values for reference:
 - Layer 4: 15 points
 - Layer 5: 20 points
 
-### Current Balance Strategy (May 2026)
-Decision: **Lower overall stats temporarily**. 
-By keeping standard node values at their 1x baseline (instead of tripling them to compensate for the `MaxPoints` 3 -> 1 shift), the overall stat inflations are strictly nerfed. Players are forced to branch out to gain power.
+### Current Balance Strategy (June 2026)
+Decision: **Scale Warrior Upwards Appropriately per Stance**. 
+We've aggressively buffed Warrior's baseline damage and specifically targeted each skill branch to provide a very distinct identity.
 
-**Current 1-Point Baseline (e.g., Warrior):**
-- **Haste/Agility:** 1.0% total
-- **Base Damage:** 5.0 total
-- **Max HP:** 25.0 total
-- **Dodge Chance:** 1.0% total
-- **Armor Pen:** 1.0% total
-- **Block Chance:** 1.0% total
+**Updated 1-Point Branch Scalings (Warrior):**
 
-*Note: These baseline values are subject to change. We can scale this up if playtesting shows the game has become too difficult. Layer unlock requirements remain aggressively scaled down (0, 1, 2, 3...) to allow faster late-game ability access without severe stat bloat.*
+- **Left Wing (Dual Wield/Agility)** 
+  - Goal: Higher damage, much faster attack speed.
+  - Scale: Gain 0.1 to 0.2 `CurrentHaste` reduction (massive speed) and up to 40 Flat Damage.
+
+- **Middle Wing (Axe/Bruiser)** 
+  - Goal: Highest damage, slower attack speed.
+  - Scale: Gain 30 to 70 Flat Damage, while letting the innate Heavy Axe Stance lower attack speed gracefully.
+
+- **Right Wing (Shield/Tank)** 
+  - Goal: High resistance, great regen, tiny bit of damage increase.
+  - Scale: Keep existing proc block-healing effects, gain up to 125 Max HP, and a tiny 15 Flat Damage to keep clearing pace alive.
+
+*Note: The C# backend integration (`Player/Warrior.cs`) was updated to map Effect Values accurately like the Archer implementation. Values scale directly from JSON bindings instead of hardcoded int iterators.*

@@ -324,10 +324,10 @@ namespace Last_Hope.UI
             );
 
             _topBarRect = new Rectangle(_mainPanel.X, _mainPanel.Y, _mainPanel.Width, 75);
-            _bottomBarRect = new Rectangle(_mainPanel.X, _mainPanel.Bottom - 85, _mainPanel.Width, 85);
+            _bottomBarRect = new Rectangle(_mainPanel.X, _mainPanel.Bottom - 92, _mainPanel.Width, 92);
 
-            int btnWidth = 175;
-            int btnHeight = 44;
+            int btnWidth = 160;
+            int btnHeight = 34;
             int btnY = _bottomBarRect.Center.Y - (btnHeight / 2);
 
             _btnCancel = new Rectangle(_bottomBarRect.Right - btnWidth - 30, btnY, btnWidth, btnHeight);
@@ -572,16 +572,16 @@ namespace Last_Hope.UI
                 Color confirmBase = Color.Lerp(new Color(30, 80, 40), new Color(100, 160, 50), pulse);
                 Color confirmHigh = Color.Lerp(new Color(60, 150, 70), new Color(150, 255, 80), pulse);
                 
-                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM POINTS", confirmBase, confirmHigh, _btnConfirmHover, globalAlpha);
-                DrawPremiumButton(spriteBatch, font, _btnCancel, "SAVE & CLOSE", new Color(40, 45, 50), new Color(80, 85, 95), _btnCancelHover, globalAlpha);
-                DrawPremiumButton(spriteBatch, font, _btnReset, "RESET", new Color(90, 30, 25), new Color(160, 50, 40), _btnResetHover, globalAlpha);
-                
-                // Instructions
-                string hint = _isKeyboardMode 
-                    ? "E: Assign   |   Q: Remove   |   ENTER / SPACE: Confirm   |   ESC: Save & Close" 
-                    : "LMB: Assign   |   RMB: Remove   |   ENTER / SPACE: Confirm   |   ESC: Save & Close";
-                Vector2 hintSize = font.MeasureString(hint) * 0.3f;
-                spriteBatch.DrawString(font, hint, new Vector2(_bottomBarRect.Center.X - hintSize.X/2, _bottomBarRect.Center.Y - hintSize.Y/2), Fade(new Color(120, 125, 130), globalAlpha), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+                DrawPremiumButton(spriteBatch, font, _btnConfirm, "CONFIRM", confirmBase, confirmHigh, _btnConfirmHover, globalAlpha, 0.30f);
+                DrawPremiumButton(spriteBatch, font, _btnCancel, "SAVE & CLOSE", new Color(40, 45, 50), new Color(80, 85, 95), _btnCancelHover, globalAlpha, 0.26f);
+                DrawPremiumButton(spriteBatch, font, _btnReset, "RESET", new Color(90, 30, 25), new Color(160, 50, 40), _btnResetHover, globalAlpha, 0.30f);
+
+                string hint = _isKeyboardMode
+                    ? "E Assign | Q Remove | Enter/Space Confirm | Esc Save & Close"
+                    : "LMB Assign | RMB Remove | Enter/Space Confirm | Esc Save & Close";
+                float hintScale = 0.22f;
+                Vector2 hintSize = font.MeasureString(hint) * hintScale;
+                spriteBatch.DrawString(font, hint, new Vector2(_bottomBarRect.Center.X - hintSize.X / 2f, _bottomBarRect.Center.Y - hintSize.Y / 2f), Fade(new Color(130, 135, 145), globalAlpha), 0f, Vector2.Zero, hintScale, SpriteEffects.None, 0f);
             }
 
             // 3. Draw Connections
@@ -777,14 +777,13 @@ namespace Last_Hope.UI
             }
         }
         
-        private void DrawPremiumButton(SpriteBatch sb, SpriteFont font, Rectangle bounds, string text, Color baseColor, Color highlightColor, float hoverAlpha, float globalAlpha)
+        private void DrawPremiumButton(SpriteBatch sb, SpriteFont font, Rectangle bounds, string text, Color baseColor, Color highlightColor, float hoverAlpha, float globalAlpha, float txtScale = 0.45f)
         {
             Color currentBg = Color.Lerp(baseColor, highlightColor, hoverAlpha);
             Color currentBorderInner = Color.Lerp(new Color(60, 65, 70), new Color(200, 200, 200), hoverAlpha);
             
             DrawPremiumPanel(sb, bounds, currentBg, new Color(20, 22, 25), currentBorderInner, globalAlpha, 2);
             
-            float txtScale = 0.45f;
             Vector2 size = font.MeasureString(text) * txtScale;
             Vector2 pos = new Vector2(bounds.Center.X - size.X/2, bounds.Center.Y - size.Y/2);
             

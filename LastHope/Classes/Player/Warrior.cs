@@ -96,8 +96,8 @@ public class Warrior : BasePlayer
     public bool HasDeepWounds { get; set; }
     public bool HasBulwark { get; set; }
 
-    public int HasteLevel { get; set; }
-    public int DmgLevel { get; set; }
+    public float SkillTreeHasteBonus { get; set; }
+    public int SkillTreeDamageBonus { get; set; }
 
     // Base Warrior stats
     public override float BaseMaxHp { get; } = 100f;
@@ -493,10 +493,10 @@ public class Warrior : BasePlayer
         switch (effect.EffectId)
         {
             case "haste_percent":
-                HasteLevel++;
+                SkillTreeHasteBonus += effect.ValuePerPoint;
                 break;
             case "base_damage":
-                DmgLevel++;
+                SkillTreeDamageBonus += (int)effect.ValuePerPoint;
                 break;
             case "max_hp":
                 Heal(effect.ValuePerPoint); // Keep it simple for now, can modify MaxHp property later if created
@@ -558,8 +558,8 @@ public class Warrior : BasePlayer
 
     public void RevertAllSkillStats()
     {
-        HasteLevel = 0;
-        DmgLevel = 0;
+        SkillTreeHasteBonus = 0;
+        SkillTreeDamageBonus = 0;
         
         IsSwordActive = false;
         IsAxeActive = false;
@@ -593,7 +593,7 @@ public class Warrior : BasePlayer
     public void UpdateStats()
     {
         // Damage Calculations
-        CurrentDamage = (int)(BaseDamage + _levelDamageBonus) + DmgLevel * 5;
+        CurrentDamage = (int)(BaseDamage + _levelDamageBonus) + SkillTreeDamageBonus;
         if (IsSwordActive)
         {
             CurrentDamage = (int)(CurrentDamage * 0.8f);
@@ -609,7 +609,7 @@ public class Warrior : BasePlayer
 
         // Haste Calculations (lower = faster attacks; level bonus reduces cooldown)
         float baseHasteForStance = IsAxeActive ? 1.2f : IsSwordActive ? 0.5f : BaseHaste;
-        CurrentHaste = baseHasteForStance - _levelHasteBonus - HasteLevel * 0.1f;
+        CurrentHaste = baseHasteForStance - _levelHasteBonus - SkillTreeHasteBonus;
         if (_speedBuffTimer > 0f)
             CurrentHaste *= 0.5f;
         CurrentHaste = Math.Max(0.1f, CurrentHaste);
