@@ -43,6 +43,13 @@ namespace Last_Hope.Systems
             {
                 File.Delete(SaveFilePath);
             }
+            
+            // Ensures starting a "New Run" or dying completely wipes the skill tree
+            // if we have persistence turned off in the config.
+            if (!global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+            {
+                global::Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
+            }
         }
 
         public static void SaveRun(GameManager gm)
@@ -74,6 +81,10 @@ namespace Last_Hope.Systems
 
             string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(SaveFilePath, json);
+            
+            // SYNCHRONIZED SAVE: Write the skill tree to disk EXACTLY when the wave progress is saved.
+            // This closes the loophole where players could spend a point mid-wave, force quit, and double-dip XP.
+            global::Last_Hope.SkillTree.SkillTreeSaveManager.SaveCurrent();
         }
 
         public static RunSaveData LoadRunData()
