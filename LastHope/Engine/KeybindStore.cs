@@ -31,10 +31,6 @@ public enum KeybindId
     AimRight,
     /// <summary>Keyboard-only attack key — fires in the current aim direction.</summary>
     KeyboardAttack,
-    /// <summary>Toggle the in-run stat screen overlay.</summary>
-    StatScreen,
-    /// <summary>Toggle the in-run skill tree overlay.</summary>
-    SkillTree,
 }
 
 /// <summary>
@@ -168,8 +164,6 @@ public static class KeybindStore
         [KeybindId.AimLeft] = GameInputBinding.Keyboard(Keys.Left),
         [KeybindId.AimRight] = GameInputBinding.Keyboard(Keys.Right),
         [KeybindId.KeyboardAttack] = GameInputBinding.Keyboard(Keys.Space),
-        [KeybindId.StatScreen] = GameInputBinding.Keyboard(Keys.C),
-        [KeybindId.SkillTree] = GameInputBinding.Keyboard(Keys.N),
     };
 
     private static readonly Dictionary<KeybindId, GameInputBinding> Current = new(Defaults);
@@ -270,8 +264,6 @@ public static class KeybindStore
         KeybindId.AimLeft => "Aim left",
         KeybindId.AimRight => "Aim right",
         KeybindId.KeyboardAttack => "Attack (keyboard)",
-        KeybindId.StatScreen => "Stat screen",
-        KeybindId.SkillTree => "Skill tree",
         _ => id.ToString(),
     };
 }

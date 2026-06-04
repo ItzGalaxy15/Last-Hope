@@ -49,8 +49,7 @@ public class StatScreenOverlay
             maxW = Math.Max(maxW, gm.MeasureUiString(gm._font, r, RowScale).X);
 
         int titleH  = (int)gm.MeasureUiString(gm._font, title, TitleScale).Y;
-        string closeHint = $"[{KeybindStore.FormatBinding(KeybindId.StatScreen)}] Close";
-        int hintH   = (int)gm.MeasureUiString(gm._font, closeHint, HintScale).Y;
+        int hintH   = (int)gm.MeasureUiString(gm._font, "[C] Close", HintScale).Y;
         int panelW  = (int)maxW + PadX * 2 + 24;
         int panelH  = PadY * 2 + titleH + 10 + rows.Length * RowH + 6 + hintH;
 
@@ -82,7 +81,7 @@ public class StatScreenOverlay
         }
 
         y += 4;
-        gm.DrawUiString(spriteBatch, gm._font, closeHint,
+        gm.DrawUiString(spriteBatch, gm._font, "[C] Close",
             new Vector2(x, y), new Color(80, 90, 110), HintScale);
     }
     // stackoverflow.com/questions/23305577/draw-rectangle-in-monogame

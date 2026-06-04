@@ -138,10 +138,6 @@ public abstract class MenuBase
         },
         new[] { Segment.B(KeybindId.PlaceItem), Segment.T(" -> Place item") },
         new[] { Segment.B(KeybindId.ThrowItem), Segment.T(" -> Throw item") },
-        Array.Empty<Segment>(),
-        new[] { Segment.T("UI") },
-        new[] { Segment.B(KeybindId.StatScreen), Segment.T(" -> Stat screen") },
-        new[] { Segment.B(KeybindId.SkillTree), Segment.T(" -> Skill tree") },
     };
 
     private static readonly Segment[][] ItemsSegments =

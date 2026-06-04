@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Last_Hope.Engine;
 using Last_Hope.UI.Menus;
 using Last_Hope.SkillTree;
@@ -88,7 +89,7 @@ public class Menu
         GameManager gm = GameManager.GetGameManager();
         InputManager input = gm.InputManager;
 
-        if (input.IsGameplayKeyPress(KeybindId.StatScreen))
+        if (input.IsKeyPress(Keys.C))
         {
             EnsureStatScreen();
             _showStatScreen = !_showStatScreen;
@@ -97,7 +98,7 @@ public class Menu
         if (_showStatScreen && _statScreen != null)
             _statScreen.Update(gameTime);
 
-        if (input.IsGameplayKeyPress(KeybindId.SkillTree))
+        if (input.IsKeyPress(Keys.N))
         {
             _showSkillTree = !_showSkillTree;
 

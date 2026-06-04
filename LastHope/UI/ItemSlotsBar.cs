@@ -1,9 +1,9 @@
 using Last_Hope;
-using Last_Hope.Classes.Items;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Last_Hope.Classes.Items;
 
 namespace Last_Hope.UI;
 
@@ -33,19 +33,13 @@ public class ItemSlotsBar : UIElement
 	{
 		GameManager gm = GameManager.GetGameManager();
 		InputManager input = gm.InputManager;
-        int scrollDelta = input.CurrentMouseState.ScrollWheelValue - input.LastMouseState.ScrollWheelValue;
 
 		if (input.IsGameplayKeyPress(KeybindId.ItemSlot1))
 			gm.SetSelectedItemSlot(0);
-		if (input.IsGameplayKeyPress(KeybindId.ItemSlot2))
-            gm.SetSelectedItemSlot(1);
+		else if (input.IsGameplayKeyPress(KeybindId.ItemSlot2))
+			gm.SetSelectedItemSlot(1);
 
-        if (scrollDelta > 0)
-			gm.CycleSelectedItemSlot(-1);
-		else if (scrollDelta < 0)
-            gm.CycleSelectedItemSlot(1);
-
-        _selectedSlot = gm.SelectedItemSlot;
+		_selectedSlot = gm.SelectedItemSlot;
 
 		const int sideMargin = 48;
 		const int bottomMargin = 28;

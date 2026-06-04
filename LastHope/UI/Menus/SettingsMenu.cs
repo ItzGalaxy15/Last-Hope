@@ -492,11 +492,6 @@ public sealed class SettingsMenu : MenuBase
         BindingRow("Right", KeybindId.MoveRight, ref yL, leftX, colW);
         BindingRow("Dash", KeybindId.Dash, ref yL, leftX, colW);
         BindingRow("Teleport", KeybindId.Teleport, ref yL, leftX, colW);
-
-        yL += 12f * ui;
-        SectionHeader("UI", ref yL, leftX);
-        BindingRow("Stat screen", KeybindId.StatScreen, ref yL, leftX, colW);
-        BindingRow("Skill tree", KeybindId.SkillTree, ref yL, leftX, colW);
         if (keyboardOnly)
         {
             yL += 12f * ui;
@@ -753,11 +748,6 @@ public sealed class SettingsMenu : MenuBase
         RegisterRow(KeybindId.MoveRight, ref yL, leftX, colW);
         RegisterRow(KeybindId.Dash, ref yL, leftX, colW);
         RegisterRow(KeybindId.Teleport, ref yL, leftX, colW);
-
-        yL += 12f * ui;
-        AfterSectionHeader(ref yL);
-        RegisterRow(KeybindId.StatScreen, ref yL, leftX, colW);
-        RegisterRow(KeybindId.SkillTree, ref yL, leftX, colW);
         if (keyboardOnly)
         {
             yL += 12f * ui;
