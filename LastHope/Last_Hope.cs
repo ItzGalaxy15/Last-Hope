@@ -195,7 +195,7 @@ public class Last_Hope : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        Effect backgroundEffect = _gameManager._state == GameState.GameOver ? _gameManager.DeathFade : null;
+        Effect backgroundEffect = _gameManager._state == GameState.GameOver ? _gameManager.DeathFade : (_gameManager._state == GameState.Winner ? _gameManager.WinnerGlow : null);
 
         // Ground layer: terrain, overlay decorations, village buildings.
         _spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp, effect: backgroundEffect);

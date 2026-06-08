@@ -106,6 +106,7 @@ public class GameManager
         _gameObjects.Where(g => g.IsYSorted);
 
     public Effect DeathFade { get; private set; }
+    public Effect? WinnerGlow { get; private set; }
     public Effect? CooldownIcon { get; private set; }
 
     /// <summary>
@@ -161,6 +162,7 @@ public class GameManager
 
         _font = content.Load<SpriteFont>("Fonts/font");
         DeathFade = content.Load<Effect>("Effects/DeathFade");
+        try { WinnerGlow = content.Load<Effect>("Effects/WinnerGlow"); } catch { WinnerGlow = null; }
         try { CooldownIcon = content.Load<Effect>("Effects/CooldownIcon"); } catch { CooldownIcon = null; }
 
         FontBitmap = null;
