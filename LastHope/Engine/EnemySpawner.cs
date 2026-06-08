@@ -103,7 +103,8 @@ public class EnemySpawner
                 waitingForNextWave = false;
                 bossSpawned = false;
             }
-            _previousZone = gm.CurrentZone;
+            _previousZone = gm.CurrentZone; 
+            global::Last_Hope.Systems.RunSaveManager.SaveRun(gm);
         }
 
         int currentEnemyCount = 0;
@@ -127,7 +128,7 @@ public class EnemySpawner
                 {
                     if (gm.CurrentZone == Zone.Village)
                     {
-                        gm.VillageCleared = true;
+                        if (!gm.VillageCleared) { gm.VillageCleared = true; global::Last_Hope.Systems.RunSaveManager.SaveRun(gm); }
                         // Idle until player crosses west, which flips CurrentZone to Forest and resets us.
                     }
                     else
@@ -144,6 +145,7 @@ public class EnemySpawner
                     waveWaitTimer = 0f;
                     currentWave++;
                     spawnedThisWave = 0;
+                    global::Last_Hope.Systems.RunSaveManager.SaveRun(gm);
                 }
             }
             return;
@@ -303,6 +305,12 @@ public class EnemySpawner
     /// <summary>
     /// Resets the spawner state back to the beginning of wave 1. Used when starting a new run.
     /// </summary>
+    public void LoadWaveState(int wave, bool boss)
+    {
+        currentWave = wave;
+        bossSpawned = boss;
+    }
+
     public void Reset()
     {
         spawnTimer = 0f;

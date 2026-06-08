@@ -15,6 +15,7 @@ public sealed class SettingsMenu : MenuBase
         Controls,
         Sound,
         Display,
+        Data,
     }
 
     private const int KeyFrameSize = 32;
@@ -274,7 +275,7 @@ public sealed class SettingsMenu : MenuBase
         gm.DrawUiString(spriteBatch, layoutFont, "SETTINGS", chrome.TitlePosition,
             Color.White, 0f, Vector2.Zero, chrome.TitleTextScale, SpriteEffects.None, 0f);
 
-        string[] tabLabels = { "CONTROLS", "SOUND", "DISPLAY" };
+        string[] tabLabels = { "CONTROLS", "SOUND", "DISPLAY", "DATA" };
         for (int i = 0; i < chrome.TabRects.Length; i++)
         {
             bool sel = (int)_tab == i;
@@ -297,6 +298,18 @@ public sealed class SettingsMenu : MenuBase
             DrawControlsRebindable(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
             spriteBatch.End();
         }
+        else if (_tab == SettingsTab.Data)
+        {
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            float curY = 320f * ui;
+            var wipeRect = new Rectangle((int)(vp.Width / 2f - 150f * ui), (int)curY, (int)(300f * ui), (int)(60f * ui));
+            bool hoverWipe = wipeRect.Contains(InputManager.CurrentMouseState.Position);
+            spriteBatch.Draw(Pixel, wipeRect, hoverWipe ? new Color(255, 100, 100) : new Color(200, 50, 50));
+            string txt = "WIPE ALL DATA";
+            Vector2 txtSz = MenuUiFont.MeasureString(txt) * 0.7f * ui;
+            spriteBatch.DrawString(MenuUiFont, txt, new Vector2(wipeRect.X + wipeRect.Width/2f - txtSz.X/2f, wipeRect.Y + wipeRect.Height/2f - txtSz.Y/2f), Color.White, 0f, Vector2.Zero, 0.7f * ui, SpriteEffects.None, 0f);
+            spriteBatch.End();
+        }
         else if (_tab == SettingsTab.Sound)
         {
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
@@ -307,6 +320,18 @@ public sealed class SettingsMenu : MenuBase
         {
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             DrawDisplaySettings(spriteBatch, gameTime, layoutFont, chrome.ContentRect, textScale, ui);
+            spriteBatch.End();
+        }
+        else if (_tab == SettingsTab.Data)
+        {
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            float curY = 320f * ui;
+            var wipeRect = new Rectangle((int)(vp.Width / 2f - 150f * ui), (int)curY, (int)(300f * ui), (int)(60f * ui));
+            bool hoverWipe = wipeRect.Contains(InputManager.CurrentMouseState.Position);
+            spriteBatch.Draw(Pixel, wipeRect, hoverWipe ? new Color(255, 100, 100) : new Color(200, 50, 50));
+            string txt = "WIPE ALL DATA";
+            Vector2 txtSz = MenuUiFont.MeasureString(txt) * 0.7f * ui;
+            spriteBatch.DrawString(MenuUiFont, txt, new Vector2(wipeRect.X + wipeRect.Width/2f - txtSz.X/2f, wipeRect.Y + wipeRect.Height/2f - txtSz.Y/2f), Color.White, 0f, Vector2.Zero, 0.7f * ui, SpriteEffects.None, 0f);
             spriteBatch.End();
         }
 

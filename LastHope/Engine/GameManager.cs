@@ -502,9 +502,46 @@ public class GameManager
     /// Resets the engine state for a new game run. 
     /// Clears all game objects, resets score and inventory, and spawns a fresh player character.
     /// </summary>
-    public void ResetGame()
+    
+    /// <summary>
+    /// Resets the engine state for a new game run. 
+    /// Clears all game objects, resets score and inventory, and spawns a fresh player character.
+    /// </summary>
+    public void LoadRun()
     {
-        if (!global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        var data = global::Last_Hope.Systems.RunSaveManager.LoadRunData();
+        if (data == null)
+        {
+            ResetGame(false);
+            return;
+        }
+
+        SelectedCharacter = data.SelectedCharacter;
+        ResetGame(true);
+
+        CurrentZone = data.CurrentZone;
+        VillageCleared = data.VillageCleared;
+        Score = data.Score;
+        HasUsedOneUp = data.HasUsedOneUp;
+        HasOneUpDropped = data.HasOneUpDropped;
+
+        
+        EnemySpawner.LoadWaveState(data.CurrentWave, data.BossSpawned);
+
+        _player._Level = data.Level;
+        _player._Experience = data.Experience;
+        _player._currentHp = data.CurrentHp;
+        _player.ExtraLives = data.ExtraLives;
+        if (data.Inventory != null)
+        {
+            _player.Inventory = data.Inventory;
+        }
+        _player._position = new Microsoft.Xna.Framework.Vector2(data.PositionX, data.PositionY);
+    }
+
+    public void ResetGame(bool isLoadingRun = false)
+    {
+        if (!isLoadingRun && !global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
         {
             global::Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
         }
@@ -531,7 +568,7 @@ public class GameManager
         _player.OnTalentPointEarned += Menu.AwardTalentPoint;
         AddGameObject(_player);
 
-        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (isLoadingRun || global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
         {
             Menu.LoadSkillTreeSilently();
         }

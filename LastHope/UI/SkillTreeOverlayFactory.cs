@@ -58,10 +58,7 @@ internal static class SkillTreeOverlayFactory
             tree.OnTreeRespec += warrior.RevertAllSkillStats;
         }
 
-        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
-        {
-            tree.RecalculateStats();
-        }
+        tree.RecalculateStats();
 
         var theme = new UIThemeData
         {
@@ -112,10 +109,7 @@ internal static class SkillTreeOverlayFactory
             tree.OnTreeRespec += archer.RevertAllSkillStats;
         }
 
-        if (global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
-        {
-            tree.RecalculateStats();
-        }
+        tree.RecalculateStats();
 
         var theme = new UIThemeData
         {

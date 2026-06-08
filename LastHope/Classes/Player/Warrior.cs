@@ -522,17 +522,17 @@ public class Warrior : BasePlayer
             case "unlock_whirlwind":
                 WhirlwindUnlocked = true;
                 ActiveAbility = new WhirlwindAbility();
-                ActiveAbility.Load(_content);
+                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
                 break;
             case "unlock_axe_slam":
                 AxeSlamUnlocked = true;
                 ActiveAbility = new AxeSlamAbility();
-                ActiveAbility.Load(_content);
+                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
                 break;
             case "unlock_shield_slam":
                 ShieldSlamUnlocked = true;
                 ActiveAbility = new ShieldSlamAbility();
-                ActiveAbility.Load(_content);
+                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
                 break;
             case "dodge_chance":
                 DodgeLevel++;
