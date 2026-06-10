@@ -28,7 +28,12 @@ public class ItemDrop : GameObject
     private const float PickupRadius = 150f;
     private const float Speed = 350f;
     private const float LifetimeSeconds = 30f;
+    private const float BlinkStartSeconds = 8f;
+    private const float BlinkIntervalSeconds = 0.4f;
     private float _ageSeconds;
+    private bool _isBlinkVisible = true;
+    private float _blinkAccumulator;
+    private bool IsBlinking => LifetimeSeconds - _ageSeconds <= BlinkStartSeconds;
 
     /// <summary>
     /// Creates an item drop of the given type at the given world position.
@@ -87,11 +92,27 @@ public class ItemDrop : GameObject
         if (player is null || inv is null)
             return;
 
-        _ageSeconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _ageSeconds += dt;
         if (_ageSeconds >= LifetimeSeconds)
         {
             gm.RemoveGameObject(this);
             return;
+        }
+
+        if (IsBlinking)
+        {
+            _blinkAccumulator += dt;
+            if (_blinkAccumulator >= BlinkIntervalSeconds)
+            {
+                _blinkAccumulator -= BlinkIntervalSeconds;
+                _isBlinkVisible = !_isBlinkVisible;
+            }
+        }
+        else
+        {
+            _blinkAccumulator = 0f;
+            _isBlinkVisible = true;
         }
 
         bool hasInventorySpace = false;
@@ -144,6 +165,9 @@ public class ItemDrop : GameObject
     /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
+        if (!_isBlinkVisible)
+            return;
+
         float bounceOffset = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4f) * 6f;
         Vector2 drawPos = _position + new Vector2(0, bounceOffset);
 
@@ -165,7 +189,7 @@ public class ItemDrop : GameObject
             Rectangle sourceRect = Type == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : 
                                    Type == ItemType.Decoy ? new Rectangle(0, 32, 32, 32) : 
                                    new Rectangle(0, 64, 32, 32);
-            
+
             // Draw red glow behind the item
             spriteBatch.Draw(_itemSpriteSheet, drawPos, sourceRect, Color.Red * 0.5f, 0f, new Vector2(16, 16), 1.4f, SpriteEffects.None, 0f);
             spriteBatch.Draw(_itemSpriteSheet, drawPos, sourceRect, Color.White, 0f, new Vector2(16, 16), 1f, SpriteEffects.None, 0f);
@@ -173,7 +197,7 @@ public class ItemDrop : GameObject
         else
         {
             Texture2D pixel = GameManager.GetGameManager().Pixel;
-            
+
             spriteBatch.Draw(pixel, new Rectangle((int)drawPos.X - 12, (int)drawPos.Y - 12, 24, 24), Color.Red * 0.5f);
             Color itemColor = Type == ItemType.Bomb ? Color.Black : 
                               Type == ItemType.Decoy ? Color.Brown : 
