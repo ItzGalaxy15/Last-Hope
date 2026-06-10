@@ -11,14 +11,14 @@ namespace Last_Hope.UI.Menus;
 public class WinnerMenu : MenuBase
 {
     private float _fadeAmount;
-    private const float FadeSpeed = 0.5f;
+    private const float FadeSpeed = 0.25f;
 
     /// <summary>Handles restart/quit using shared <see cref="MenuBase.HandleEndGameMenuClicks"/>.</summary>
     public void Update(GameTime gameTime)
     {
         _fadeAmount += (float)gameTime.ElapsedGameTime.TotalSeconds * FadeSpeed;
-        if (_fadeAmount > 0.8f)
-            _fadeAmount = 0.8f;
+        if (_fadeAmount > 0.45f)
+            _fadeAmount = 0.45f;
 
         const string title = "Winner";
         EndGameMenuLayout layout = LayoutEndGameTwoButtonMenu(title);
