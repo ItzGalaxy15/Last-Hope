@@ -10,19 +10,28 @@ namespace Last_Hope.UI.Menus;
 /// </summary>
 public class WinnerMenu : MenuBase
 {
+    private float _fadeAmount;
+    private const float FadeSpeed = 0.25f;
+
     /// <summary>Handles restart/quit using shared <see cref="MenuBase.HandleEndGameMenuClicks"/>.</summary>
     public void Update(GameTime gameTime)
     {
+        _fadeAmount += (float)gameTime.ElapsedGameTime.TotalSeconds * FadeSpeed;
+        if (_fadeAmount > 0.45f)
+            _fadeAmount = 0.45f;
+
         const string title = "Winner";
         EndGameMenuLayout layout = LayoutEndGameTwoButtonMenu(title);
         HandleEndGameMenuClicks(layout,
             onRestart: () =>
             {
+                _fadeAmount = 0f;
                 gm.ResetGame();
                 _state = GameState.Running;
             },
             onMainMenu: () =>
             {
+                _fadeAmount = 0f;
                 gm.ResetGame();
                 _state = GameState.MainMenu;
             });
@@ -34,7 +43,12 @@ public class WinnerMenu : MenuBase
         const string title = "Winner";
         EndGameMenuLayout layout = LayoutEndGameTwoButtonMenu(title);
 
-        DrawWorld(gameTime, spriteBatch, transformMatrix);
+        if (gm.WinnerGlow != null)
+        {
+            gm.WinnerGlow.Parameters["FadeAmount"]?.SetValue(_fadeAmount);
+        }
+
+        DrawWorld(gameTime, spriteBatch, transformMatrix, gm.WinnerGlow);
 
         spriteBatch.Begin();
         DrawEndGameTwoButtonOverlay(spriteBatch, title, Color.LimeGreen, Color.Red, layout);
