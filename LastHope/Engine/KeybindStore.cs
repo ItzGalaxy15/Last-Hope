@@ -158,7 +158,6 @@ public static class KeybindStore
         [KeybindId.Teleport] = GameInputBinding.Keyboard(Keys.R),
         [KeybindId.Attack] = GameInputBinding.FromMouse(MouseBindButton.Left),
         [KeybindId.Ability1] = GameInputBinding.Keyboard(Keys.H),
-        [KeybindId.Ability2] = GameInputBinding.Keyboard(Keys.E),
         [KeybindId.ItemSlot1] = GameInputBinding.Keyboard(Keys.D1),
         [KeybindId.ItemSlot2] = GameInputBinding.Keyboard(Keys.D2),
         [KeybindId.PlaceItem] = GameInputBinding.Keyboard(Keys.G),
