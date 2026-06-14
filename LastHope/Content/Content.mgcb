@@ -657,6 +657,30 @@
 /processorParam:Quality=Best
 /build:sounds/Archer_Special2.wav
 
+#begin sounds/bgm-flute-1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/bgm-flute-1.wav
+
+#begin sounds/bgm-piano-1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/bgm-piano-1.wav
+
+#begin sounds/bgm-synth-1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/bgm-synth-1.wav
+
+#begin sounds/bgm-synth-2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/bgm-synth-2.wav
+
 #begin sounds/BMG.wav
 /importer:WavImporter
 /processor:SongProcessor

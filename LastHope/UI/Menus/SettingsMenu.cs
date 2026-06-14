@@ -47,6 +47,11 @@ public sealed class SettingsMenu : MenuBase
     private bool _draggingMaster;
     private bool _draggingMusic;
     private bool _draggingSfx;
+    private bool _draggingMainMenuBgm;
+    private bool _draggingOverworldBgm;
+
+    private float _mainMenuBgmVolume = 0.3f;
+    private float _overworldBgmVolume = 0.3f;
 
     private bool isMuted = false;
 
@@ -222,12 +227,16 @@ public sealed class SettingsMenu : MenuBase
             AudioManager.MasterVolume = _masterVolume;
             AudioManager.MusicVolume = _musicVolume;
             AudioManager.SfxVolume = _sfxVolume;
+            BgmManager.MainMenuBgmVolume = _mainMenuBgmVolume;
+            BgmManager.OverworldBgmVolume = _overworldBgmVolume;
         }
         else
         {
             AudioManager.MasterVolume = 0f;
             AudioManager.MusicVolume = 0f;
             AudioManager.SfxVolume = 0f;
+            BgmManager.MainMenuBgmVolume = 0f;
+            BgmManager.OverworldBgmVolume = 0f;
         }
         AudioManager.Apply();
 
@@ -597,6 +606,8 @@ public sealed class SettingsMenu : MenuBase
         DrawSlider("Master Volume", ref _masterVolume, ref _draggingMaster);
         DrawSlider("Music Volume", ref _musicVolume, ref _draggingMusic);
         DrawSlider("SFX Volume", ref _sfxVolume, ref _draggingSfx);
+        DrawSlider("Main Menu BGM", ref _mainMenuBgmVolume, ref _draggingMainMenuBgm);
+        DrawSlider("Overworld BGM", ref _overworldBgmVolume, ref _draggingOverworldBgm);
 
 
         var (labelFont, labelMul) = BodyFontForMenuText(font);
