@@ -32,9 +32,9 @@ namespace Last_Hope.Classes.Weapon
         private float ExplosionRadius = 100f;
 
         private const float PoisonDamagePerTick = 5f;
-        private const float ExplosionDamageMultiplier = 1.5f;
+        private const float ExplosionDamageMultiplier = 1.25f;
         private const float ExplosionRadiusMultiplier = 1.5f;
-        private const float ExplosionSplashMultiplier = 0.5f;
+        private const float ExplosionSplashMultiplier = 0.25f;
 
         private HashSet<GameObject> _alreadyHit = new HashSet<GameObject>();
 

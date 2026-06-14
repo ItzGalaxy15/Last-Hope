@@ -497,8 +497,8 @@ namespace Last_Hope.SkillTree
                 catch { /* fall through to fresh state */ }
             }
 
-            // Return default fresh state if no save exists. Starts with 15 points for testing.
-            var freshState = new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 15 };
+            // Return default fresh state if no save exists. Starts with 0 points for testing.
+            var freshState = new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 0 };
             CurrentState = freshState; // Track for sync saves
             return freshState;
         }

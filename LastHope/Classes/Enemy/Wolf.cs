@@ -60,7 +60,7 @@ public class Wolf : BaseEnemy
     public override float BaseCritChance { get; } = 0f;
     public override float BaseHaste { get; } = 2f; // Attack cooldown
     public override float BaseSpeed { get; } = 150f;
-    public override float ExperienceValue { get; protected set; } = 2f;
+    public override float ExperienceValue { get; protected set; } = 0.2f;
 
     // Current Wolf Stats
     public override float CurrentMaxHp { get; protected set; }
