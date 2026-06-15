@@ -530,8 +530,7 @@ public class GameManager
         
         EnemySpawner.LoadWaveState(data.CurrentWave, data.BossSpawned);
 
-        _player._Level = data.Level;
-        _player._Experience = data.Experience;
+        _player.LoadLevelAndExperienceSilently(data.Level, data.Experience);
         _player._currentHp = data.CurrentHp;
         _player.ExtraLives = data.ExtraLives;
         if (data.Inventory != null)

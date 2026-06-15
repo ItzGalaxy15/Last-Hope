@@ -30,7 +30,26 @@ namespace Last_Hope.Systems
 
     public static class RunSaveManager
     {
-        private static readonly string SaveFilePath = Path.Combine(AppContext.BaseDirectory, "run_save.json");
+        public static string GetSaveDirectory()
+        {
+            // Dev requested to save in the Systems folder.
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
+            string systemsPath = Path.Combine(projectRoot, "Systems");
+            
+            // Fallback if we are not running from bin/Debug/...
+            if (!Directory.Exists(systemsPath))
+            {
+                systemsPath = Path.Combine(baseDir, "Systems");
+                if (!Directory.Exists(systemsPath))
+                {
+                    Directory.CreateDirectory(systemsPath);
+                }
+            }
+            return systemsPath;
+        }
+
+        private static string SaveFilePath => Path.Combine(GetSaveDirectory(), "run_save.json");
 
         public static bool HasSave()
         {
@@ -39,9 +58,16 @@ namespace Last_Hope.Systems
 
         public static void DeleteSave()
         {
-            if (File.Exists(SaveFilePath))
+            try
             {
-                File.Delete(SaveFilePath);
+                if (File.Exists(SaveFilePath))
+                {
+                    File.Delete(SaveFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to delete run save: {ex.Message}");
             }
             
             // Ensures starting a "New Run" or dying completely wipes the skill tree
@@ -76,11 +102,17 @@ namespace Last_Hope.Systems
                 
                 PositionX = gm._player.GetPosition().X,
                 PositionY = gm._player.GetPosition().Y,
-                
             };
 
-            string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(SaveFilePath, json);
+            try
+            {
+                string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(SaveFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to save run data: {ex.Message}");
+            }
             
             // SYNCHRONIZED SAVE: Write the skill tree to disk EXACTLY when the wave progress is saved.
             // This closes the loophole where players could spend a point mid-wave, force quit, and double-dip XP.
@@ -96,8 +128,9 @@ namespace Last_Hope.Systems
                 string json = File.ReadAllText(SaveFilePath);
                 return JsonSerializer.Deserialize<RunSaveData>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Failed to load run data or save is corrupted: {ex.Message}");
                 return null;
             }
         }

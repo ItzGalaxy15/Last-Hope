@@ -394,7 +394,8 @@ namespace Last_Hope.SkillTree
             }
 
             _pendingAllocations.Clear();
-            // Saving is now handled synchronously by RunSaveManager.SaveRun()
+            // Save both run and skill tree immediately to prevent state desync or exploit loops
+            global::Last_Hope.Systems.RunSaveManager.SaveRun(global::Last_Hope.Engine.GameManager.GetGameManager());
         }
 
         /// <summary>
@@ -435,8 +436,27 @@ namespace Last_Hope.SkillTree
     /// </summary>
     public static class SkillTreeSaveManager
     {
-        private const string SaveFile = "skilltree_save.json";
-        
+        private static string GetSaveDirectory()
+        {
+            // Dev requested to save in the Systems folder.
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
+            string systemsPath = Path.Combine(projectRoot, "Systems");
+            
+            // Fallback if we are not running from bin/Debug/...
+            if (!Directory.Exists(systemsPath))
+            {
+                systemsPath = Path.Combine(baseDir, "Systems");
+                if (!Directory.Exists(systemsPath))
+                {
+                    Directory.CreateDirectory(systemsPath);
+                }
+            }
+            return systemsPath;
+        }
+
+        private static string SaveFilePath => Path.Combine(GetSaveDirectory(), "skilltree_save.json");
+
         // Track the actively loaded state in memory for synchronized saving
         public static SkillTreeState CurrentState { get; set; }
 
@@ -446,8 +466,15 @@ namespace Last_Hope.SkillTree
         public static void Save(SkillTreeState state)
         {
             CurrentState = state;
-            string json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(SaveFile, json);
+            try
+            {
+                string json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(SaveFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to save skill tree: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -463,9 +490,16 @@ namespace Last_Hope.SkillTree
 
         public static void DeleteSave()
         {
-            if (File.Exists(SaveFile))
+            try
             {
-                File.Delete(SaveFile);
+                if (File.Exists(SaveFilePath))
+                {
+                    File.Delete(SaveFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to delete skill tree save: {ex.Message}");
             }
         }
 
@@ -476,11 +510,11 @@ namespace Last_Hope.SkillTree
         {
             var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-            if (File.Exists(SaveFile))
+            if (File.Exists(SaveFilePath))
             {
                 try
                 {
-                    string json = File.ReadAllText(SaveFile);
+                    string json = File.ReadAllText(SaveFilePath);
                     SkillTreeState? state = JsonSerializer.Deserialize<SkillTreeState>(json, jsonOptions);
                     if (state != null)
                     {
@@ -494,13 +528,21 @@ namespace Last_Hope.SkillTree
                         return state;
                     }
                 }
-                catch { /* fall through to fresh state */ }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to load skill tree save or save is corrupted: {ex.Message}");
+                    /* fall through to fresh state */ 
+                }
             }
 
             // Return default fresh state if no save exists. Starts with 0 points for testing.
-            var freshState = new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 0 };
-            CurrentState = freshState; // Track for sync saves
-            return freshState;
+            return new SkillTreeState
+            {
+                ClassId = classId,
+                AllocatedNodes = new Dictionary<string, int>(),
+                UnspentSkillPoints = 10,
+                TotalPointsSpent = 0
+            };
         }
     }
 }
