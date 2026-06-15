@@ -7,17 +7,10 @@ using Microsoft.Xna.Framework.Content;
 namespace LastHope.Audio;
 
 /// <summary>
-/// Looped background music via <see cref="SoundEffectInstance"/> (BGM assets are SoundEffects in the content pipeline).
+/// Looped main-menu background music via <see cref="SoundEffectInstance"/>.
 /// </summary>
 public static class BgmManager
 {
-    private enum BgmContext
-    {
-        None,
-        MainMenu,
-        Overworld,
-    }
-
     private static readonly string[] MainMenuTrackLabels = { "Snyth-1", "Flute", "Synth-2" };
     private static readonly string[] MainMenuTrackPaths =
     {
@@ -26,16 +19,12 @@ public static class BgmManager
         "sounds/bgm-synth-2",
     };
 
-    private const string OverworldTrackPath = "sounds/bgm-synth-1";
-
-    private static SoundEffect _overworldTrack;
     private static SoundEffect[] _mainMenuTracks = Array.Empty<SoundEffect>();
     private static SoundEffectInstance _instance;
-    private static BgmContext _activeContext = BgmContext.None;
+    private static bool _isMainMenuActive;
     private static int _mainMenuTrackIndex;
 
     public static float MainMenuBgmVolume { get; set; } = 0.3f;
-    public static float OverworldBgmVolume { get; set; } = 0.3f;
 
     public static string CurrentMainMenuTrackLabel =>
         MainMenuTrackLabels[Math.Clamp(_mainMenuTrackIndex, 0, MainMenuTrackLabels.Length - 1)];
@@ -45,50 +34,35 @@ public static class BgmManager
         _mainMenuTracks = new SoundEffect[MainMenuTrackPaths.Length];
         for (int i = 0; i < MainMenuTrackPaths.Length; i++)
             _mainMenuTracks[i] = content.Load<SoundEffect>(MainMenuTrackPaths[i]);
-
-        _overworldTrack = content.Load<SoundEffect>(OverworldTrackPath);
     }
 
     public static void OnGameStateChanged(GameState state)
     {
-        BgmContext wanted = ResolveContext(state);
+        bool wantMainMenu = IsMainMenuBgmState(state);
 
-        if (wanted == _activeContext)
+        if (wantMainMenu == _isMainMenuActive)
             return;
 
-        _activeContext = wanted;
+        _isMainMenuActive = wantMainMenu;
 
-        switch (wanted)
-        {
-            case BgmContext.MainMenu:
-                PlayMainMenu();
-                break;
-            case BgmContext.Overworld:
-                PlayOverworld();
-                break;
-            default:
-                Stop();
-                break;
-        }
+        if (wantMainMenu)
+            PlayMainMenu();
+        else
+            Stop();
     }
 
-    private static BgmContext ResolveContext(GameState state)
+    private static bool IsMainMenuBgmState(GameState state)
     {
-        if (state is GameState.Running or GameState.Paused)
-            return BgmContext.Overworld;
-
         if (state is GameState.MainMenu or GameState.Characters or GameState.CharacterSelect or GameState.ItemsIndex)
-            return BgmContext.MainMenu;
+            return true;
 
         if (state == GameState.SettingsMenu)
         {
             GameState returnState = GameManager.GetGameManager().StateAfterClosingSettings;
-            if (returnState is GameState.Running or GameState.Paused)
-                return BgmContext.Overworld;
-            return BgmContext.MainMenu;
+            return returnState is not (GameState.Running or GameState.Paused);
         }
 
-        return BgmContext.None;
+        return false;
     }
 
     public static void CycleMainMenuTrack()
@@ -97,7 +71,7 @@ public static class BgmManager
             return;
 
         _mainMenuTrackIndex = (_mainMenuTrackIndex + 1) % _mainMenuTracks.Length;
-        if (_activeContext == BgmContext.MainMenu)
+        if (_isMainMenuActive)
             PlaySound(_mainMenuTracks[_mainMenuTrackIndex]);
     }
 
@@ -106,22 +80,13 @@ public static class BgmManager
         if (_mainMenuTracks.Length == 0)
             return;
 
-        _activeContext = BgmContext.MainMenu;
+        _isMainMenuActive = true;
         PlaySound(_mainMenuTracks[_mainMenuTrackIndex]);
-    }
-
-    public static void PlayOverworld()
-    {
-        if (_overworldTrack == null)
-            return;
-
-        _activeContext = BgmContext.Overworld;
-        PlaySound(_overworldTrack);
     }
 
     public static void Stop()
     {
-        _activeContext = BgmContext.None;
+        _isMainMenuActive = false;
         _instance?.Stop();
         _instance?.Dispose();
         _instance = null;
@@ -132,7 +97,7 @@ public static class BgmManager
         if (_instance == null)
             return;
 
-        _instance.Volume = GetEffectiveVolume(_activeContext);
+        _instance.Volume = GetEffectiveVolume();
     }
 
     private static void PlaySound(SoundEffect sound)
@@ -145,19 +110,10 @@ public static class BgmManager
 
         _instance = sound.CreateInstance();
         _instance.IsLooped = true;
-        _instance.Volume = GetEffectiveVolume(_activeContext);
+        _instance.Volume = GetEffectiveVolume();
         _instance.Play();
     }
 
-    private static float GetEffectiveVolume(BgmContext context)
-    {
-        float contextVolume = context switch
-        {
-            BgmContext.MainMenu => MainMenuBgmVolume,
-            BgmContext.Overworld => OverworldBgmVolume,
-            _ => 0f,
-        };
-
-        return Math.Clamp(AudioManager.MasterVolume * AudioManager.MusicVolume * contextVolume, 0f, 1f);
-    }
+    private static float GetEffectiveVolume() =>
+        Math.Clamp(AudioManager.MasterVolume * AudioManager.MusicVolume * MainMenuBgmVolume, 0f, 1f);
 }
