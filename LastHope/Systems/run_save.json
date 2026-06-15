@@ -1,5 +1,5 @@
 {
-  "CurrentWave": 3,
+  "CurrentWave": 4,
   "CurrentZone": 0,
   "VillageCleared": false,
   "Score": 0,
@@ -7,14 +7,14 @@
   "BossSpawned": false,
   "HasUsedOneUp": false,
   "HasOneUpDropped": true,
-  "Level": 2,
-  "Experience": 24.000002,
-  "CurrentHp": 15,
-  "ExtraLives": 1,
+  "Level": 4,
+  "Experience": 49.00003,
+  "CurrentHp": 100.020004,
+  "ExtraLives": 0,
   "Inventory": [
-    0,
-    0
+    3,
+    1
   ],
-  "PositionX": 3469.5767,
-  "PositionY": 598.9114
+  "PositionX": 3354.133,
+  "PositionY": 818.3712
 }
