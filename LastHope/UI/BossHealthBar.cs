@@ -9,6 +9,12 @@ namespace Last_Hope.UI;
 
 public class BossHealthBar : UIElement
 {
+    private const int BottomMargin = 28;
+    private const int BarHeight = 18;
+    private const float BarWidthViewportRatio = 0.58f;
+    private const int MinBarWidth = 280;
+    private const int MaxBarWidth = 620;
+
     private readonly Texture2D? _pixel;
     private Texture2D? _fallbackPixel;
     private BaseEnemy? _activeBoss;
@@ -24,13 +30,11 @@ public class BossHealthBar : UIElement
     {
         _activeBoss = FindActiveBoss();
 
-        const int bottomMargin = 28;
-        const int barHeight = 18;
-        int barWidth = Math.Clamp((int)(viewport.Width * 0.58f), 280, 620);
+        int barWidth = Math.Clamp((int)(viewport.Width * BarWidthViewportRatio), MinBarWidth, MaxBarWidth);
         int x = (viewport.Width - barWidth) / 2;
-        int y = viewport.Height - bottomMargin - barHeight;
+        int y = viewport.Height - BottomMargin - BarHeight;
 
-        _frameRect = new Rectangle(x, y, barWidth, barHeight);
+        _frameRect = new Rectangle(x, y, barWidth, BarHeight);
 
         float progress = 0f;
         if (_activeBoss is not null && _activeBoss.CurrentMaxHp > 0f)

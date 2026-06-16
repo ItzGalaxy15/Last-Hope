@@ -135,7 +135,7 @@ public class EnemySpawner
             if (!gm.VillageCleared)
             {
                 gm.VillageCleared = true;
-                global::Last_Hope.Systems.RunSaveManager.SaveRun(gm);
+                Systems.RunSaveManager.SaveRun(gm);
             }
             return;
         }
@@ -148,9 +148,7 @@ public class EnemySpawner
                 {
                     if (gm.CurrentZone == Zone.Village)
                     {
-                        if (!gm.VillageCleared) { gm.VillageCleared = true; global::Last_Hope.Systems.RunSaveManager.SaveRun(gm); }
-                        // Idle until player crosses west, which flips CurrentZone to Forest and resets us.
-                    }
+                        if (!gm.VillageCleared) { gm.VillageCleared = true; Systems.RunSaveManager.SaveRun(gm); }                    }
                     else
                     {
                         gm._state = GameState.Winner;
@@ -165,7 +163,7 @@ public class EnemySpawner
                     waveWaitTimer = 0f;
                     currentWave++;
                     spawnedThisWave = 0;
-                    global::Last_Hope.Systems.RunSaveManager.SaveRun(gm);
+                    Systems.RunSaveManager.SaveRun(gm);
                 }
             }
             return;
