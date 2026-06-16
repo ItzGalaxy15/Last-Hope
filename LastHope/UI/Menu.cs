@@ -7,11 +7,14 @@ using Last_Hope.SkillTree;
 namespace Last_Hope.UI;
 
 /// <summary>
-/// Facade for all full-screen menu states and the in-run skill tree overlay. Each method pair is invoked from
-/// <see cref="GameManager"/> based on <see cref="GameState"/> (e.g. <see cref="GameState.MainMenu"/> →
-/// <see cref="UpdateMainMenu"/> / <see cref="DrawMainMenu"/>). Gum-backed hubs call <see cref="ReleaseMainMenuGum"/> /
-/// <see cref="ReleasePausedMenuGum"/> when leaving those states.
+/// Facade for all full-screen menu states and the in-run skill tree overlay. 
+/// Each method pair is invoked from <see cref="GameManager"/> based on <see cref="GameState"/>.
 /// </summary>
+/// <remarks>
+/// This class acts as a State Machine manager for the UI layer. 
+/// For information on State design patterns in C#, see: 
+/// <see href="https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/">Microsoft Framework Design Guidelines</see>.
+/// </remarks>
 public class Menu
 {
     private readonly MainMenuScreen _mainMenu = new();
@@ -30,21 +33,41 @@ public class Menu
     private StatScreenOverlay _statScreen;
     private bool _showStatScreen;
 
+    /// <summary>
+    /// Ensures the stat screen overlay is instantiated before use, following the Lazy Initialization pattern.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://learn.microsoft.com/en-us/dotnet/framework/performance/lazy-initialization">Microsoft Lazy Initialization</see>
+    /// </remarks>
     private void EnsureStatScreen()
     {
         if (_statScreen == null)
             _statScreen = new StatScreenOverlay(GameManager.GetGameManager().Pixel);
     }
 
+    /// <summary>
+    /// Updates the main menu logic based on elapsed game time.
+    /// </summary>
+    /// <param name="gameTime">Snapshot of timing values. <see href="https://docs.monogame.net/api/Microsoft.Xna.Framework.GameTime.html">MonoGame GameTime</see></param>
     public void UpdateMainMenu(GameTime gameTime) => _mainMenu.Update(gameTime);
 
+    /// <summary>
+    /// Draws the main menu to the active graphics device.
+    /// </summary>
+    /// <param name="gameTime">Snapshot of timing values.</param>
+    /// <param name="spriteBatch">Used to draw 2D textures. <see href="https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html">MonoGame SpriteBatch</see></param>
+    /// <param name="transformMatrix">Optional camera matrix.</param>
     public void DrawMainMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
         _mainMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
-    /// <summary>Removes Gum controls when leaving the title hub so they do not stay interactive.</summary>
+    /// <summary>
+    /// Removes Gum controls when leaving the title hub so they do not stay interactive and consume memory or input events.
+    /// </summary>
     public void ReleaseMainMenuGum() => _mainMenu.ReleaseGumUi();
 
-    /// <summary>Removes pause Gum buttons when resuming or changing state away from <see cref="GameState.Paused"/>.</summary>
+    /// <summary>
+    /// Removes pause Gum buttons when resuming or changing state away from Paused status.
+    /// </summary>
     public void ReleasePausedMenuGum() => _pausedMenu.ReleaseGumUi();
 
     public void UpdateCharactersRosterMenu(GameTime gameTime) => _charactersRosterMenu.Update(gameTime);
@@ -82,7 +105,9 @@ public class Menu
     public void DrawGameOverMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null) =>
         _gameOverMenu.Draw(gameTime, spriteBatch, transformMatrix);
 
-    /// <summary>Running gameplay update, or skill tree UI when the overlay is open (toggle: N).</summary>
+    /// <summary>
+    /// Core gameplay UI update loop. Handles toggling of the Skill Tree and Stat Screen overlays.
+    /// </summary>
     public void UpdateRunningMenu(GameTime gameTime)
     {
         GameManager gm = GameManager.GetGameManager();
@@ -116,7 +141,7 @@ public class Menu
                         _skillTreeCanvas = SkillTreeOverlayFactory.CreateArcherOverlay(gm, vp);
                         break;
                     default:
-                        _showSkillTree = false; // no overlay for other classes
+                        _showSkillTree = false;
                         break;
                 }
             }
@@ -138,6 +163,9 @@ public class Menu
         }
     }
 
+    /// <summary>
+    /// Instantiates the skill tree backend silently to ensure event hooks function correctly during run continuation.
+    /// </summary>
     public void LoadSkillTreeSilently()
     {
         if (_skillTreeCanvas == null)
@@ -159,6 +187,9 @@ public class Menu
         }
     }
 
+    /// <summary>
+    /// Forces the skill tree UI open, typically triggered by an external event like leveling up.
+    /// </summary>
     public void ForceOpenSkillTree()
     {
         if (!_showSkillTree)
@@ -168,53 +199,63 @@ public class Menu
                 ? gm.Game.GraphicsDevice.Viewport
                 : new Viewport(0, 0, GameManager.WorldWidth, GameManager.WorldHeight);
 
-            switch (gm._player)
+            if (_skillTreeCanvas == null)
             {
-                case Warrior:
-                    _skillTreeCanvas = SkillTreeOverlayFactory.CreateWarriorOverlay(gm, vp);
-                    _showSkillTree = true;
-                    break;
-                case Archer:
-                    _skillTreeCanvas = SkillTreeOverlayFactory.CreateArcherOverlay(gm, vp);
-                    _showSkillTree = true;
-                    break;
+                switch (gm._player)
+                {
+                    case Warrior:
+                        _skillTreeCanvas = SkillTreeOverlayFactory.CreateWarriorOverlay(gm, vp);
+                        break;
+                    case Archer:
+                        _skillTreeCanvas = SkillTreeOverlayFactory.CreateArcherOverlay(gm, vp);
+                        break;
+                }
             }
+            _showSkillTree = true;
         }
     }
 
+    /// <summary>
+    /// Awards a talent point by updating the central save state directly to prevent desynchronization, 
+    /// then updates the UI if the Canvas is instantiated.
+    /// </summary>
+    /// <remarks>
+    /// Centralized State Management prevents race conditions and data loss during Application Domain exits.
+    /// <see href="https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-application-layer-implementation-web-api">Microsoft Application State Management</see>
+    /// </remarks>
     public void AwardTalentPoint()
     {
+        // The canvas's tree shares the same SkillTreeState object as CurrentState,
+        // so incrementing both would award two points. Add exactly one.
         if (_skillTreeCanvas != null)
         {
             _skillTreeCanvas.AddTalentPoint();
         }
-        else
+        else if (SkillTreeSaveManager.CurrentState != null)
         {
-            // Canvas not yet opened this run, write directly to the save file so the
-            // point is there when the player opens the skill tree later.
-            GameManager gm = GameManager.GetGameManager();
-            string classId = gm._player switch
-            {
-                Warrior => "Warrior",
-                Archer  => "Archer",
-                _       => null
-            };
-            if (classId == null) return;
-            SkillTreeState state = SkillTreeSaveManager.Load(classId);
-            state.UnspentSkillPoints++;
-            SkillTreeSaveManager.Save(state);
+            SkillTreeSaveManager.CurrentState.UnspentSkillPoints++;
         }
+
+        SkillTreeSaveManager.SaveCurrent();
 
         GameManager.GetGameManager().RequestToast("Talent Point Earned!");
     }
 
+    /// <summary>
+    /// Clears UI references to allow the Garbage Collector to reclaim memory when the skill tree resets.
+    /// </summary>
     public void ResetSkillTree()
     {
         _skillTreeCanvas = null;
         _showSkillTree = false;
     }
 
-    /// <summary>World draw plus optional full-screen skill tree overlay on top.</summary>
+    /// <summary>
+    /// Renders the running menu, drawing overlays sequentially on top of the world space.
+    /// </summary>
+    /// <param name="gameTime">Snapshot of timing values.</param>
+    /// <param name="spriteBatch">Used to draw 2D textures.</param>
+    /// <param name="transformMatrix">Optional camera matrix.</param>
     public void DrawRunningMenu(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         _runningMenu.Draw(gameTime, spriteBatch, transformMatrix);
