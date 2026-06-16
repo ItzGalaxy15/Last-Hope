@@ -16,6 +16,7 @@ public class Last_Hope : Game
 {
     private const int MapWidthInTiles = 150;
     private const int MapHeightInTiles = 100;
+    private float _forestPromptTimer;
     public GraphicsDeviceManager Graphics { get; }
 
     private InputManager _inputManager;
@@ -188,6 +189,11 @@ public class Last_Hope : Game
         if (ShouldShowHud(_gameManager._state))
             _hud?.Update(gameTime, GraphicsDevice.Viewport);
 
+        if (ShouldShowForestDirectionPrompt())
+            _forestPromptTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        else
+            _forestPromptTimer = 0f;
+
         base.Update(gameTime);
     }
     // idea for drawing player behind trees (Y-sorting) = https://eliasdaler.wordpress.com/2013/11/20/z-order-in-top-down-2d-games/
@@ -235,6 +241,7 @@ public class Last_Hope : Game
         {
             _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             _hud?.Draw(gameTime, _spriteBatch);
+            DrawForestDirectionPrompt(_spriteBatch);
             _spriteBatch.End();
         }
 
@@ -243,4 +250,95 @@ public class Last_Hope : Game
 
     private static bool ShouldShowHud(GameState state) =>
         state is GameState.Running or GameState.Paused;
+
+    private bool ShouldShowForestDirectionPrompt() =>
+        _gameManager._state == GameState.Running &&
+        _gameManager.CurrentZone == Zone.Village &&
+        _gameManager.VillageCleared &&
+        _gameManager.ForestBoundaryX > 0f;
+
+    private void DrawForestDirectionPrompt(SpriteBatch spriteBatch)
+    {
+        if (!ShouldShowForestDirectionPrompt() || _gameManager._font == null)
+            return;
+
+        Viewport viewport = GraphicsDevice.Viewport;
+        float pulse = 0.72f + (float)Math.Sin(_forestPromptTimer * MathHelper.TwoPi * 0.85f) * 0.18f;
+        float bob = (float)Math.Sin(_forestPromptTimer * MathHelper.TwoPi * 1.1f) * 8f;
+        int alpha = (int)MathHelper.Clamp(255f * pulse, 120f, 255f);
+
+        Color arrowColor = new Color(255, 236, 145, alpha);
+        Color arrowShadow = new Color(0, 0, 0, Math.Min(alpha, 190));
+        Color textColor = new Color(255, 245, 210, alpha);
+        Color textShadow = new Color(0, 0, 0, Math.Min(alpha, 220));
+
+        float arrowLength = MathHelper.Clamp(viewport.Width * 0.16f, 140f, 260f);
+        float headLength = MathHelper.Clamp(viewport.Width * 0.055f, 48f, 86f);
+        float headHeight = headLength * 0.68f;
+        float thickness = MathHelper.Clamp(viewport.Width * 0.01f, 10f, 18f);
+
+        Vector2 center = new Vector2(
+            viewport.Width * 0.5f + bob,
+            viewport.Height * 0.42f);
+
+        Rectangle panel = new Rectangle(
+            (int)(center.X - arrowLength * 0.65f),
+            (int)(center.Y - headHeight - 24f),
+            (int)(arrowLength * 1.3f),
+            (int)(headHeight * 2f + 96f));
+        spriteBatch.Draw(_gameManager.Pixel, panel, new Color(0, 0, 0, 120));
+
+        Vector2 leftTip = center - new Vector2(arrowLength * 0.5f, 0f);
+        Vector2 rightEnd = center + new Vector2(arrowLength * 0.5f, 0f);
+        Vector2 shaftStart = leftTip + new Vector2(headLength * 0.6f, 0f);
+
+        DrawPromptArrow(spriteBatch, shaftStart + new Vector2(3f, 3f), rightEnd + new Vector2(3f, 3f),
+            leftTip + new Vector2(3f, 3f), headLength, headHeight, thickness + 3f, arrowShadow);
+        DrawPromptArrow(spriteBatch, shaftStart, rightEnd, leftTip, headLength, headHeight, thickness, arrowColor);
+
+        const string promptText = "Go left";
+        float textScale = MathHelper.Clamp(viewport.Width / 1920f * 0.85f, 0.6f, 0.9f);
+        Vector2 textSize = _gameManager._font.MeasureString(promptText) * textScale;
+        Vector2 textPos = new Vector2(
+            center.X - textSize.X * 0.5f,
+            center.Y + headHeight + 18f);
+
+        spriteBatch.DrawString(_gameManager._font, promptText, textPos + new Vector2(3f, 3f), textShadow, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_gameManager._font, promptText, textPos, textColor, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+    }
+
+    private void DrawPromptArrow(
+        SpriteBatch spriteBatch,
+        Vector2 shaftStart,
+        Vector2 shaftEnd,
+        Vector2 leftTip,
+        float headLength,
+        float headHeight,
+        float thickness,
+        Color color)
+    {
+        DrawPromptLine(spriteBatch, shaftStart, shaftEnd, thickness, color);
+        DrawPromptLine(spriteBatch, leftTip, leftTip + new Vector2(headLength, -headHeight), thickness, color);
+        DrawPromptLine(spriteBatch, leftTip, leftTip + new Vector2(headLength, headHeight), thickness, color);
+    }
+
+    private void DrawPromptLine(SpriteBatch spriteBatch, Vector2 start, Vector2 end, float thickness, Color color)
+    {
+        Vector2 delta = end - start;
+        float length = delta.Length();
+        if (length <= 0f)
+            return;
+
+        float rotation = (float)Math.Atan2(delta.Y, delta.X);
+        spriteBatch.Draw(
+            _gameManager.Pixel,
+            start,
+            null,
+            color,
+            rotation,
+            new Vector2(0f, 0.5f),
+            new Vector2(length, thickness),
+            SpriteEffects.None,
+            0f);
+    }
 }
