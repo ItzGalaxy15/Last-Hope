@@ -225,16 +225,18 @@ public class Menu
     /// </remarks>
     public void AwardTalentPoint()
     {
-        if (SkillTreeSaveManager.CurrentState != null)
-        {
-            SkillTreeSaveManager.CurrentState.UnspentSkillPoints++;
-            SkillTreeSaveManager.SaveCurrent(); 
-        }
-
+        // The canvas's tree shares the same SkillTreeState object as CurrentState,
+        // so incrementing both would award two points. Add exactly one.
         if (_skillTreeCanvas != null)
         {
             _skillTreeCanvas.AddTalentPoint();
         }
+        else if (SkillTreeSaveManager.CurrentState != null)
+        {
+            SkillTreeSaveManager.CurrentState.UnspentSkillPoints++;
+        }
+
+        SkillTreeSaveManager.SaveCurrent();
 
         GameManager.GetGameManager().RequestToast("Talent Point Earned!");
     }
