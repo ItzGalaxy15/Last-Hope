@@ -36,7 +36,7 @@ public abstract class GameObject
     /// <summary>The base duration, in seconds, for the damage visual feedback.</summary>
     protected const float HurtFlashDurationSeconds = 0.12f;
     
-    /// <summary>The color applied when the object takes damage.</summary>
+    /// <summary>The color applied when the object takes damage. lerp is a for a smooth blend.</summary>
     protected static readonly Color HurtFlashColor = Color.Lerp(Color.White, Color.Red, 0.35f);
     
     private float _hurtFlashTimer;

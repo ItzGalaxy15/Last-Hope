@@ -3,9 +3,12 @@ using Last_Hope.BaseModel;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-// http://www.xnadevelopment.com/tutorials/notsohealthy/NotSoHealthy.shtml took inspiration but made my own.
 namespace Last_Hope.UI;
-
+/// <summary>
+/// looked in to drawing rectangles in monogame and found this thread: https://community.monogame.net/t/solved-question-drawing-rectangles-and-when-to-call-dispose/13606
+/// also took inspiration from: http://www.xnadevelopment.com/tutorials/notsohealthy/NotSoHealthy.shtml
+/// mostly made bymyself though, and I think it turned out pretty good!
+/// </summary>
 public class ExperienceBar : UIElement
 {
 	private readonly BasePlayer? _player;
