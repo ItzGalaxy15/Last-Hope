@@ -8,6 +8,8 @@ using Last_Hope.Classes.Camera;
 using Last_Hope.Classes.Items;
 using Last_Hope.Collision;
 using Last_Hope.Engine.Pathfinding;
+using Last_Hope.SkillTree;
+using Last_Hope.Systems;
 using Last_Hope.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -487,7 +489,7 @@ public class GameManager
     /// </summary>
     public void LoadRun()
     {
-        var data = global::Last_Hope.Systems.RunSaveManager.LoadRunData();
+        var data = RunSaveManager.LoadRunData();
         if (data == null)
         {
             ResetGame(false);
@@ -507,6 +509,11 @@ public class GameManager
         EnemySpawner.LoadWaveState(data.CurrentWave, data.BossSpawned);
 
         _player.LoadLevelAndExperienceSilently(data.Level, data.Experience);
+
+        // Snap unspent talent points back to what the loaded level grants, so points
+        // earned past the last checkpoint (and not saved with the run) don't persist.
+        SkillTreeSaveManager.ReconcileUnspentPoints(data.Level);
+
         _player._currentHp = data.CurrentHp;
         _player.ExtraLives = data.ExtraLives;
         if (data.Inventory != null)
@@ -518,9 +525,9 @@ public class GameManager
 
     public void ResetGame(bool isLoadingRun = false)
     {
-        if (!isLoadingRun && !global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (!isLoadingRun && !SkillTreeConfig.PersistSkillTreeOnDeath)
         {
-            global::Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
+            SkillTreeSaveManager.DeleteSave();
         }
         _gameObjects.Clear();
         _toBeAdded.Clear();
@@ -544,7 +551,7 @@ public class GameManager
         _player.OnTalentPointEarned += Menu.AwardTalentPoint;
         AddGameObject(_player);
 
-        if (isLoadingRun || global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (isLoadingRun || SkillTreeConfig.PersistSkillTreeOnDeath)
         {
             Menu.LoadSkillTreeSilently();
         }

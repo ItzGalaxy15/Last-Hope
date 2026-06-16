@@ -448,6 +448,26 @@ namespace Last_Hope.SkillTree
 
         public static SkillTreeState CurrentState { get; set; }
 
+        // Points granted at character creation, and how many levels earn one talent point.
+        // Must match the fresh-state grant below and BasePlayer.TalentPointInterval.
+        public const int InitialSkillPoints = 10;
+        public const int LevelsPerSkillPoint = 5;
+
+        /// <summary>
+        /// Recomputes unspent points from the authoritative level so a rolled-back run
+        /// (quitting before a checkpoint) cannot keep points earned past that checkpoint.
+        /// Prevents farming infinite points by leveling, quitting, and continuing.
+        /// </summary>
+        public static void ReconcileUnspentPoints(int level)
+        {
+            if (CurrentState == null) return;
+
+            int earned = InitialSkillPoints + (level / LevelsPerSkillPoint);
+            int unspent = earned - CurrentState.TotalPointsSpent;
+            CurrentState.UnspentSkillPoints = unspent < 0 ? 0 : unspent;
+            SaveCurrent();
+        }
+
         /// <summary>
         /// Saves the given skill tree state to a JSON file.
         /// </summary>
@@ -529,7 +549,7 @@ namespace Last_Hope.SkillTree
             {
                 ClassId = classId,
                 AllocatedNodes = new Dictionary<string, int>(),
-                UnspentSkillPoints = 10,
+                UnspentSkillPoints = InitialSkillPoints,
                 TotalPointsSpent = 0
             };
             CurrentState = freshState;
