@@ -281,13 +281,6 @@ public class Last_Hope : Game
             viewport.Width * 0.5f + bob,
             viewport.Height * 0.34f);
 
-        Rectangle panel = new Rectangle(
-            (int)(center.X - arrowLength * 0.62f),
-            (int)(center.Y - headHeight - 14f),
-            (int)(arrowLength * 1.24f),
-            (int)(headHeight * 2f + 54f));
-        spriteBatch.Draw(_gameManager.Pixel, panel, new Color(0, 0, 0, 55));
-
         Vector2 leftTip = center - new Vector2(arrowLength * 0.5f, 0f);
         Vector2 rightEnd = center + new Vector2(arrowLength * 0.5f, 0f);
         Vector2 shaftStart = leftTip + new Vector2(headLength * 0.6f, 0f);
