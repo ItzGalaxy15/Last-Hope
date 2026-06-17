@@ -6,6 +6,10 @@ using Last_Hope.Classes.Items;
 
 namespace Last_Hope.Systems
 {
+    /// <summary>
+    /// Data container structure holding all serializable states for a single gameplay run.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/classes
+    /// </summary>
     public class RunSaveData
     {
         public int CurrentWave { get; set; }
@@ -25,18 +29,29 @@ namespace Last_Hope.Systems
         public ItemType[] Inventory { get; set; }
         public float PositionX { get; set; }
         public float PositionY { get; set; }
-        
     }
 
+    /// <summary>
+    /// Static manager handling persistent run save file logic and skill tree synchronization.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/static
+    /// </summary>
     public static class RunSaveManager
     {
         private static readonly string SaveFilePath = Path.Combine(AppContext.BaseDirectory, "run_save.json");
 
+        /// <summary>
+        /// Checks whether a valid run save file exists on the local disk.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.io.file.exists
+        /// </summary>
         public static bool HasSave()
         {
             return File.Exists(SaveFilePath);
         }
 
+        /// <summary>
+        /// Deletes the active run save file and enforces skill tree wipe configuration rules on death.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.io.file.delete
+        /// </summary>
         public static void DeleteSave()
         {
             if (File.Exists(SaveFilePath))
@@ -52,6 +67,10 @@ namespace Last_Hope.Systems
             }
         }
 
+        /// <summary>
+        /// Serializes the full operational run context and executes a synchronized skill tree save pass.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/how-to
+        /// </summary>
         public static void SaveRun(GameManager gm)
         {
             if (gm._player == null) return;
@@ -76,17 +95,20 @@ namespace Last_Hope.Systems
                 
                 PositionX = gm._player.GetPosition().X,
                 PositionY = gm._player.GetPosition().Y,
-                
             };
 
             string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(SaveFilePath, json);
             
-            // SYNCHRONIZED SAVE: Write the skill tree to disk EXACTLY when the wave progress is saved.
+            // Synchronized save: write the skill tree to disk exactly when the wave progress is saved.
             // This closes the loophole where players could spend a point mid-wave, force quit, and double-dip XP.
             global::Last_Hope.SkillTree.SkillTreeSaveManager.SaveCurrent();
         }
 
+        /// <summary>
+        /// Deserializes local json records to reconstruct a cached run data model.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.io.file.readalltext
+        /// </summary>
         public static RunSaveData LoadRunData()
         {
             if (!HasSave()) return null;
