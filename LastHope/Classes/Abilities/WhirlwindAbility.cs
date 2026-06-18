@@ -5,12 +5,21 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Abilities;
 
+/// <summary>
+/// Warrior ability that forces a sustained spinning state, triggering rapid radial slashes over time.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/override
+/// </summary>
 public class WhirlwindAbility : BaseAbility
 {
     private float _durationTimer;
     private float _tickTimer;
     private const float Duration = 2.0f;
     private const float TickInterval = 0.15f;
+
+    /// <summary>
+    /// Calculates the normalized progress of the ability's cooldown.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
+    /// </summary>
     public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
 
     public WhirlwindAbility() : base(8.0f) { }

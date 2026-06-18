@@ -6,11 +6,20 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Abilities;
 
+/// <summary>
+/// Warrior ability that executes a high-damage frontal cleave attack with a stun effect.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+/// </summary>
 public class AxeSlamAbility : BaseAbility
 {
     private const float DamageMultiplier = 3.0f;
     private const float Range = 330f;
     private const float StunDuration = 1.0f;
+
+    /// <summary>
+    /// Calculates the normalized progress of the ability's cooldown.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
+    /// </summary>
     public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
 
     public AxeSlamAbility() : base(8.0f) { }
