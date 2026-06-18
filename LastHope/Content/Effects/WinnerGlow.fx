@@ -30,6 +30,9 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 	// Only apply the fade to visible pixels so the transparent pixels are skipped.
 	if (color.a > 0)
 	{
+		// Uses distance + smoothstep for a soft center glow/vignette.
+		// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-distance
+		// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-smoothstep
 		float2 uv = input.TextureCoordinates;
 		float dist = distance(uv, float2(0.5, 0.5));
 		float vignette = smoothstep(0.95, 0.25, dist);
