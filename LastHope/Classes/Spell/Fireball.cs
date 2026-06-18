@@ -8,6 +8,10 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Spell;
 
+/// <summary>
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.GameTime.html
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+/// </summary>
 public class Fireball : GameObject
 {
     private RectangleCollider _collider;

@@ -9,6 +9,10 @@ using System.Collections.Generic;
 
 namespace Last_Hope.Classes.Weapon
 {
+    /// <summary>
+    /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.atan2
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+    /// </summary>
     internal class Slash : GameObject
     {
         private Collider collider;

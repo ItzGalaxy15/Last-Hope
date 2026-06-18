@@ -13,6 +13,8 @@ namespace Last_Hope.UI.Menus;
 /// Shared helpers for full-screen and hub menus: fonts, keybind/control reference drawing, item index text,
 /// hub backdrop, and end-game overlays. Concrete screens inherit this and implement their own
 /// <c>Update</c>/<c>Draw</c>; routing is via <see cref="Last_Hope.UI.Menu"/> and <see cref="GameManager"/>.
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Color.html
 /// </summary>
 public abstract class MenuBase
 {

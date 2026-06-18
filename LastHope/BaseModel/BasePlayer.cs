@@ -166,6 +166,7 @@ public abstract class BasePlayer : GameObject
     public event Action OnTalentPointEarned;
 
     // UI bar properties
+    // Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
     public float DashCooldownProgress => MathHelper.Clamp(_dashCooldown / DashCooldown, 0f, 1f);
     public float TeleportCooldownProgress => MathHelper.Clamp(_teleportCooldown / TeleportCooldownDuration, 0f, 1f);
 
@@ -550,6 +551,8 @@ public abstract class BasePlayer : GameObject
         GameManager.GetGameManager()._state = GameState.GameOver;
     }
 
+    // Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.atan2
+    // Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
     protected void DrawAimArrow(SpriteBatch spriteBatch)
     {
         if (AimArrowSprite == null)

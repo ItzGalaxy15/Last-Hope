@@ -5,6 +5,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.UI;
 
+/// <summary>
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+/// </summary>
 public class AbilityCooldownIcon : UIElement
 {
     private readonly Texture2D _icon;
