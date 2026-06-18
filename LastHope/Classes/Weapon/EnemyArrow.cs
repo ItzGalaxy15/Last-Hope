@@ -61,7 +61,6 @@ namespace Last_Hope.Classes.Weapon
 
             // var testCollider = new RectangleCollider(nextRect);
 
-            // // 🧱 BLOCKED BY WORLD
             // if (CollisionWorld.CollidesWithStatic(testCollider))
             // {
             //     GameManager.GetGameManager().RemoveGameObject(this);

@@ -230,9 +230,7 @@ public class GameManager
     }
 
     /// <summary>
-    /// Performs an O(N^2) pair iteration with an AABB broad-phase pre-cull so that
-    /// the expensive narrow-phase intersection test only runs on pairs whose bounding
-    /// boxes actually overlap.
+    /// Performs an O(N^2)
     /// </summary>
     public void CheckCollision()
     {

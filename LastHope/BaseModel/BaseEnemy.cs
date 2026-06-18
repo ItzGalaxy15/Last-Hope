@@ -128,7 +128,7 @@ public abstract class BaseEnemy : GameObject
             StunTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (StunTimer < 0f) StunTimer = 0f;
             
-            // 1 Clean Place: Centralized Stun Freeze. Skips all enemy logic while stunned.
+            // Centralized Stun Freeze. Skips all enemy logic while stunned.
             return;
         }
         else if (!EnableStuns)

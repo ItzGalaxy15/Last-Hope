@@ -379,7 +379,7 @@ public class Archer : BasePlayer
                 break;
             case "unlock_giant_arrow":
                 ActiveAbility = new GiantArrowAbility();
-                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
+                ActiveAbility.Load(GameManager.GetGameManager()._content);
                 break;
             case "unlock_poison_arrows":
                 ((Bow)_Weapon).poisonArrows = true;
@@ -397,7 +397,7 @@ public class Archer : BasePlayer
                 break;
             case "unlock_arrow_storm":
                 ActiveAbility = new ArrowStormAbility();
-                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
+                ActiveAbility.Load(GameManager.GetGameManager()._content);
                 break;
             case "unlock_explosive_arrows":
                 ((Bow)_Weapon).explosiveArrows = true;
@@ -416,7 +416,7 @@ public class Archer : BasePlayer
                 break;
             case "unlock_arrow_rain":
                 ActiveAbility = new ArrowRainAbility();
-                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
+                ActiveAbility.Load(GameManager.GetGameManager()._content);
                 break;
         }
         UpdateStats();
