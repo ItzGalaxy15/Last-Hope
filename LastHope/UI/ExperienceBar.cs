@@ -3,7 +3,10 @@ using Last_Hope.BaseModel;
 using Last_Hope.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-// http://www.xnadevelopment.com/tutorials/notsohealthy/NotSoHealthy.shtml took inspiration but made my own.
+/// <summary>
+/// looked in to drawing rectangles in monogame and found this thread: https://community.monogame.net/t/solved-question-drawing-rectangles-and-when-to-call-dispose/13606
+/// also took inspiration from: http://www.xnadevelopment.com/tutorials/notsohealthy/NotSoHealthy.shtml
+/// </summary>
 // Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Color.html
 // Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
 namespace Last_Hope.UI;
