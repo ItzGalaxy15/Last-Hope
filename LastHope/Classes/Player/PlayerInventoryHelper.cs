@@ -5,6 +5,7 @@ namespace Last_Hope;
 
 /// <summary>
 /// Hotbar / pickup helpers: any <see cref="BasePlayer"/> with <see cref="BasePlayer.Inventory"/> set is included automatically.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/static-classes-and-static-class-members
 /// </summary>
 internal static class PlayerInventoryHelper
 {
