@@ -384,7 +384,7 @@ namespace Last_Hope.SkillTree
             }
 
             _pendingAllocations.Clear();
-            global::Last_Hope.Systems.RunSaveManager.SaveRun(global::Last_Hope.Engine.GameManager.GetGameManager());
+            Systems.RunSaveManager.SaveRun(Engine.GameManager.GetGameManager());
         }
 
         /// <summary>
