@@ -95,6 +95,9 @@ public class Explosion : GameObject
         base.Draw(gameTime, spriteBatch);
     }
 
+    // Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
+    // Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.atan2
+    // Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
     private static void DrawHitbox(SpriteBatch spriteBatch, Vector2 center, float radius, Color color)
     {
         Texture2D pixel = GameManager.GetGameManager().Pixel;

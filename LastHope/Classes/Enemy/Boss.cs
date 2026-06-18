@@ -105,6 +105,8 @@ public class Boss : BaseEnemy
 
     /// <summary>
     /// Updates the logic and behavior of the boss each frame, including attacking and pathfinding.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.GameTime.html
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Vector2.html
     /// </summary>
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void UpdateBehavior(GameTime gameTime)
@@ -208,6 +210,7 @@ public class Boss : BaseEnemy
 
     /// <summary>
     /// Draws the boss to the screen, handling sprite sheets and animations.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
     /// </summary>
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     /// <param name="spriteBatch">The SpriteBatch used to draw the texture.</param>

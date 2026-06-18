@@ -170,6 +170,7 @@ public class Orc : BaseEnemy
         }
     }
 
+    // Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         Vector2 center = _precisePosition + new Vector2(FullSize / 2f);

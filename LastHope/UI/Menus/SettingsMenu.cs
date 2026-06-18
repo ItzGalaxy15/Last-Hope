@@ -8,6 +8,10 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 namespace Last_Hope.UI.Menus;
 
+/// <summary>
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+/// </summary>
 public sealed class SettingsMenu : MenuBase
 {
     private enum SettingsTab

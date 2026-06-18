@@ -5,6 +5,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.UI;
 
+// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
 public class StatScreenOverlay
 {
     private readonly Texture2D _pixel;

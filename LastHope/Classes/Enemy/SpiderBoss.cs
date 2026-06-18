@@ -10,6 +10,11 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope;
 
+/// <summary>
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.GameTime.html
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Vector2.html
+/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+/// </summary>
 public class SpiderBoss : BaseEnemy
 {
     private const float SpriteScale = 2f;
