@@ -20,7 +20,6 @@ public enum KeybindId
     /// <summary>Primary weapon input (default: left mouse button).</summary>
     Attack,
     Ability1,
-    Ability2,
     ItemSlot1,
     ItemSlot2,
     PlaceItem,
@@ -259,7 +258,6 @@ public static class KeybindStore
         KeybindId.Teleport => "Teleport",
         KeybindId.Attack => "Attack",
         KeybindId.Ability1 => "Ability 1",
-        KeybindId.Ability2 => "Ability 2",
         KeybindId.ItemSlot1 => "Item slot 1",
         KeybindId.ItemSlot2 => "Item slot 2",
         KeybindId.PlaceItem => "Place Item (at feet)",
