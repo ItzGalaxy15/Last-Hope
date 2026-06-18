@@ -8,7 +8,7 @@ namespace Last_Hope.Systems
 {
     /// <summary>
     /// Data container structure holding all serializable states for a single gameplay run.
-    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/classes
+    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes
     /// </summary>
     public class RunSaveData
     {
@@ -33,7 +33,6 @@ namespace Last_Hope.Systems
 
     /// <summary>
     /// Static manager handling persistent run save file logic and skill tree synchronization.
-    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/static
     /// </summary>
     public static class RunSaveManager
     {
@@ -69,7 +68,7 @@ namespace Last_Hope.Systems
 
         /// <summary>
         /// Serializes the full operational run context and executes a synchronized skill tree save pass.
-        /// Source: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/how-to
+        /// Source: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/serialization
         /// </summary>
         public static void SaveRun(GameManager gm)
         {

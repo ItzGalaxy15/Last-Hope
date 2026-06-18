@@ -7,7 +7,6 @@ namespace Last_Hope.Systems.ItemSystem;
 
 /// <summary>
 /// System handling placement, throwing logic, and instant utilization of inventory items.
-/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/static
 /// </summary>
 public static class ItemSystem
 {
@@ -105,7 +104,6 @@ public static class ItemSystem
 
     /// <summary>
     /// Cleans existing instances and instantiates a localized decoy entity targeting actor aggro.
-    /// Source: https://community.monogame.net/t/gameobject-management-lists-vs-linklist/12104
     /// </summary>
     public static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
     {
