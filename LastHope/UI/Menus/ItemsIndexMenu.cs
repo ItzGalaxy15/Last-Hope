@@ -5,8 +5,16 @@ using Last_Hope.Engine;
 
 namespace Last_Hope.UI.Menus;
 
+/// <summary>
+/// Menu screen displaying an index collection of all discoverable items.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/sealed
+/// </summary>
 public sealed class ItemsIndexMenu : MenuBase
 {
+    /// <summary>
+    /// Processes menu navigation input and state transitions.
+    /// Source: https://community.monogame.net/t/game-state-management-update-and-draw-logic/11252
+    /// </summary>
     public void Update(GameTime gameTime)
     {
         SpriteFont layoutFont = MenuUiFont ?? _font;
@@ -35,6 +43,10 @@ public sealed class ItemsIndexMenu : MenuBase
             _state = GameState.MainMenu;
     }
 
+    /// <summary>
+    /// Draws the background blueprint container and interface strings for the index.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+    /// </summary>
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Matrix? transformMatrix = null)
     {
         SpriteFont layoutFont = MenuUiFont ?? _font;

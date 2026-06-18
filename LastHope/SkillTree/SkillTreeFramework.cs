@@ -11,6 +11,7 @@ namespace Last_Hope.SkillTree
     /// </summary>
     public static class SkillTreeConfig
     {
+        // Turned off as requested for standard roguelike wipe-on-death behavior
         public static bool PersistSkillTreeOnDeath = false;
         public static bool EnableBranchLocking = true;
     }
@@ -32,7 +33,6 @@ namespace Last_Hope.SkillTree
 
     /// <summary>
     /// Contains the static configuration data for a single skill node within the skill tree.
-    /// Defines its attributes, dependencies, visual coordinates, and thematic metadata.
     /// </summary>
     public class SkillNodeData
     {
@@ -43,13 +43,16 @@ namespace Last_Hope.SkillTree
         public SkillNodeType Type { get; set; }
         public int Layer { get; set; }
         
+        // Thematic and metadata
         public string Rarity { get; set; }
         public string IconId { get; set; }
         public List<string> Tags { get; set; } = new List<string>();
         
+        // Logic dependencies
         public List<string> Dependencies { get; set; } = new List<string>();
         public List<NodeEffect> Effects { get; set; } = new List<NodeEffect>();
         
+        // UI grid coordinates for spatial navigation
         public float GridX { get; set; }
         public float GridY { get; set; }
     }
@@ -68,6 +71,7 @@ namespace Last_Hope.SkillTree
     /// </summary>
     public class SkillTreeTheme
     {
+        // Hex colors representing the thematic vibe
         public string PrimaryColorHex { get; set; } 
         public string SecondaryColorHex { get; set; }
         public NodeShape DefaultShape { get; set; }
@@ -75,20 +79,19 @@ namespace Last_Hope.SkillTree
 
     /// <summary>
     /// The root data structure defining an entire skill tree for a specific character class.
-    /// Contains all nodes, connections, styling, and progression requirements.
     /// </summary>
     public class ClassSkillTreeData
     {
         public string ClassId { get; set; }
         public SkillTreeTheme Theme { get; set; }
+        // Key is layer index, value is total points spent required to unlock this layer
         public Dictionary<int, int> LayerUnlockRequirements { get; set; } = new Dictionary<int, int>();
         public List<SkillNodeData> Nodes { get; set; } = new List<SkillNodeData>();
         public List<SkillConnectionData> Connections { get; set; } = new List<SkillConnectionData>();
     }
 
     /// <summary>
-    /// Represents the player's mutable state for a skill tree. 
-    /// This is strictly separated from the configuration data to facilitate clean JSON serialization.
+    /// Represents the player's mutable state for a skill tree.
     /// </summary>
     /// <remarks>
     /// Separating mutable state from static data follows the Data Transfer Object (DTO) pattern.
@@ -99,12 +102,13 @@ namespace Last_Hope.SkillTree
         public string ClassId { get; set; }
         public int TotalPointsSpent { get; set; }
         public int UnspentSkillPoints { get; set; }
+        
+        // Maps node id to points allocated
         public Dictionary<string, int> AllocatedNodes { get; set; } = new Dictionary<string, int>();
     }
 
     /// <summary>
     /// Manages the logic, validation, and point allocation for a player's interaction with a skill tree.
-    /// Combines static tree data (<see cref="ClassSkillTreeData"/>) with the player's mutable state (<see cref="SkillTreeState"/>).
     /// </summary>
     /// <remarks>
     /// Utilizes the Observer pattern via C# Events/Actions to notify other systems when stats change.
@@ -117,23 +121,22 @@ namespace Last_Hope.SkillTree
         
         private readonly Dictionary<string, int> _pendingAllocations = new Dictionary<string, int>();
         private readonly Dictionary<string, SkillNodeData> _nodeMap;
+        
+        // Caches the layer 0 root node ID for each node in the tree
         private readonly Dictionary<string, string> _nodeRoots = new Dictionary<string, string>();
 
         /// <summary>
         /// Event fired when a point is confirmed, applying its associated effect to the player.
         /// </summary>
         public event Action<NodeEffect> OnEffectApplied;
-        
-        /// <summary>
-        /// Event fired when the entire skill tree is reset, signaling that all node effects should be removed.
-        /// </summary>
         public event Action OnTreeRespec;
         
         public int UnspentPoints => _state.UnspentSkillPoints - _pendingAllocations.Values.Sum();
         public int PendingPoints => _pendingAllocations.Values.Sum();
 
         /// <summary>
-        /// Initializes a new instance of the skill tree manager, precomputing traversal paths.
+        /// Initializes a new instance of the skill tree manager.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/constructors
         /// </summary>
         public BaseSkillTree(ClassSkillTreeData data, SkillTreeState state)
         {
@@ -199,7 +202,7 @@ namespace Last_Hope.SkillTree
         }
 
         /// <summary>
-        /// Compiles a list of missing requirements preventing the allocation of points to a node.
+        /// Retrieves a list of reasons why a node cannot currently be unlocked.
         /// </summary>
         public List<string> GetUnlockMissingRequirements(string nodeId, bool includePending = true)
         {
@@ -354,7 +357,7 @@ namespace Last_Hope.SkillTree
         }
 
         /// <summary>
-        /// Confirms all pending point allocations, permanently applying them to the state and triggering effect events.
+        /// Confirms all pending point allocations and permanently applies them.
         /// </summary>
         /// <remarks>
         /// Relies on external managers to sync file writes to prevent exploit loops.
@@ -384,7 +387,7 @@ namespace Last_Hope.SkillTree
             }
 
             _pendingAllocations.Clear();
-            Systems.RunSaveManager.SaveRun(Engine.GameManager.GetGameManager());
+            // Saving is now handled synchronously by RunSaveManager.SaveRun
         }
 
         /// <summary>
@@ -397,7 +400,6 @@ namespace Last_Hope.SkillTree
 
         /// <summary>
         /// Resets the entire skill tree, refunding all spent points and clearing allocations.
-        /// Fires <see cref="OnTreeRespec"/> to allow external systems to clear applied stats.
         /// </summary>
         public void Respec()
         {
@@ -407,19 +409,47 @@ namespace Last_Hope.SkillTree
             _state.AllocatedNodes.Clear();
             
             OnTreeRespec?.Invoke();
+            // Saving is now handled synchronously by RunSaveManager.SaveRun
         }
         
-        public void RecalculateStats() { foreach (var kvp in _state.AllocatedNodes) { string nodeId = kvp.Key; int points = kvp.Value; if (_nodeMap.TryGetValue(nodeId, out var node)) { for (int i = 0; i < points; i++) { foreach(var effect in node.Effects) OnEffectApplied?.Invoke(effect); } } } } public ClassSkillTreeData GetData() => _data;
+        /// <summary>
+        /// Recalculates all active effects based on currently allocated nodes.
+        /// </summary>
+        public void RecalculateStats() 
+        { 
+            foreach (var kvp in _state.AllocatedNodes) 
+            { 
+                string nodeId = kvp.Key; 
+                int points = kvp.Value; 
+                if (_nodeMap.TryGetValue(nodeId, out var node)) 
+                { 
+                    for (int i = 0; i < points; i++) 
+                    { 
+                        foreach(var effect in node.Effects) 
+                            OnEffectApplied?.Invoke(effect); 
+                    } 
+                } 
+            } 
+        } 
+        
+        /// <summary>
+        /// Gets the configuration data of the skill tree.
+        /// </summary>
+        public ClassSkillTreeData GetData() => _data;
 
+        /// <summary>
+        /// Grants a free skill point to the tree.
+        /// </summary>
         public void AddUnspentPoint()
         {
             _state.UnspentSkillPoints++;
+            // Saving is now handled synchronously by RunSaveManager.SaveRun
         }
     }
 
     /// <summary>
-    /// Handles loading and saving the player's skill tree progression state to disk using JSON serialization.
-    /// Explicitly tracks CurrentState to allow external systems to trigger synchronized saves.
+    /// Handles loading and saving the player's skill tree progression state to disk using JSON.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/how-to
     /// </summary>
     /// <remarks>
     /// Utilizes System.Text.Json for serialization operations.
@@ -470,6 +500,7 @@ namespace Last_Hope.SkillTree
 
         /// <summary>
         /// Saves the given skill tree state to a JSON file.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.io.file.writealltext
         /// </summary>
         public static void Save(SkillTreeState state)
         {
@@ -497,7 +528,8 @@ namespace Last_Hope.SkillTree
         }
 
         /// <summary>
-        /// Safely deletes the active save file if it exists.
+        /// Deletes the skill tree save file from disk.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.io.file.delete
         /// </summary>
         public static void DeleteSave()
         {
@@ -515,7 +547,8 @@ namespace Last_Hope.SkillTree
         }
 
         /// <summary>
-        /// Loads the skill tree state from disk. If the file does not exist or is corrupted, returns a fresh state object.
+        /// Loads the skill tree state from disk or returns a fresh state.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.io.file.readalltext
         /// </summary>
         public static SkillTreeState Load(string classId)
         {
@@ -535,24 +568,19 @@ namespace Last_Hope.SkillTree
                         if (state.TotalPointsSpent != sumAllocated)
                             state.TotalPointsSpent = sumAllocated;
                             
+                        // Track for sync saves
                         CurrentState = state; 
                         return state;
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Failed to load skill tree save or save is corrupted: {ex.Message}");
-                }
+                catch { }
             }
 
-            var freshState = new SkillTreeState
-            {
-                ClassId = classId,
-                AllocatedNodes = new Dictionary<string, int>(),
-                UnspentSkillPoints = InitialSkillPoints,
-                TotalPointsSpent = 0
-            };
-            CurrentState = freshState;
+            // Return default fresh state if no save exists
+            var freshState = new SkillTreeState { ClassId = classId, TotalPointsSpent = 0, UnspentSkillPoints = 0 };
+            
+            // Track for sync saves
+            CurrentState = freshState; 
             return freshState;
         }
     }

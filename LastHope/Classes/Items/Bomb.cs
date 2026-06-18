@@ -8,6 +8,10 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Items;
 
+/// <summary>
+/// Handles the physics, fuse animation countdown, and explosive logic of a thrown or placed bomb entity.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+/// </summary>
 public class Bomb : GameObject
 {
     private readonly RectangleCollider _collider;
@@ -30,6 +34,7 @@ public class Bomb : GameObject
 
     /// <summary>
     /// Creates a bomb at the given position with an initial velocity and fuse duration.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.max
     /// </summary>
     public Bomb(Vector2 position, Vector2 initialVelocity, float fuseSeconds = 3f)
     {
@@ -44,6 +49,7 @@ public class Bomb : GameObject
 
     /// <summary>
     /// Loads the bomb sprite sheet from content. Falls back to a plain pixel if the asset is missing.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Content.ContentManager.html
     /// </summary>
     public override void Load(ContentManager content)
     {
@@ -61,6 +67,7 @@ public class Bomb : GameObject
 
     /// <summary>
     /// Moves the bomb with drag, advances the fuse timer, updates the fuse animation frame, and triggers the explosion when the fuse runs out.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.clamp
     /// </summary>
     public override void Update(GameTime gameTime)
     {
@@ -97,6 +104,7 @@ public class Bomb : GameObject
 
     /// <summary>
     /// Draws the current fuse frame from the sprite sheet, or a plain black square if the sprite sheet is unavailable.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
     /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {

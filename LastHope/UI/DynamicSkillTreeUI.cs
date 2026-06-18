@@ -9,14 +9,9 @@ using Last_Hope.SkillTree;
 
 namespace Last_Hope.UI
 {
-    // ==========================================
-    // 1. GLOBAL THEMING SYSTEM
-    // ==========================================
-    
     /// <summary>
     /// Data structure defining the visual aesthetics of a class skill tree.
-    /// Can be swapped dynamically to completely change the look and feel.
-    /// Example: Warrior = Dark Steel/Red, Archer = Leather/Green, Mage = Parchment/Purple
+    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes
     /// </summary>
     public class UIThemeData
     {
@@ -28,30 +23,29 @@ namespace Last_Hope.UI
         public Color AccentGlowColor { get; set; }
         public Color LockedDesaturation { get; set; }
         
-        // Assets (Loaded via Content Pipeline)
+        // Assets loaded via content pipeline
         public string BackgroundTexturePath { get; set; }
         public string NodeBorderTexturePath { get; set; }
         public string NodeMaskTexturePath { get; set; }
         
-        // VFX / Juiciness
+        // Visual effects
         public string ParticleEffectPrefab { get; set; }
         public NodeShape DefaultShape { get; set; }
     }
 
-    // ==========================================
-    // 2. VISUAL NODE PREFAB & STATE MACHINE
-    // ==========================================
-    
+    /// <summary>
+    /// Visual representation and state machine for a single skill node on the canvas.
+    /// </summary>
     public class SkillNodeUI
     {
         public SkillNodeData Data { get; private set; }
         public NodeState CurrentState { get; private set; }
         public bool HasPendingPoints { get; set; }
         
-        // Transform & Layout
+        // Transform and layout
         public Vector2 Position { get; set; }
         
-        // Tweening Targets (For Polish & Juice)
+        // Tweening targets
         private float _currentScale = 1f;
         private float _targetScale = 1f;
         
@@ -65,6 +59,10 @@ namespace Last_Hope.UI
         // References
         private UIThemeData _theme;
 
+        /// <summary>
+        /// Initializes a new instance of a visual skill node.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/constructors
+        /// </summary>
         public SkillNodeUI(SkillNodeData data, UIThemeData theme)
         {
             Data = data;
@@ -72,35 +70,39 @@ namespace Last_Hope.UI
             _currentColor = theme.LockedDesaturation;
         }
 
+        /// <summary>
+        /// Updates the internal state and sets up visual tween targets.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/selection-statements
+        /// </summary>
         public void UpdateState(NodeState newState, int allocatedPoints, int maxPoints, bool hasPending)
         {
-            // [AUDIO HOOK]: Detect state changes
+            // Audio hook: detect state changes
             if (CurrentState != newState && newState == NodeState.Maxed)
             {
-                // AudioManager.PlaySound("Node_Maxed_Aura");
-                // ParticleManager.Emit(_theme.ParticleEffectPrefab, Position);
+                
             }
             else if (_targetFill < (float)allocatedPoints / maxPoints)
             {
-                // AudioManager.PlaySound("Point_Allocated_Tick");
+                
             }
             else if (CurrentState == NodeState.Locked && newState == NodeState.Available)
             {
-                // AudioManager.PlaySound("Node_Unlocked_Thump");
+                
             }
 
             CurrentState = newState;
             HasPendingPoints = hasPending;
             _targetFill = maxPoints > 0 ? (float)allocatedPoints / maxPoints : 0f;
 
-            // Set Target Visuals based on state
+            // Set target visuals based on state
             switch (CurrentState)
             {
                 case NodeState.Locked:
                     _targetColor = _theme.LockedDesaturation;
                     break;
                 case NodeState.Available:
-                    _targetColor = new Color(120, 130, 140); // Metallic idle
+                    // Metallic idle
+                    _targetColor = new Color(120, 130, 140); 
                     break;
                 case NodeState.Partial:
                     _targetColor = Color.Lerp(new Color(200, 50, 20), _theme.AccentGlowColor, _targetFill);
@@ -112,31 +114,34 @@ namespace Last_Hope.UI
             
             if (HasPendingPoints)
             {
-                _targetColor = new Color(255, 210, 50); // Radiant Gold for planned nodes
+                // Radiant gold for planned nodes
+                _targetColor = new Color(255, 210, 50); 
             }
         }
 
+        /// <summary>
+        /// Executes tween animations and hover effects over time.
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
+        /// </summary>
         public void UpdateVisuals(GameTime gameTime, bool isHovered)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             
-            // 1. Hover Logic & Tooltip Activation
+            // Hover logic and tooltip activation
             if (isHovered)
             {
                 if (_targetScale < 1.15f) 
                 {
-                    // [AUDIO HOOK]: AudioManager.PlaySound("UI_Hover_Soft");
+                    
                 }
                 _targetScale = 1.15f;
-                
-                // Request Controller/Tree to draw tooltip panel safely away from cursor
             }
             else
             {
                 _targetScale = 1.0f;
             }
 
-            // 2. State-Based Animations
+            // State based animations
             if (CurrentState == NodeState.Available)
             {
                 // Subtle pulsing border glow to attract attention
@@ -145,11 +150,11 @@ namespace Last_Hope.UI
                 _targetColor = Color.Lerp(new Color(100, 110, 120), new Color(160, 80, 50), pulseAlpha);
             }
 
-            // 3. Tweening Execution (Fades, Scales, Color Lerps)
+            // Tweening execution
             _currentScale = MathHelper.Lerp(_currentScale, _targetScale, dt * 12f);
             _currentFill = MathHelper.Lerp(_currentFill, _targetFill, dt * 6f);
             
-            // Safe Color Lerp (MonoGame doesn't natively lerp alpha perfectly via standard lerp without premultiplication)
+            // Safe color lerp
             _currentColor = new Color(
                 (int)MathHelper.Lerp(_currentColor.R, _targetColor.R, dt * 8f),
                 (int)MathHelper.Lerp(_currentColor.G, _targetColor.G, dt * 8f),
@@ -163,9 +168,9 @@ namespace Last_Hope.UI
         public Color GetColor() => _currentColor;
     }
 
-    // ==========================================
-    // 3. DYNAMIC CONNECTION LINES
-    // ==========================================
+    /// <summary>
+    /// Visual representation of the line connecting two skill nodes.
+    /// </summary>
     public class SkillConnectionUI
     {
         public SkillNodeUI ParentNode;
@@ -173,11 +178,14 @@ namespace Last_Hope.UI
         
         private float _fillProgress = 0f;
 
+        /// <summary>
+        /// Updates the connection fill progress based on parent allocation.
+        /// </summary>
         public void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             
-            // If parent has allocated points and child is available/unlocked, animate the connection line filling up
+            // If parent has allocated points and child is unlocked, animate the connection line filling up
             bool isRouteActive = (ParentNode.CurrentState == NodeState.Maxed || ParentNode.CurrentState == NodeState.Partial) && ChildNode.CurrentState != NodeState.Locked;
             
             float targetFill = isRouteActive ? 1f : 0f;
@@ -187,39 +195,42 @@ namespace Last_Hope.UI
         public float GetFillProgress() => _fillProgress;
     }
 
-    // ==========================================
-    // 4. DYNAMIC LAYOUT ENGINE (The Grid/Canvas)
-    // ==========================================
+    /// <summary>
+    /// Dynamic layout engine responsible for generating the skill tree grid.
+    /// </summary>
     public class DynamicSkillTreeLayout
     {
         public NodeShape GlobalShapeOverride { get; private set; }
 
+        /// <summary>
+        /// Swaps the visual shape archetype used by nodes for layout debugging.
+        /// </summary>
         public void ToggleShapeDebug()
         {
             GlobalShapeOverride = GlobalShapeOverride == NodeShape.Circle ? NodeShape.Square : NodeShape.Circle;
         }
 
         /// <summary>
-        /// Dynamically calculates vertical and horizontal spacing to symmetrically center 
-        /// layers regardless of how many nodes are in them.
+        /// Dynamically calculates vertical and horizontal spacing to symmetrically center layers.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable
         /// </summary>
         public void GenerateLayout(List<SkillNodeUI> uiNodes, Rectangle availableScreenArea)
         {
             if (uiNodes.Count == 0) return;
 
-            // 1. Determine Tree Depth
+            // Determine tree depth
             int maxLayer = uiNodes.Max(n => n.Data.Layer);
             int layerCount = maxLayer + 1;
 
-            // 2. Fixed spacing for a tighter, centered UI
+            // Fixed spacing for a tighter centered UI
             float verticalSpacing = 160f;
             float totalHeight = (layerCount - 1) * verticalSpacing;
             float startY = availableScreenArea.Center.Y - (totalHeight / 2f);
 
-            // 3. Process Layers for Horizontal Centering
+            // Process layers for horizontal centering
             for (int l = 0; l <= maxLayer; l++)
             {
-                // Grab all nodes in this layer, sort them conceptually by their Data.GridX value
+                // Grab all nodes in this layer and sort them conceptually by grid x value
                 var nodesInLayer = uiNodes.Where(n => n.Data.Layer == l)
                                           .OrderBy(n => n.Data.GridX)
                                           .ToList();
@@ -243,9 +254,9 @@ namespace Last_Hope.UI
         }
     }
 
-    // ==========================================
-    // 5. MASTER CANVAS & INPUT HANDLING
-    // ==========================================
+    /// <summary>
+    /// Master UI element holding the full skill tree canvas, managing navigation and rendering.
+    /// </summary>
     public class SkillTreeMenuCanvas : UIElement
     {
         private readonly BaseSkillTree _tree;
@@ -256,7 +267,7 @@ namespace Last_Hope.UI
         private readonly List<SkillConnectionUI> _uiConnections = new List<SkillConnectionUI>();
         private readonly DynamicSkillTreeLayout _layout = new DynamicSkillTreeLayout();
 
-        // UI Panel & Controls
+        // UI panel and controls
         private Rectangle _mainPanel;
         private Rectangle _topBarRect;
         private Rectangle _bottomBarRect;
@@ -267,9 +278,12 @@ namespace Last_Hope.UI
         private Rectangle _btnCancel;
         public bool IsClosed { get; private set; }
 
+        /// <summary>
+        /// Directly awards a sandbox progression talent point to the model.
+        /// </summary>
         public void AddTalentPoint() => _tree.AddUnspentPoint();
 
-        // Keyboard Navigation State
+        // Keyboard navigation state
         private bool _isKeyboardMode = false;
         private SkillNodeUI _selectedNode;
         private Vector2 _lastMousePosition;
@@ -285,6 +299,10 @@ namespace Last_Hope.UI
         private int _layoutViewportW;
         private int _layoutViewportH;
 
+        /// <summary>
+        /// Constructs the menu canvas and initializes node layout templates.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.first
+        /// </summary>
         public SkillTreeMenuCanvas(BaseSkillTree tree, UIThemeData theme, Texture2D pixel, Viewport viewport)
         {
             _tree = tree;
@@ -292,13 +310,13 @@ namespace Last_Hope.UI
             _pixel = pixel;
             _lastMousePosition = Mouse.GetState().Position.ToVector2();
 
-            // 1. Instantiate UI Nodes
+            // Instantiate UI nodes
             foreach (var nodeData in tree.GetData().Nodes)
             {
                 _uiNodes.Add(new SkillNodeUI(nodeData, theme));
             }
 
-            // 2. Instantiate UI Connections
+            // Instantiate UI connections
             foreach (var connData in tree.GetData().Connections)
             {
                 var parent = _uiNodes.First(n => n.Data.Id == connData.FromNodeId);
@@ -309,6 +327,10 @@ namespace Last_Hope.UI
             ApplyViewportLayout(viewport);
         }
 
+        /// <summary>
+        /// Adjusts the internal bounding boxes when the screen resolution changes.
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.Viewport.html
+        /// </summary>
         private void ApplyViewportLayout(Viewport viewport)
         {
             _layoutViewportW = viewport.Width;
@@ -338,6 +360,9 @@ namespace Last_Hope.UI
             _layout.GenerateLayout(_uiNodes, treeArea);
         }
 
+        /// <summary>
+        /// Updates canvas logic, input tracking systems, and triggers UI tween updates.
+        /// </summary>
         public override void Update(GameTime gameTime, Viewport viewport)
         {
             if (viewport.Width != _layoutViewportW || viewport.Height != _layoutViewportH)
@@ -349,7 +374,7 @@ namespace Last_Hope.UI
             bool isLeftClickPressed = input.LeftMousePress();
             bool isRightClickPressed = input.RightMousePress();
 
-            // Detect Mouse Movement
+            // Detect mouse movement
             if (Vector2.DistanceSquared(mousePos, _lastMousePosition) > 1f)
             {
                 _isKeyboardMode = false;
@@ -364,13 +389,14 @@ namespace Last_Hope.UI
             _btnCancelHover = MathHelper.Lerp(_btnCancelHover, _btnCancel.Contains(mousePos) ? 1f : 0f, dt * 12f);
             _btnResetHover = MathHelper.Lerp(_btnResetHover, _btnReset.Contains(mousePos) ? 1f : 0f, dt * 12f);
 
-            // Keyboard Shortcuts
+            // Keyboard shortcuts
             if (input.IsKeyPress(Keys.Escape))
             {
                 IsClosed = true;
                 if (_tree.PendingPoints > 0)
                 {
-                    _tree.ConfirmPendingPoints(); // Auto-save for ease of use
+                    // Auto save for ease of use
+                    _tree.ConfirmPendingPoints(); 
                 }
                 return;
             }
@@ -383,7 +409,7 @@ namespace Last_Hope.UI
                 _tree.ConfirmPendingPoints();
             }
 
-            // Keyboard Navigation (WASD/Arrows)
+            // Keyboard navigation
             Vector2 navDir = Vector2.Zero;
             if (input.IsKeyPress(Keys.W) || input.IsKeyPress(Keys.Up)) navDir = new Vector2(0, -1);
             if (input.IsKeyPress(Keys.S) || input.IsKeyPress(Keys.Down)) navDir = new Vector2(0, 1);
@@ -421,14 +447,15 @@ namespace Last_Hope.UI
                 }
             }
 
-            // Bottom Bar Button Clicks
+            // Bottom bar button clicks
             if (isLeftClickPressed)
             {
                 if (_btnCancel.Contains(mousePos)) 
                 { 
                     if (_tree.PendingPoints > 0)
                     {
-                        _tree.ConfirmPendingPoints(); // Auto-save for ease of use
+                        // Auto save for ease of use
+                        _tree.ConfirmPendingPoints(); 
                     }
                     IsClosed = true; 
                     return; 
@@ -447,7 +474,7 @@ namespace Last_Hope.UI
                 
                 node.UpdateState(state, pts, node.Data.MaxPoints, hasPending);
                 
-                // Set Hover Check (Mouse or Keyboard)
+                // Set hover check
                 bool isHovered = false;
                 if (_isKeyboardMode)
                 {
@@ -482,23 +509,34 @@ namespace Last_Hope.UI
                 conn.Update(gameTime);
         }
 
+        /// <summary>
+        /// Multiplies a drawing color parameter structure with a transparency parameter.
+        /// </summary>
         private Color Fade(Color c, float a) => c * a;
 
+        /// <summary>
+        /// Handles complex canvas layout container styling and draw passes.
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+        /// </summary>
         private void DrawPremiumPanel(SpriteBatch spriteBatch, Rectangle bounds, Color bg, Color borderOuter, Color borderInner, float alpha, int outerThick = 2)
         {
             // Drop shadow
             spriteBatch.Draw(_pixel, new Rectangle(bounds.X + 8, bounds.Y + 8, bounds.Width, bounds.Height), Fade(Color.Black * 0.5f, alpha));
             
-            // Main Fill
+            // Main fill
             spriteBatch.Draw(_pixel, bounds, Fade(bg, alpha));
             
-            // Outer Border
+            // Outer border
             DrawRectangleOutline(spriteBatch, bounds, outerThick, Fade(borderOuter, alpha));
             
-            // Inner Highlight
+            // Inner highlight
             DrawRectangleOutline(spriteBatch, new Rectangle(bounds.X + outerThick, bounds.Y + outerThick, bounds.Width - (outerThick*2), bounds.Height - (outerThick*2)), 1, Fade(borderInner, alpha));
         }
 
+        /// <summary>
+        /// Loops out primitive vector paths representing a rectangle boundary.
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+        /// </summary>
         private void DrawRectangleOutline(SpriteBatch sb, Rectangle rect, int t, Color c)
         {
             sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, rect.Width, t), c);
@@ -507,6 +545,10 @@ namespace Last_Hope.UI
             sb.Draw(_pixel, new Rectangle(rect.Right - t, rect.Top, t, rect.Height), c);
         }
 
+        /// <summary>
+        /// Standard render sweep processing nodes, interactive wires, headers and context panels.
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+        /// </summary>
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             SpriteFont font = GameManager.GetGameManager()._font;
@@ -515,7 +557,7 @@ namespace Last_Hope.UI
             
             float globalAlpha = _entranceProgress;
 
-            // 1. Draw Main Panel
+            // Draw main panel
             Color panelBg = new Color(20, 22, 26, 245);
             Color borderOuter = new Color(25, 28, 32);
             Color borderInner = new Color(70, 75, 85);
@@ -527,7 +569,7 @@ namespace Last_Hope.UI
             for (int y = _mainPanel.Y; y < _mainPanel.Bottom; y += 40)
                 spriteBatch.Draw(_pixel, new Rectangle(_mainPanel.X, y, _mainPanel.Width, 1), Fade(Color.White * 0.02f, globalAlpha));
 
-            // 2. Top & Bottom Headers
+            // Top and bottom headers
             DrawPremiumPanel(spriteBatch, _topBarRect, new Color(15, 17, 20, 255), borderOuter, new Color(90, 95, 105), globalAlpha, 2);
             DrawPremiumPanel(spriteBatch, _bottomBarRect, new Color(15, 17, 20, 255), borderOuter, new Color(90, 95, 105), globalAlpha, 2);
 
@@ -538,7 +580,7 @@ namespace Last_Hope.UI
                 Vector2 titleSize = font.MeasureString(title) * 0.65f;
                 spriteBatch.DrawString(font, title, new Vector2(_topBarRect.Center.X - titleSize.X/2, _topBarRect.Center.Y - titleSize.Y/2), Fade(new Color(255, 215, 100), globalAlpha), 0f, Vector2.Zero, 0.65f, SpriteEffects.None, 0f);
 
-                // Re-designed Available / Pending Block
+                // Available and pending block
                 string pointsLabel = "AVAILABLE:";
                 string pointsVal = $" {_tree.UnspentPoints}";
                 float lblScale = 0.4f;
@@ -562,11 +604,11 @@ namespace Last_Hope.UI
                     spriteBatch.DrawString(font, pendVal, pPos + new Vector2(font.MeasureString(pendLabel).X * pScale, 0), Fade(new Color(255, 215, 80), globalAlpha), 0f, Vector2.Zero, pScale, SpriteEffects.None, 0f);
                 }
 
-                // Draw Bottom Buttons
+                // Draw bottom buttons
                 float pulse = 0f;
                 if (_tree.PendingPoints > 0)
                 {
-                    pulse = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4.0) * 0.5f + 0.5f; // 0 to 1 pulse
+                    pulse = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 4.0) * 0.5f + 0.5f; 
                 }
 
                 Color confirmBase = Color.Lerp(new Color(30, 80, 40), new Color(100, 160, 50), pulse);
@@ -584,7 +626,7 @@ namespace Last_Hope.UI
                 spriteBatch.DrawString(font, hint, new Vector2(_bottomBarRect.Center.X - hintSize.X / 2f, _bottomBarRect.Center.Y - hintSize.Y / 2f), Fade(new Color(130, 135, 145), globalAlpha), 0f, Vector2.Zero, hintScale, SpriteEffects.None, 0f);
             }
 
-            // 3. Draw Connections
+            // Draw connections
             foreach (var conn in _uiConnections)
             {
                 Vector2 startPos = conn.ParentNode.Position;
@@ -605,32 +647,26 @@ namespace Last_Hope.UI
                 float angle = (float)Math.Atan2(diff.Y, diff.X);
                 float length = diff.Length();
                 
-                // Brighter engraved line casing
                 spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, (int)length, 6), null, Fade(new Color(55, 60, 65), globalAlpha), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
-                // Brighter inner groove
                 spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, (int)length, 2), null, Fade(new Color(85, 95, 105), globalAlpha), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                 
                 if (conn.GetFillProgress() > 0)
                 {
                     int fillLength = (int)(length * conn.GetFillProgress());
-                    
-                    // Energy Glow
                     spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 8), null, Fade(_theme.AccentGlowColor * 0.35f, globalAlpha), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
-                    
-                    // Energy Core
                     spriteBatch.Draw(_pixel, new Rectangle((int)startPos.X, (int)startPos.Y, fillLength, 3), null, Fade(Color.Lerp(_theme.AccentGlowColor, Color.Yellow, 0.5f), globalAlpha), angle, new Vector2(0, 0.5f), SpriteEffects.None, 0);
                 }
             }
 
-            // 4. Draw Nodes
+            // Draw nodes
             foreach (var node in _uiNodes)
             {
                 float currentScale = node.GetScale();
-
-                Color nodeBg = new Color(35, 40, 45); // Brighter dark iron background
-                Color nodeBorder = node.GetColor(); // Derived from tweened state
-                if (node.CurrentState == NodeState.Locked) nodeBorder = new Color(80, 85, 95); // Better contrast for locked nodes
-                if (node.HasPendingPoints) nodeBorder = new Color(255, 215, 0); // Gold
+                Color nodeBg = new Color(35, 40, 45); 
+                Color nodeBorder = node.GetColor(); 
+                
+                if (node.CurrentState == NodeState.Locked) nodeBorder = new Color(80, 85, 95); 
+                if (node.HasPendingPoints) nodeBorder = new Color(255, 215, 0); 
 
                 Point pos = node.Position.ToPoint();
 
@@ -652,7 +688,7 @@ namespace Last_Hope.UI
                     DrawFilledDiamond(spriteBatch, _pixel, pos, r, Fade(nodeBg, globalAlpha));
                     DrawFilledDiamond(spriteBatch, _pixel, pos, r - 2, Fade(node.GetColor(), globalAlpha));
                 }
-                else // Standard
+                else
                 {
                     int r = (int)(18 * currentScale);
                     DrawFilledCircle(spriteBatch, _pixel, pos, r + 2, Fade(nodeBorder, globalAlpha));
@@ -660,7 +696,6 @@ namespace Last_Hope.UI
                     DrawFilledCircle(spriteBatch, _pixel, pos, r - 2, Fade(node.GetColor(), globalAlpha));
                 }
                 
-                // Rank Text inside Major Nodes
                 if (node.Data.Type == SkillNodeType.Major && font != null)
                 {
                     string rankTxt = $"{_tree.GetAllocatedPoints(node.Data.Id, true)}/{node.Data.MaxPoints}";
@@ -668,7 +703,6 @@ namespace Last_Hope.UI
                     spriteBatch.DrawString(font, rankTxt, new Vector2(pos.X - rSize.X/2, pos.Y - rSize.Y/2 + 1), Fade(Color.White, globalAlpha), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
                 }
 
-                // Keyboard Selected Square
                 if (_isKeyboardMode && _selectedNode == node)
                 {
                     int selSize = (int)(60 * currentScale);
@@ -679,7 +713,7 @@ namespace Last_Hope.UI
                 }
             }
 
-            // 5. Draw Hover Tooltip on Top
+            // Draw hover tooltip on top
             if (_hoveredNode != null && font != null)
             {
                 int pts = _tree.GetAllocatedPoints(_hoveredNode.Data.Id, true);
@@ -732,7 +766,6 @@ namespace Last_Hope.UI
                 Vector2 tooltipBasePos;
                 if (_isKeyboardMode)
                 {
-                    // Place it to the right of the node safely so it doesn't overlap the node itself
                     tooltipBasePos = new Vector2(_hoveredNode.Position.X + 60, _hoveredNode.Position.Y - tipHeight / 2);
                 }
                 else
@@ -742,10 +775,8 @@ namespace Last_Hope.UI
 
                 Rectangle bgTip = new Rectangle((int)tooltipBasePos.X, (int)tooltipBasePos.Y, (int)tipWidth, (int)tipHeight);
                 
-                // Clamp to screen bounds
                 if (bgTip.Right > viewport.Width) 
                 {
-                    // If it goes off the right edge, pop it to the left side of the node/cursor instead
                     bgTip.X = _isKeyboardMode 
                         ? (int)(_hoveredNode.Position.X - bgTip.Width - 60) 
                         : (int)(mousePos.X - bgTip.Width - 20);
@@ -777,6 +808,9 @@ namespace Last_Hope.UI
             }
         }
         
+        /// <summary>
+        /// Combines layout calculation boundaries with localized sprite text to project buttons.
+        /// </summary>
         private void DrawPremiumButton(SpriteBatch sb, SpriteFont font, Rectangle bounds, string text, Color baseColor, Color highlightColor, float hoverAlpha, float globalAlpha, float txtScale = 0.45f)
         {
             Color currentBg = Color.Lerp(baseColor, highlightColor, hoverAlpha);
@@ -791,6 +825,10 @@ namespace Last_Hope.UI
             sb.DrawString(font, text, pos, Fade(Color.White, globalAlpha), 0f, Vector2.Zero, txtScale, SpriteEffects.None, 0f);
         }
 
+        /// <summary>
+        /// Loops out structural lines around a center node vector to build out rasterized circles.
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+        /// </summary>
         private void DrawFilledCircle(SpriteBatch sb, Texture2D pixel, Point center, int radius, Color color)
         {
             for (int y = -radius; y <= radius; y++)
@@ -800,6 +838,10 @@ namespace Last_Hope.UI
             }
         }
         
+        /// <summary>
+        /// Maps diamond layouts by linearly clamping tracking line segments relative to offsets.
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.abs
+        /// </summary>
         private void DrawFilledDiamond(SpriteBatch sb, Texture2D pixel, Point center, int radius, Color color)
         {
             for (int y = -radius; y <= radius; y++)

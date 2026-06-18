@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Input;
 using Last_Hope.Classes.Items;
-using Last_Hope.SkillTree; // Import Skill Tree structures
+using Last_Hope.SkillTree;
 using LastHope.Audio;
 using Last_Hope.Helpers;
 using Last_Hope.Systems.ItemSystem;
@@ -17,6 +17,10 @@ using System.Linq;
 
 namespace Last_Hope;
 
+/// <summary>
+/// Specialized player character class handling melee combat behavior, equipment state configurations, and passive combat proc states.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+/// </summary>
 public class Warrior : BasePlayer
 {
     public Texture2D AxeSprite;
@@ -44,7 +48,6 @@ public class Warrior : BasePlayer
     private const float EnemyContactHurtInterval = 0.5f;
     private const bool DebugDrawHitbox = false;
 
-    // --- TIMERS & COOLDOWNS ---
     private double _timeSinceLastAttack = 0;
     private float _speedBuffTimer = 0f;
     private float _dmgBuffTimer = 0f;
@@ -54,25 +57,26 @@ public class Warrior : BasePlayer
     private float _bleedDps = 0f;
     private const float BleedTickInterval = 0.5f;
 
+    /// <summary>
+    /// Calculates properties progress metrics clamped within safe boundaries.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
+    /// </summary>
     public float RegenHpProgress => MathHelper.Clamp(_defBuffTimer / BuffDurationSeconds, 0f, 1f);
     public float DamageUpProgress => MathHelper.Clamp(_dmgBuffTimer / BuffDurationSeconds, 0f, 1f);
     public float AttackSpeedUpProgress => MathHelper.Clamp(_speedBuffTimer / BuffDurationSeconds, 0f, 1f);
 
-    // --- STATE & PHYSICS ---
     private bool _facingLeft;
     private RectangleCollider _collider;
 
     private const float SlashDistance = 105f;
     private const float SlashCastHeightOffset = 10f;
 
-    // --- COMBAT & SKILL CONFIGURATION ---
     private const float BuffDurationSeconds = 10.0f;
     private const double ProcChance = 0.10;
     private const float AdrenalineRegenRate = 5.0f;
     private SoundEffect _attackSound;
     private SoundEffect _specialSound;
 
-    // --- Skill Tree States ---
     public Texture2D SwordSprite { get; private set; }
     public Texture2D ShieldSprite { get; private set; }
 
@@ -103,7 +107,7 @@ public class Warrior : BasePlayer
     public override float BaseMaxHp { get; } = 100f;
     public override int BaseDamage { get; } = 20;
     public override float BaseCritChance { get; } = 0.1f;
-    public override float BaseHaste { get; } = 0.7f; // Attack cooldown
+    public override float BaseHaste { get; } = 0.7f;
     public override float BaseSpeed { get; } = 220f;
 
     // Current Warrior stats
@@ -128,6 +132,10 @@ public class Warrior : BasePlayer
     private bool _abilityRotate;
     private float _abilityDrawScale;
 
+    /// <summary>
+    /// Initializes a new instance of the Warrior player class.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/constructors
+    /// </summary>
     public Warrior(Vector2 startPosition)
         : base(position: startPosition, weapon: new Weapon("Sword"), level: 0, experience: 0, dashDistance: 140f)
     {
@@ -142,8 +150,8 @@ public class Warrior : BasePlayer
     {
         base.Load(content);
         AxeSprite = content.Load<Texture2D>("AxeSheet");
-        try { SwordSprite = content.Load<Texture2D>("SwordSheet"); } catch { SwordSprite = AxeSprite; } // Fallback to avoid crashes
-        try { ShieldSprite = content.Load<Texture2D>("ShieldSprite"); } catch { ShieldSprite = AxeSprite; } // Fallback to avoid crashes
+        try { SwordSprite = content.Load<Texture2D>("SwordSheet"); } catch { SwordSprite = AxeSprite; }
+        try { ShieldSprite = content.Load<Texture2D>("ShieldSprite"); } catch { ShieldSprite = AxeSprite; }
         
         WarriorSprite = content.Load<Texture2D>("WarriorSheet");
         AimArrowSprite = content.Load<Texture2D>("AimArrow");
@@ -162,6 +170,10 @@ public class Warrior : BasePlayer
         SyncColliderToPosition();
     }
 
+    /// <summary>
+    /// Manages core lifecycle processing updates, active talent status timers, and action inputs.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.GameTime.html
+    /// </summary>
     public override void Update(GameTime gameTime)
     {
         if (!GameManager.GetGameManager().playerAlive || _currentHp <= 0f)
@@ -487,7 +499,6 @@ public class Warrior : BasePlayer
         AudioManager.PlaySfx(_attackSound);
     }
 
-    // --- SKILL TREE INTEGRATION ---
     public void ApplyNodeEffect(NodeEffect effect)
     {
         switch (effect.EffectId)
@@ -499,7 +510,7 @@ public class Warrior : BasePlayer
                 SkillTreeDamageBonus += (int)effect.ValuePerPoint;
                 break;
             case "max_hp":
-                Heal(effect.ValuePerPoint); // Keep it simple for now, can modify MaxHp property later if created
+                Heal(effect.ValuePerPoint);
                 break;
             case "unlock_sword_stance":
                 IsSwordActive = true; DualWieldUnlocked = true; IsAxeActive = false; IsShieldActive = false;
@@ -522,17 +533,17 @@ public class Warrior : BasePlayer
             case "unlock_whirlwind":
                 WhirlwindUnlocked = true;
                 ActiveAbility = new WhirlwindAbility();
-                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
+                ActiveAbility.Load(GameManager.GetGameManager()._content);
                 break;
             case "unlock_axe_slam":
                 AxeSlamUnlocked = true;
                 ActiveAbility = new AxeSlamAbility();
-                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
+                ActiveAbility.Load(GameManager.GetGameManager()._content);
                 break;
             case "unlock_shield_slam":
                 ShieldSlamUnlocked = true;
                 ActiveAbility = new ShieldSlamAbility();
-                ActiveAbility.Load(GameManager.GetGameManager()._content); // FIX APPLIED HERE
+                ActiveAbility.Load(GameManager.GetGameManager()._content);
                 break;
             case "dodge_chance":
                 DodgeLevel++;
@@ -590,6 +601,10 @@ public class Warrior : BasePlayer
         UpdateStats();
     }
 
+    /// <summary>
+    /// Processes current weapon multipliers, character levels, and active skill tree modifications to update parameters.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.max
+    /// </summary>
     public void UpdateStats()
     {
         // Damage Calculations
@@ -604,7 +619,7 @@ public class Warrior : BasePlayer
         }
         if (_dmgBuffTimer > 0f)
         {
-            CurrentDamage = (int)(CurrentDamage * 1.5f); // 50% damage boost from bloodlust buff
+            CurrentDamage = (int)(CurrentDamage * 1.5f);
         }
 
         // Haste Calculations (lower = faster attacks; level bonus reduces cooldown)
@@ -621,9 +636,13 @@ public class Warrior : BasePlayer
         CurrentMaxHp += LevelStatBonus;
         CurrentCritChance = Math.Min(1f, CurrentCritChance + LevelStatBonus);
         CurrentSpeed += LevelStatBonus;
-        UpdateStats(); // picks up _levelDamageBonus and _levelHasteBonus
+        UpdateStats();
     }
 
+    /// <summary>
+    /// Dispatches equipment layers, shield orientation profiles, animation frames, and ability visual overlays to the device.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+    /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         var warriorSource = new Rectangle(_walkFrameIndex * FrameSize, _walkRow * FrameSize, FrameSize, FrameSize);
@@ -658,18 +677,18 @@ public class Warrior : BasePlayer
         Rectangle weaponSource = GetWeaponSourceRect();
         SpriteEffects weaponFlip = GetAxeSpriteEffects();
 
-        Rectangle shieldSource = new Rectangle(0, 0, FrameSize, FrameSize); // Default Down (1st 32x32)
-        float shieldScale = AxeDrawScale * 0.85f; // A tiny bit smaller
+        Rectangle shieldSource = new Rectangle(0, 0, FrameSize, FrameSize);
+        float shieldScale = AxeDrawScale * 0.85f;
         
         Vector2 shieldPos;
         Vector2 weaponPos;
 
-        if (_walkRow == 3) // Left
+        if (_walkRow == 3)
         {
             shieldPos = leftHand;
             weaponPos = leftHand;
         }
-        else if (_walkRow == 2) // Right
+        else if (_walkRow == 2)
         {
             shieldPos = rightHand;
             weaponPos = rightHand;
@@ -682,17 +701,17 @@ public class Warrior : BasePlayer
 
         if (IsShieldActive)
         {
-            if (_walkRow == 3) // Left
+            if (_walkRow == 3)
             {
-                shieldSource = new Rectangle(FrameSize * 1, 0, FrameSize, FrameSize); // 2nd 32x32
+                shieldSource = new Rectangle(FrameSize * 1, 0, FrameSize, FrameSize);
             }
-            else if (_walkRow == 2) // Right
+            else if (_walkRow == 2)
             {
-                shieldSource = new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize); // 3rd 32x32
+                shieldSource = new Rectangle(FrameSize * 2, 0, FrameSize, FrameSize);
             }
-            else if (_walkRow == 1) // Up
+            else if (_walkRow == 1)
             {
-                shieldSource = new Rectangle(0, FrameSize * 1, FrameSize, FrameSize); // 1st 32x32 out of row 2
+                shieldSource = new Rectangle(0, FrameSize * 1, FrameSize, FrameSize);
             }
 
             // Draw shield behind the player for Up, Left, and Right
@@ -713,7 +732,7 @@ public class Warrior : BasePlayer
         if (_isCastingAbility && _abilityAnimation != null && _abilitySprite != null)
         {
             bool isBackgroundAbility = _castingAbility is ShieldSlamAbility || _castingAbility is AxeSlamAbility;
-            if (!isBackgroundAbility) // These are drawn in the background layer instead
+            if (!isBackgroundAbility)
             {
                 Rectangle abilitySource = _abilityAnimation.GetSourceRect();
                 float rotation = _abilityRotate ? _abilityRotation : 0f;
@@ -724,7 +743,7 @@ public class Warrior : BasePlayer
 
         if (IsSwordActive && DualWieldUnlocked)
         {
-            if (_walkRow == 3 || _walkRow == 2) // Left or Right
+            if (_walkRow == 3 || _walkRow == 2)
             {
                 Vector2 sidePos = _walkRow == 3 ? leftHand : rightHand;
                 Vector2 offsetPos = sidePos + new Vector2(_walkRow == 3 ? 8f : -8f, -4f);
@@ -769,7 +788,7 @@ public class Warrior : BasePlayer
 
     private SpriteEffects GetAxeSpriteEffects()
     {
-        if (_walkRow == 0) // Down
+        if (_walkRow == 0)
             return SpriteEffects.FlipVertically;
 
         bool horizontal = _walkRow == 2 || _walkRow == 3;
@@ -800,25 +819,22 @@ public class Warrior : BasePlayer
     {
         GameManager gm = GameManager.GetGameManager();
         
-        // --- DODGE LOGIC ---
-        if (DodgeLevel > 0 && gm.RNG.NextDouble() < (DodgeLevel * 0.05)) // 5% per point
+        if (DodgeLevel > 0 && gm.RNG.NextDouble() < (DodgeLevel * 0.05))
         {
             if (HasElusiveRhythm)
             {
                 _speedBuffTimer = BuffDurationSeconds;
                 UpdateStats();
             }
-            return; // Completely evade the attack
+            return;
         }
 
-        // --- BLOCK LOGIC ---
-        if (BlockLevel > 0 && gm.RNG.NextDouble() < (BlockLevel * 0.10)) // 10% per point
+        if (BlockLevel > 0 && gm.RNG.NextDouble() < (BlockLevel * 0.10))
         {
-            amount *= 0.5f; // Mitigate half damage
-            if (HasBulwark) Heal(0.15f); // Reduced further due to high block frequency
+            amount *= 0.5f;
+            if (HasBulwark) Heal(0.15f);
         }
 
-        // --- ON HIT TAKEN PROCS ---
         if (HasAdrenalineRush)
         {
             _defBuffTimer = BuffDurationSeconds;
@@ -831,6 +847,10 @@ public class Warrior : BasePlayer
         CheckDeath();
     }
 
+    /// <summary>
+    /// Configures initialization parameters, orientation matrices, and runtime dimensions to spin off an active talent script.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.atan2
+    /// </summary>
     public void StartAbilityAnimation(BaseAbility ability)
     {
         _isCastingAbility = true;
@@ -852,13 +872,13 @@ public class Warrior : BasePlayer
             _abilityDrawScale = AbilityDrawScale * 2.5f;
 
             _abilityAnimation = new AnimationManager(
-                5, // 5 frames total (3 on first row, 2 on second row)
-                3, // 3 columns max per row
+                5,
+                3,
                 new Vector2(FrameSize, FrameSize),
-                8, // interval
-                false, // loop
-                0, // offsetX
-                ShieldSlamSheetRow * FrameSize // offsetY
+                8,
+                false,
+                0,
+                ShieldSlamSheetRow * FrameSize
             );
 
             return;
@@ -884,13 +904,13 @@ public class Warrior : BasePlayer
             _abilityDrawScale = AbilityDrawScale * 3.0f;
 
             _abilityAnimation = new AnimationManager(
-                5, // Assuming 5 frames like NewShieldSlam (3 columns) 
+                5,
                 3, 
                 new Vector2(FrameSize, FrameSize),
-                8, // interval
-                false, // loop
-                0, // offsetX
-                0 // offsetY
+                8,
+                false,
+                0,
+                0
             );
 
             return;
@@ -910,8 +930,8 @@ public class Warrior : BasePlayer
             AbilityFrames,
             AbilityColumns,
             new Vector2(FrameSize, FrameSize),
-            8, // interval
-            false, // loop
+            8,
+            false,
             0,
             AxeAbilityRow * FrameSize
         );
@@ -950,7 +970,7 @@ public class Warrior : BasePlayer
         {
             Rectangle abilitySource = _abilityAnimation.GetSourceRect();
             float rotation = _abilityRotate ? _abilityRotation : 0f;
-            Color drawColor = DrawTint; // Not using freeze tints etc. for ground effects
+            Color drawColor = DrawTint;
             
             Action<SpriteBatch> drawAction = sb =>
             {
@@ -962,6 +982,10 @@ public class Warrior : BasePlayer
         }
     }
 
+    /// <summary>
+    /// Processes walking states and updates facing orientation depending on the direction vectors.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.abs
+    /// </summary>
     private void SetWalkRowFromDirection(Vector2 dir)
     {
         if (dir == Vector2.Zero)

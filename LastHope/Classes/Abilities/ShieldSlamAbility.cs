@@ -5,11 +5,19 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Abilities;
 
+/// <summary>
+/// Warrior ability that trades raw damage for a large crowd-control stun radius centered on the player.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+/// </summary>
 public class ShieldSlamAbility : BaseAbility
 {
-    private const float DamageMultiplier = 0.5f; // Low damage
-    private const float Radius = 180f; // Significantly increased radius since your complaint was that it's too small
-    private const float StunDuration = 3.0f; // Stun AoE
+    private const float DamageMultiplier = 0.5f;
+    private const float Radius = 180f;
+    private const float StunDuration = 3.0f;
+    /// <summary>
+    /// Calculates the normalized progress of the ability's cooldown.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
+    /// </summary>
     public override float CooldownProgress => MathHelper.Clamp(CooldownTimer / Cooldown, 0f, 1f);
 
     public ShieldSlamAbility() : base(8.0f) { }

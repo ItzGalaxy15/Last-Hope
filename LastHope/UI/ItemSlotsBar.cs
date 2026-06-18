@@ -7,6 +7,10 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Last_Hope.UI;
 
+/// <summary>
+/// UI Element managing the player's active item slots and selection.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes
+/// </summary>
 public class ItemSlotsBar : UIElement
 {
 	private readonly Texture2D? _pixel;
@@ -22,6 +26,10 @@ public class ItemSlotsBar : UIElement
 	private readonly Rectangle[] _slotItemRects = new Rectangle[2];
 	private int _selectedSlot;
 
+	/// <summary>
+	/// Initializes a new instance of the item slots bar.
+	/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/constructors
+	/// </summary>
 	public ItemSlotsBar(Texture2D? pixel, Texture2D? itemSpriteSheet)
 	{
 		_pixel = pixel;
@@ -29,30 +37,39 @@ public class ItemSlotsBar : UIElement
 		_selectedSlot = 0;
 	}
 
+	/// <summary>
+	/// Updates input, selection logic, and slot positioning.
+	/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Game.html
+	/// </summary>
 	public override void Update(GameTime gameTime, Viewport viewport)
 	{
 		GameManager gm = GameManager.GetGameManager();
 		InputManager input = gm.InputManager;
-        int scrollDelta = input.CurrentMouseState.ScrollWheelValue - input.LastMouseState.ScrollWheelValue;
+		int scrollDelta = input.CurrentMouseState.ScrollWheelValue - input.LastMouseState.ScrollWheelValue;
 
 		if (input.IsGameplayKeyPress(KeybindId.ItemSlot1))
 			gm.SetSelectedItemSlot(0);
 		if (input.IsGameplayKeyPress(KeybindId.ItemSlot2))
-            gm.SetSelectedItemSlot(1);
+			gm.SetSelectedItemSlot(1);
 
-        if (scrollDelta > 0)
+		if (scrollDelta > 0)
 			gm.CycleSelectedItemSlot(-1);
 		else if (scrollDelta < 0)
-            gm.CycleSelectedItemSlot(1);
+			gm.CycleSelectedItemSlot(1);
 
-        _selectedSlot = gm.SelectedItemSlot;
+		_selectedSlot = gm.SelectedItemSlot;
 
 		const int sideMargin = 48;
 		const int bottomMargin = 28;
-		const int slotSize = 64;      // Enlarged from 48 for better visibility
-		const int gap = 16;           // Increased from 12 to match new scale
-		const int panelPadding = 12;  // Increased from 10 for better proportions
-		const int itemInset = 8;      // Kept at 8, which makes the inner icon rect 48x48 (64 - 2*8)
+		
+		// Enlarged from 48 for better visibility
+		const int slotSize = 64;      
+		// Increased from 12 to match new scale
+		const int gap = 16;           
+		// Increased from 10 for better proportions
+		const int panelPadding = 12;  
+		// Kept at 8, which makes the inner icon rect 48x48
+		const int itemInset = 8;      
 
 		int totalSlotsWidth = (slotSize * 2) + gap;
 		int slotsX = viewport.Width - sideMargin - totalSlotsWidth;
@@ -83,6 +100,10 @@ public class ItemSlotsBar : UIElement
 		}
 	}
 
+	/// <summary>
+	/// Renders the item slots, their contents, and selection rings.
+	/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+	/// </summary>
 	public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
 	{
 		Texture2D pixel = GetPixel(spriteBatch);
@@ -106,40 +127,40 @@ public class ItemSlotsBar : UIElement
 
 			if (inv is not null)
 			{
-			    ItemType item = inv[i];
-			    if (item != ItemType.None)
-			    {
-			        if (item == ItemType.OneUp)
-			        {
-			            if (!_triedLoadingHearth && _hearthSprite == null)
-			            {
-			                _triedLoadingHearth = true;
-			                try { _hearthSprite = gm._content.Load<Texture2D>("Heart"); } catch { }
-			            }
-			            if (_hearthSprite != null)
-			            {
-			                spriteBatch.Draw(_hearthSprite, _slotItemRects[i], Color.White);
-			            }
-			            else
-			            {
-			                spriteBatch.Draw(pixel, _slotItemRects[i], placeholder);
-			            }
-			        }
-			        else
-			        {
-			            Rectangle sourceRect = item == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : 
-			                                   item == ItemType.Decoy ? new Rectangle(0, 32, 32, 32) : 
-			                                   new Rectangle(0, 64, 32, 32);
-			            if (_itemSpriteSheet is not null)
-			            {
-			                spriteBatch.Draw(_itemSpriteSheet, _slotItemRects[i], sourceRect, Color.White);
-			            }
-			            else
-			            {
-			                spriteBatch.Draw(pixel, _slotItemRects[i], placeholder);
-			            }
-			        }
-			    }
+				ItemType item = inv[i];
+				if (item != ItemType.None)
+				{
+					if (item == ItemType.OneUp)
+					{
+						if (!_triedLoadingHearth && _hearthSprite == null)
+						{
+							_triedLoadingHearth = true;
+							try { _hearthSprite = gm._content.Load<Texture2D>("Heart"); } catch { }
+						}
+						if (_hearthSprite != null)
+						{
+							spriteBatch.Draw(_hearthSprite, _slotItemRects[i], Color.White);
+						}
+						else
+						{
+							spriteBatch.Draw(pixel, _slotItemRects[i], placeholder);
+						}
+					}
+					else
+					{
+						Rectangle sourceRect = item == ItemType.Bomb ? new Rectangle(0, 0, 32, 32) : 
+											   item == ItemType.Decoy ? new Rectangle(0, 32, 32, 32) : 
+											   new Rectangle(0, 64, 32, 32);
+						if (_itemSpriteSheet is not null)
+						{
+							spriteBatch.Draw(_itemSpriteSheet, _slotItemRects[i], sourceRect, Color.White);
+						}
+						else
+						{
+							spriteBatch.Draw(pixel, _slotItemRects[i], placeholder);
+						}
+					}
+				}
 			}
 
 			if (i == _selectedSlot)
@@ -152,7 +173,9 @@ public class ItemSlotsBar : UIElement
 			if (selectedItem != ItemType.None)
 			{
 				string label = GetItemLabel(selectedItem);
-				const float labelScale = 0.55f; // Increased from 0.45f for readability with larger slots
+				
+				// Increased from 0.45f for readability with larger slots
+				const float labelScale = 0.55f; 
 				Vector2 labelSize = gm.MeasureUiString(gm._font, label, labelScale);
 
 				Rectangle selectedRect = _slotFrameRects[_selectedSlot];
@@ -172,6 +195,10 @@ public class ItemSlotsBar : UIElement
 		}
 	}
 
+	/// <summary>
+	/// Gets the display name for a specific item type.
+	/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/switch-expression
+	/// </summary>
 	private static string GetItemLabel(ItemType item)
 	{
 		return item switch
@@ -184,6 +211,10 @@ public class ItemSlotsBar : UIElement
 		};
 	}
 
+	/// <summary>
+	/// Helper method to draw a rectangular outline out of thin lines.
+	/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
+	/// </summary>
 	private static void DrawOutline(SpriteBatch spriteBatch, Texture2D pixel, Rectangle rect, int thickness, Color color)
 	{
 		spriteBatch.Draw(pixel, new Rectangle(rect.Left, rect.Top, rect.Width, thickness), color);
@@ -192,6 +223,10 @@ public class ItemSlotsBar : UIElement
 		spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Top, thickness, rect.Height), color);
 	}
 
+	/// <summary>
+	/// Gets a 1x1 white pixel texture, creating it dynamically if necessary.
+	/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.Texture2D.html
+	/// </summary>
 	private Texture2D GetPixel(SpriteBatch spriteBatch)
 	{
 		if (_pixel is not null)

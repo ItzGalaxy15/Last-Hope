@@ -2,6 +2,10 @@ using Last_Hope.BaseModel;
 
 namespace Last_Hope.Classes.Items;
 
+/// <summary>
+/// Life extension resource blueprint that instantly implements character fallback revive stacks upon retrieval.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/base
+/// </summary>
 public class OneUp : BaseItem
 {
     /// <summary>

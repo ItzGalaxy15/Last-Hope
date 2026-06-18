@@ -10,17 +10,17 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Last_Hope.UI;
 
 /// <summary>
-/// Builds <see cref="SkillTreeMenuCanvas"/> for the in-run skill overlay toggled from
-/// <see cref="Menu.UpdateRunningMenu"/> (N key). Keeps JSON path resolution and theme wiring out of <see cref="Menu"/>.
+/// Builds SkillTreeMenuCanvas for the in-run skill overlay toggled from Menu.UpdateRunningMenu (N key).
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/static-classes-and-static-class-members
 /// </summary>
 internal static class SkillTreeOverlayFactory
 {
     private static readonly string WarriorTreeRelativePath = Path.Combine("SkillTree", "WarriorSkillTree.json");
     private static readonly string ArcherSkillTreeRelativePath = Path.Combine("SkillTree", "ArcherSkillTree.json");
 
-
     /// <summary>
-    /// Loads warrior tree JSON, applies save state, hooks <see cref="Warrior"/> callbacks, returns canvas or throws if data is invalid.
+    /// Loads warrior tree JSON, applies save state, hooks Warrior callbacks, and returns the constructed menu canvas.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/deserialization
     /// </summary>
     public static SkillTreeMenuCanvas CreateWarriorOverlay(GameManager gm, in Viewport viewport)
     {
@@ -71,7 +71,8 @@ internal static class SkillTreeOverlayFactory
     }
 
     /// <summary>
-    /// Loads archer tree JSON, applies save state, hooks <see cref="Archer"/> callbacks, returns canvas or throws if data is invalid.
+    /// Loads archer tree JSON, applies save state, hooks Archer callbacks, and returns the constructed menu canvas.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.io.path.combine
     /// </summary>
     public static SkillTreeMenuCanvas CreateArcherOverlay(GameManager gm, in Viewport viewport)
     {

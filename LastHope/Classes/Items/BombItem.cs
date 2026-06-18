@@ -4,6 +4,10 @@ using Microsoft.Xna.Framework;
 
 namespace Last_Hope.Classes.Items;
 
+/// <summary>
+/// Inventory registration definition wrapping the Bomb projectile behavior.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+/// </summary>
 public class BombItem : BaseItem
 {
     /// <summary>

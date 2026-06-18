@@ -6,6 +6,10 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.Classes.Items;
 
+/// <summary>
+/// Object placed or thrown into the world to draw threat and aggro away from the player character.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+/// </summary>
 public class Decoy : GameObject
 {
     private const int DecoySize = 30;
@@ -35,6 +39,7 @@ public class Decoy : GameObject
 
     /// <summary>
     /// Loads the item sprite sheet from content. Falls back to a plain pixel if the asset is missing.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Content.ContentManager.html
     /// </summary>
     public override void Load(ContentManager content)
     {
@@ -52,6 +57,7 @@ public class Decoy : GameObject
 
     /// <summary>
     /// Moves the decoy with drag until it settles, counts down its lifetime, and removes it when the lifetime or health reaches zero.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Vector2.html
     /// </summary>
     public override void Update(GameTime gameTime)
     {
@@ -81,6 +87,7 @@ public class Decoy : GameObject
 
     /// <summary>
     /// Draws the decoy using the food sprite from the sprite sheet, or a brown square as a fallback.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
     /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
