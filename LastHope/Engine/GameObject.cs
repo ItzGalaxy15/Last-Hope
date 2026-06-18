@@ -1,5 +1,4 @@
 // References:
-//   ShouldCollideWith pair filter (Step 3, performance):
 //     Inspired by the collision-filtering pattern in Erin Catto, "Box2D v2.3.0 User Manual"
 //     (category bits / mask bits / group indices). This is a much simpler form: a single
 //     virtual predicate per object instead of a full bitmask layer matrix.

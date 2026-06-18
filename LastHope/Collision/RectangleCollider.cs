@@ -34,7 +34,7 @@ namespace Last_Hope.Collision
 
         public override bool Intersects(RectangleCollider other)
         {
-            // Inclusive AABBs: MonoGame's Rectangle.Intersects uses strict <, so edge-touching
+            // Inclusive AABBs: MonoGame's Rectangle.Intersects uses strict <, so edge touching
             // pairs never count; that often misses valid gameplay contacts.
             Rectangle a = shape;
             Rectangle b = other.shape;

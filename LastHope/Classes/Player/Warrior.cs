@@ -640,7 +640,7 @@ public class Warrior : BasePlayer
     }
 
     /// <summary>
-    /// Dispatches equipment layers, shield orientation profiles, animation frames, and ability visual overlays to the device.
+    /// Draws the warrior, equipped weapon/shield, and any active ability animation.
     /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
     /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -848,7 +848,7 @@ public class Warrior : BasePlayer
     }
 
     /// <summary>
-    /// Configures initialization parameters, orientation matrices, and runtime dimensions to spin off an active talent script.
+    /// Sets up and plays the sprite animation for a warrior ability (whirlwind, axe slam, shield slam).
     /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.atan2
     /// </summary>
     public void StartAbilityAnimation(BaseAbility ability)

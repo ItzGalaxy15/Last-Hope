@@ -5,8 +5,8 @@ using Microsoft.Xna.Framework;
 namespace Last_Hope.Engine.Pathfinding;
 
 /// <summary>
-/// Tile-based navigation: walkability per cell, world/tile conversion, and A* paths.
-/// Mark cells non-walkable when you add blocking collision (e.g. <see cref="SetWalkable"/>).
+/// Tile based navigation: walkability per cell, world/tile conversion, and A* paths.
+/// Mark cells non walkable when you add blocking collision (e.g. <see cref="SetWalkable"/>).
 /// </summary>
 public sealed class NavigationGrid
 {
@@ -120,9 +120,9 @@ public sealed class NavigationGrid
 
     /// <summary>
     /// Computes a direction toward the next step on an A* path from <paramref name="fromWorld"/> to <paramref name="toWorld"/>.
-    /// If the start or goal falls inside a non-walkable tile (e.g. agent clipped into the inflated footprint around a building,
-    /// or the player is standing next to one), snaps to the nearest walkable tile instead of giving up — otherwise the caller
-    /// would get a straight-line direction and grind against the collider.
+    /// If the start or goal falls inside a non walkable tile (e.g. agent clipped into the inflated footprint around a building,
+    /// or the player is standing next to one), snaps to the nearest walkable tile instead of giving up otherwise the caller
+    /// would get a straight line direction and grind against the collider.
     /// </summary>
     public bool TryGetMoveDirection(Vector2 fromWorld, Vector2 toWorld, out Vector2 direction)
     {
@@ -173,7 +173,7 @@ public sealed class NavigationGrid
 
         if (tilePath.Count == 1)
         {
-            // Already at the (snapped) goal tile — steer straight at the final world target.
+            // Already at the (snapped) goal tile steer straight at the final world target.
             Vector2 delta = toWorld - fromWorld;
             if (delta == Vector2.Zero)
             {

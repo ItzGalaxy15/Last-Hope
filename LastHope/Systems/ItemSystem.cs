@@ -50,7 +50,7 @@ public static class ItemSystem
     }
 
     /// <summary>
-    /// Normalizes target direction patterns to project projectile entries toward cursor vectors.
+    /// Throws the selected item toward the mouse cursor or aim direction.
     /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Vector2.html
     /// </summary>
     public static void ThrowSelectedItemTowardMouse(BasePlayer player)
@@ -103,7 +103,7 @@ public static class ItemSystem
     }
 
     /// <summary>
-    /// Cleans existing instances and instantiates a localized decoy entity targeting actor aggro.
+    /// Removes the old decoy if one exists, then spawns a new one.
     /// </summary>
     public static void SpawnDecoy(GameManager gm, Vector2 spawnPosition, Vector2 initialVelocity)
     {

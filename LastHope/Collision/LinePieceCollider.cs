@@ -1,5 +1,4 @@
 // References:
-//   Segment-vs-segment math reused by Intersects(RectangleCollider) (Step 2, performance):
 //     Same standard-form (Ax+By+C=0) line intersection algorithm already cited inline
 //     at Intersects(LinePieceCollider) below
 //     (https://stackoverflow.com/questions/4543506/algorithm-for-intersection-of-2-lines).
@@ -151,7 +150,7 @@ public class LinePieceCollider : Collider, IEquatable<LinePieceCollider>
     /// <param name="other">The Rectangle to check for intersection.</param>
     /// <returns>true there is any overlap between the Line and the Rectangle.</returns>
     /// <remarks>
-    /// Hot path during Whirlwind (12 arc segments per Slash). Uses the static
+    /// Whirlwind (12 arc segments per Slash). Uses the static
     /// SegmentsIntersect helper instead of allocating four LinePieceColliders per call.
     /// </remarks>
     public override bool Intersects(RectangleCollider other)
@@ -176,7 +175,7 @@ public class LinePieceCollider : Collider, IEquatable<LinePieceCollider>
     }
 
     /// <summary>
-    /// Allocation-free segment-vs-segment intersection on raw Vector2 endpoints.
+    /// segment-vs-segment intersection on raw Vector2 endpoints.
     /// Same standard-form line intersection algorithm as Intersects(LinePieceCollider),
     /// extracted so RectangleCollider's four edges can be tested without allocating
     /// new LinePieceCollider instances.
