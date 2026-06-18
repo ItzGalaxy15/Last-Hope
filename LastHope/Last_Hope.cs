@@ -29,7 +29,7 @@ public class Last_Hope : Game
     private LevelGenerator _levelGenerator;
     private Camera _camera;
     private Hud _hud;
-    private ForestDirectionPrompt _forestDirectionPrompt;
+    private ForestDirectionArrow _forestDirectionPrompt;
 
     public Last_Hope()
     {
@@ -162,7 +162,7 @@ public class Last_Hope : Game
         try { WarriorDamageUp = Content.Load<Texture2D>("icons/WarriorDamageUp"); } catch { }
 
         _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon, Content, rapidFireIcon, critGuaranteeIcon, WarriorAtkSpdUp, RegenHpIcon, WarriorDamageUp);
-        _forestDirectionPrompt = new ForestDirectionPrompt();
+        _forestDirectionPrompt = new ForestDirectionArrow();
 
         GumBootstrap.Initialize(this, Content);
     }

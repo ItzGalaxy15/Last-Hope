@@ -31,6 +31,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 	if (color.a > 0)
 	{
 		float3 targetColor = float3(0.1, 0.1, 0.1) * color.a;
+		// lerp = linear interpolation: https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-lerp
 		color.rgb = lerp(color.rgb, targetColor, FadeAmount);
 	}
 

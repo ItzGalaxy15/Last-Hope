@@ -7,6 +7,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.UI;
 
+/// <summary>
+/// Draws a boss health bar at the bottom of the screen when a boss enemy is active.
+/// </summary>
 public class BossHealthBar : UIElement
 {
     private const int BottomMargin = 28;
@@ -21,11 +24,17 @@ public class BossHealthBar : UIElement
     private Rectangle _frameRect;
     private Rectangle _fillRect;
 
+    /// <summary>
+    /// Creates a boss health bar that can use a shared 1x1 pixel texture for rectangle drawing.
+    /// </summary>
     public BossHealthBar(Texture2D? pixel)
     {
         _pixel = pixel;
     }
 
+    /// <summary>
+    /// Finds the active boss and updates the frame and fill rectangles based on its health.
+    /// </summary>
     public override void Update(GameTime gameTime, Viewport viewport)
     {
         _activeBoss = FindActiveBoss();
@@ -50,6 +59,9 @@ public class BossHealthBar : UIElement
             _frameRect.Height - 4);
     }
 
+    /// <summary>
+    /// Draws the health bar frame, background, red fill, and small highlight.
+    /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         if (_activeBoss is null)
@@ -83,6 +95,9 @@ public class BossHealthBar : UIElement
         spriteBatch.Draw(pixel, shine, highlight);
     }
 
+    /// <summary>
+    /// Searches the current game objects for a boss enemy that should show the bar.
+    /// </summary>
     private static BaseEnemy? FindActiveBoss()
     {
         var gm = GameManager.GetGameManager();
@@ -91,6 +106,9 @@ public class BossHealthBar : UIElement
             .FirstOrDefault(enemy => enemy is Boss or SpiderBoss);
     }
 
+    /// <summary>
+    /// Returns the shared pixel texture, or creates a fallback white pixel if none was provided.
+    /// </summary>
     private Texture2D GetPixel(SpriteBatch spriteBatch)
     {
         if (_pixel is not null)

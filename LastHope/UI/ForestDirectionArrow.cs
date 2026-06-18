@@ -5,10 +5,16 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Last_Hope.UI;
 
-public class ForestDirectionPrompt
+/// <summary>
+/// Shows a pulsing arrow and text prompt that guides the player left after the village is cleared.
+/// </summary>
+public class ForestDirectionArrow
 {
     private float _timer;
 
+    /// <summary>
+    /// Advances the prompt animation timer while the prompt should be visible.
+    /// </summary>
     public void Update(GameTime gameTime)
     {
         if (ShouldShow())
@@ -17,6 +23,9 @@ public class ForestDirectionPrompt
             _timer = 0f;
     }
 
+    /// <summary>
+    /// Draws the animated left arrow, shadow, and "Go left" text prompt.
+    /// </summary>
     public void Draw(SpriteBatch spriteBatch)
     {
         var gm = GameManager.GetGameManager();
@@ -33,6 +42,7 @@ public class ForestDirectionPrompt
         Color textColor = new Color(255, 245, 210, alpha);
         Color textShadow = new Color(0, 0, 0, Math.Min(alpha, 180));
 
+        // https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html 
         float arrowLength = MathHelper.Clamp(viewport.Width * 0.105f, 86f, 150f);
         float headLength = MathHelper.Clamp(viewport.Width * 0.034f, 30f, 50f);
         float headHeight = headLength * 0.68f;
@@ -61,6 +71,9 @@ public class ForestDirectionPrompt
         spriteBatch.DrawString(gm._font, promptText, textPos, textColor, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
     }
 
+    /// <summary>
+    /// Checks whether the player is in the cleared village and should be guided toward the forest.
+    /// </summary>
     private static bool ShouldShow()
     {
         var gm = GameManager.GetGameManager();
@@ -70,6 +83,9 @@ public class ForestDirectionPrompt
                gm.ForestBoundaryX > 0f;
     }
 
+    /// <summary>
+    /// Draws the arrow shaft and two angled head lines with the given pixel texture.
+    /// </summary>
     private static void DrawArrow(
         SpriteBatch spriteBatch,
         Texture2D pixel,
@@ -86,6 +102,9 @@ public class ForestDirectionPrompt
         DrawLine(spriteBatch, pixel, leftTip, leftTip + new Vector2(headLength, headHeight), thickness, color);
     }
 
+    /// <summary>
+    /// Draws a thick line by stretching and rotating a 1x1 pixel texture.
+    /// </summary>
     private static void DrawLine(SpriteBatch spriteBatch, Texture2D pixel, Vector2 start, Vector2 end, float thickness, Color color)
     {
         Vector2 delta = end - start;

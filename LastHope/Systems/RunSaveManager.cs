@@ -89,9 +89,9 @@ namespace Last_Hope.Systems
                 Console.WriteLine($"Failed to delete run save: {ex.Message}");
             }
             
-            if (!global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+            if (!SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
             {
-                global::Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
+                SkillTree.SkillTreeSaveManager.DeleteSave();
             }
         }
 
@@ -136,7 +136,7 @@ namespace Last_Hope.Systems
                 Console.WriteLine($"Failed to save run data: {ex.Message}");
             }
             
-            global::Last_Hope.SkillTree.SkillTreeSaveManager.SaveCurrent();
+            SkillTree.SkillTreeSaveManager.SaveCurrent();
         }
 
         /// <summary>
