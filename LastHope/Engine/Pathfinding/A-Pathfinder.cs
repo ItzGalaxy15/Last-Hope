@@ -7,6 +7,8 @@ namespace Last_Hope.Engine.Pathfinding;
 /// <summary>
 /// Grid pathfinding using A* algorithm (4-directional, uniform edge cost).
 /// Uses Manhattan distance as heuristic for optimal grid pathfinding.
+/// 
+/// <remarks> <see href="https://www.geeksforgeeks.org/dsa/a-search-algorithm/">A* Algorithm</see> </remarks> for reference implementation.
 /// </summary>
 public static class AStarPathfinder
 {

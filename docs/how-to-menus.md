@@ -1,5 +1,7 @@
 # How to add and change menus (Last Hope)
 
+> **Gum reference:** https://docs.monogame.net/articles/tutorials/building_2d_games/20_implementing_ui_with_gum/index.html?tabs=vscode
+
 This project uses **two UI layers** for menus:
 
 | Layer | Used for | Typical files |
