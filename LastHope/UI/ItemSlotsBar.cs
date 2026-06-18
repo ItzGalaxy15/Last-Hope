@@ -9,7 +9,7 @@ namespace Last_Hope.UI;
 
 /// <summary>
 /// UI Element managing the player's active item slots and selection.
-/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/classes
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes
 /// </summary>
 public class ItemSlotsBar : UIElement
 {
@@ -39,7 +39,7 @@ public class ItemSlotsBar : UIElement
 
 	/// <summary>
 	/// Updates input, selection logic, and slot positioning.
-	/// Source: https://community.monogame.net/t/game-state-management-update-and-draw-logic/11252
+	/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Game.html
 	/// </summary>
 	public override void Update(GameTime gameTime, Viewport viewport)
 	{
@@ -213,7 +213,7 @@ public class ItemSlotsBar : UIElement
 
 	/// <summary>
 	/// Helper method to draw a rectangular outline out of thin lines.
-	/// Source: https://community.monogame.net/t/drawing-rectangle-borders-or-outlines/11812
+	/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
 	/// </summary>
 	private static void DrawOutline(SpriteBatch spriteBatch, Texture2D pixel, Rectangle rect, int thickness, Color color)
 	{
@@ -225,7 +225,7 @@ public class ItemSlotsBar : UIElement
 
 	/// <summary>
 	/// Gets a 1x1 white pixel texture, creating it dynamically if necessary.
-	/// Source: https://community.monogame.net/t/creating-a-texture2d-at-runtime/8083
+	/// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.Texture2D.html
 	/// </summary>
 	private Texture2D GetPixel(SpriteBatch spriteBatch)
 	{

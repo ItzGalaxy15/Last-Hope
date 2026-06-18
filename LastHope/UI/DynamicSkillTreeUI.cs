@@ -11,7 +11,7 @@ namespace Last_Hope.UI
 {
     /// <summary>
     /// Data structure defining the visual aesthetics of a class skill tree.
-    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/classes
+    /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes
     /// </summary>
     public class UIThemeData
     {
@@ -121,7 +121,7 @@ namespace Last_Hope.UI
 
         /// <summary>
         /// Executes tween animations and hover effects over time.
-        /// Source: https://community.monogame.net/t/clamping-lerping-and-tweening-functions/11624
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html
         /// </summary>
         public void UpdateVisuals(GameTime gameTime, bool isHovered)
         {
@@ -212,7 +212,7 @@ namespace Last_Hope.UI
 
         /// <summary>
         /// Dynamically calculates vertical and horizontal spacing to symmetrically center layers.
-        /// Source: https://learn.microsoft.com/en-us/dotnet/csharp/linq/query-a-collection-of-objects
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable
         /// </summary>
         public void GenerateLayout(List<SkillNodeUI> uiNodes, Rectangle availableScreenArea)
         {
@@ -516,7 +516,7 @@ namespace Last_Hope.UI
 
         /// <summary>
         /// Handles complex canvas layout container styling and draw passes.
-        /// Source: https://community.monogame.net/t/drawing-filled-rectangles-with-borders/17432
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
         /// </summary>
         private void DrawPremiumPanel(SpriteBatch spriteBatch, Rectangle bounds, Color bg, Color borderOuter, Color borderInner, float alpha, int outerThick = 2)
         {
@@ -535,7 +535,7 @@ namespace Last_Hope.UI
 
         /// <summary>
         /// Loops out primitive vector paths representing a rectangle boundary.
-        /// Source: https://community.monogame.net/t/drawing-rectangle-borders-or-outlines/11812
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
         /// </summary>
         private void DrawRectangleOutline(SpriteBatch sb, Rectangle rect, int t, Color c)
         {
@@ -827,7 +827,7 @@ namespace Last_Hope.UI
 
         /// <summary>
         /// Loops out structural lines around a center node vector to build out rasterized circles.
-        /// Source: https://community.monogame.net/t/drawing-filled-circles/12130
+        /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Graphics.SpriteBatch.html
         /// </summary>
         private void DrawFilledCircle(SpriteBatch sb, Texture2D pixel, Point center, int radius, Color color)
         {

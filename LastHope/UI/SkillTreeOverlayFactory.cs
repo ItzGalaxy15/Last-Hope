@@ -11,7 +11,7 @@ namespace Last_Hope.UI;
 
 /// <summary>
 /// Builds SkillTreeMenuCanvas for the in-run skill overlay toggled from Menu.UpdateRunningMenu (N key).
-/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/classes
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/static-classes-and-static-class-members
 /// </summary>
 internal static class SkillTreeOverlayFactory
 {
@@ -20,7 +20,7 @@ internal static class SkillTreeOverlayFactory
 
     /// <summary>
     /// Loads warrior tree JSON, applies save state, hooks Warrior callbacks, and returns the constructed menu canvas.
-    /// Source: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/how-to
+    /// Source: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/deserialization
     /// </summary>
     public static SkillTreeMenuCanvas CreateWarriorOverlay(GameManager gm, in Viewport viewport)
     {
