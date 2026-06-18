@@ -51,6 +51,7 @@ public static class AudioManager
     {
         SoundEffect.MasterVolume = MasterVolume;
         MediaPlayer.Volume = MusicVolume * MasterVolume;
+        BgmManager.RefreshVolume();
     }
 
     public static void PlaySfx(SoundEffect sound)

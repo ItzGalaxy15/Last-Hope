@@ -11,6 +11,7 @@ using Last_Hope.Engine.Pathfinding;
 using Last_Hope.SkillTree;
 using Last_Hope.Systems;
 using Last_Hope.UI;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -165,6 +166,9 @@ public class GameManager
         {
             FontBitmap = null;
         }
+
+        BgmManager.Load(content);
+        BgmManager.OnGameStateChanged(_state);
     }
 
     /// <summary>
@@ -324,6 +328,9 @@ public class GameManager
 
         if (stateAtFrameStart == GameState.Paused && _state != GameState.Paused)
             Menu.ReleasePausedMenuGum();
+
+        if (_state != stateAtFrameStart)
+            BgmManager.OnGameStateChanged(_state);
     }
 
     /// <summary>
