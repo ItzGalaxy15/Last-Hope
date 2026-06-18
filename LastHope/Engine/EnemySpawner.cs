@@ -110,7 +110,7 @@ public class EnemySpawner
                 bossSpawned = false;
             }
             _previousZone = gm.CurrentZone; 
-            global::Last_Hope.Systems.RunSaveManager.SaveRun(gm);
+            Systems.RunSaveManager.SaveRun(gm);
         }
 
         int currentEnemyCount = 0;
