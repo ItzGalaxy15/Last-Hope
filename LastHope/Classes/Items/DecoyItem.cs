@@ -4,6 +4,10 @@ using Microsoft.Xna.Framework;
 
 namespace Last_Hope.Classes.Items;
 
+/// <summary>
+/// Inventory data model wrapper tracking stack counters for usable decoys.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+/// </summary>
 public class DecoyItem : BaseItem
 {
     /// <summary>

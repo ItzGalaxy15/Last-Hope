@@ -2,6 +2,10 @@ using Last_Hope.BaseModel;
 
 namespace Last_Hope.Classes.Items;
 
+/// <summary>
+/// Standard recovery consumable that replenishes player health parameters immediately when consumed.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/constructors
+/// </summary>
 public class HealingPotion : BaseItem
 {
     public const float DefaultHealAmount = 50f;

@@ -17,6 +17,10 @@ public enum ItemType
     OneUp,
 }
 
+/// <summary>
+/// World representation of a dropped item that checks pickup boundaries, acts on magnetic collection sweeps, and handles terminal lifespan blinking.
+/// Source: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum
+/// </summary>
 public class ItemDrop : GameObject
 {
     private Vector2 _position;
@@ -48,6 +52,7 @@ public class ItemDrop : GameObject
 
     /// <summary>
     /// Loads the item sprite sheet and the heart sprite for the OneUp item. Falls back gracefully if either asset is missing.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Content.ContentManager.html
     /// </summary>
     public override void Load(ContentManager content)
     {
@@ -83,6 +88,7 @@ public class ItemDrop : GameObject
     /// <summary>
     /// Pulls the item toward the player when within pickup radius, picks it up on contact, and awards fallback XP if the inventory is full.
     /// Rare items (OneUp, HealingPotion) are frozen in place when both inventory slots are occupied.
+    /// Source: https://docs.monogame.net/api/Microsoft.Xna.Framework.Vector2.html
     /// </summary>
     public override void Update(GameTime gameTime)
     {
@@ -162,6 +168,7 @@ public class ItemDrop : GameObject
 
     /// <summary>
     /// Draws the item with a sine-wave vertical bounce and a red glow behind it. Uses the heart sprite for OneUp, the sprite sheet for all other types, or colored squares as a fallback.
+    /// Source: https://learn.microsoft.com/en-us/dotnet/api/system.math.sin
     /// </summary>
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
