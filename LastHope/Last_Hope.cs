@@ -29,6 +29,7 @@ public class Last_Hope : Game
     private LevelGenerator _levelGenerator;
     private Camera _camera;
     private Hud _hud;
+    private ForestDirectionArrow _forestDirectionPrompt;
 
     public Last_Hope()
     {
@@ -161,6 +162,7 @@ public class Last_Hope : Game
         try { WarriorDamageUp = Content.Load<Texture2D>("icons/WarriorDamageUp"); } catch { }
 
         _hud = new Hud(null, _gameManager.Pixel, _itemSpriteSheet, dashIcon, teleportIcon, _gameManager.CooldownIcon, Content, rapidFireIcon, critGuaranteeIcon, WarriorAtkSpdUp, RegenHpIcon, WarriorDamageUp);
+        _forestDirectionPrompt = new ForestDirectionArrow();
 
         GumBootstrap.Initialize(this, Content);
     }
@@ -187,6 +189,8 @@ public class Last_Hope : Game
 
         if (ShouldShowHud(_gameManager._state))
             _hud?.Update(gameTime, GraphicsDevice.Viewport);
+
+        _forestDirectionPrompt?.Update(gameTime);
 
         base.Update(gameTime);
     }
@@ -235,6 +239,7 @@ public class Last_Hope : Game
         {
             _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             _hud?.Draw(gameTime, _spriteBatch);
+            _forestDirectionPrompt?.Draw(_spriteBatch);
             _spriteBatch.End();
         }
 

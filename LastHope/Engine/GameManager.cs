@@ -1,9 +1,3 @@
-// References:
-//   CheckCollision broad-phase AABB pre-cull (Step 1, performance):
-//     Christer Ericson, "Real-Time Collision Detection", Morgan Kaufmann, 2005
-//     (ISBN 978-1558607323). Chapter 4 covers AABB-vs-AABB intersection; Chapter 6
-//     covers broad-phase bounding-volume hierarchies and the cheap-AABB-first pattern.
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +8,10 @@ using Last_Hope.Classes.Camera;
 using Last_Hope.Classes.Items;
 using Last_Hope.Collision;
 using Last_Hope.Engine.Pathfinding;
+using Last_Hope.SkillTree;
+using Last_Hope.Systems;
 using Last_Hope.UI;
+using LastHope.Audio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -34,7 +31,10 @@ public enum Zone
 /// </summary>
 /// <remarks>
 /// Implements the Singleton design pattern to provide global access to game systems.
-/// Follows standard MonoGame architectural patterns for Update/Draw delegation and deferred object addition/removal to prevent collection modification during iteration.
+/// Follows standard MonoGame architectural patterns for Update/Draw delegation and deferred object addition/removal 
+/// to prevent collection modification during iteration.
+/// <see href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1.getenumerator">Microsoft System.Collections List Enumeration Guidelines</see>
+/// <see href="https://docs.monogame.net/articles/intro/game_loop.html">MonoGame Game Loop Architecture</see>
 /// </remarks>
 public class GameManager
 {
@@ -50,7 +50,6 @@ public class GameManager
     public Random RNG { get; private set; }
     public BasePlayer? _player { get; private set; }
 
-    /// <summary>Chosen from the character select screen; used for new runs and restarts.</summary>
     public PlayerCharacterKind SelectedCharacter { get; set; } = PlayerCharacterKind.Warrior;
     public InputManager InputManager { get; private set; }
     public Game Game { get; private set; }
@@ -58,31 +57,25 @@ public class GameManager
     public int Score { get; set; } = 0;
     public Decoy ActiveDecoy { get; set; }
     public bool HasUsedOneUp { get; set; } = false;
-    // Set to true once a One-Up has been dropped this run; prevents further OneUp drops for the remainder of the run.
     public bool HasOneUpDropped { get; set; } = false;
     public int SelectedItemSlot { get; private set; } = 0;
 
     public const int WorldWidth = 4000;
     public const int WorldHeight = 5000;
 
-    // --- Configurable Item Drop Chances ---
     public readonly Dictionary<ItemType, double> ItemDropChances = new Dictionary<ItemType, double>
     {
-        { ItemType.Bomb, 0.06 },          // 6% chance
-        { ItemType.Decoy, 0.03 },         // 3% chance
-        { ItemType.HealingPotion, 0.06 }, // 6% chance
-        { ItemType.OneUp, 0.02 }          // 2% chance
+        { ItemType.Bomb, 0.06 },          
+        { ItemType.Decoy, 0.03 },         
+        { ItemType.HealingPotion, 0.06 }, 
+        { ItemType.OneUp, 0.02 }          
     };
     public Texture2D Pixel { get; private set; }
-
 
     public GameState _state;
     public SpriteFont _font;
 
-    /// <summary>State to enter when closing settings with Esc/Q (main menu from title hub, paused when opened from pause).</summary>
     public GameState StateAfterClosingSettings { get; set; } = GameState.MainMenu;
-
-    /// <summary>Bitmap font from <c>Content/Font.fnt</c> + <c>Content/Font.png</c> when present next to the executable.</summary>
     public BmFont? FontBitmap { get; private set; }
     public Menu Menu { get; private set; }
     public EnemySpawner EnemySpawner { get; private set; }
@@ -96,9 +89,6 @@ public class GameManager
     public bool VillageCleared { get; set; } = false;
     public bool IsForestLocked => CurrentZone == Zone.Village && !VillageCleared && ForestBoundaryX > 0f;
 
-    /// <summary>
-    /// Tile grid for enemy pathfinding; set after level generation. Mark cells non-walkable when adding blocking collision.
-    /// </summary>
     public NavigationGrid NavigationGrid { get; set; }
     public Point PlayerSpawnSearchCenter { get; set; } = new Point(-1, -1);
 
@@ -176,6 +166,9 @@ public class GameManager
         {
             FontBitmap = null;
         }
+
+        BgmManager.Load(content);
+        BgmManager.OnGameStateChanged(_state);
     }
 
     /// <summary>
@@ -241,10 +234,6 @@ public class GameManager
     /// the expensive narrow-phase intersection test only runs on pairs whose bounding
     /// boxes actually overlap.
     /// </summary>
-    /// <remarks>
-    /// The cheap AABB-vs-AABB rejection is the broad-phase pattern from Ericson,
-    /// "Real-Time Collision Detection" (2005), Ch. 6.
-    /// </remarks>
     public void CheckCollision()
     {
         for (int i = 0; i < _gameObjects.Count; i++)
@@ -274,9 +263,6 @@ public class GameManager
     /// <param name="center">The origin point of the search.</param>
     /// <param name="radius">The maximum distance from the center.</param>
     /// <returns>A list of objects that fall within the radius.</returns>
-    /// <remarks>
-    /// Uses squared distance comparisons to avoid expensive square root operations, a common optimization in game loops.
-    /// </remarks>
     public List<GameObject> GetObjectsInRadius(Vector2 center, float radius)
     {
         List<GameObject> objectsInRadius = new List<GameObject>();
@@ -299,9 +285,6 @@ public class GameManager
     /// The main update loop for the game engine. Routes logic based on the current <see cref="GameState"/>.
     /// </summary>
     /// <param name="gameTime">Snapshot of the game's timing state.</param>
-    /// <remarks>
-    /// Operates conceptually as a Finite State Machine (FSM), delegating specific update logic to the <see cref="Menu"/> or active game systems.
-    /// </remarks>
     public void Update(GameTime gameTime)
     {
         InputManager.Update();
@@ -345,6 +328,9 @@ public class GameManager
 
         if (stateAtFrameStart == GameState.Paused && _state != GameState.Paused)
             Menu.ReleasePausedMenuGum();
+
+        if (_state != stateAtFrameStart)
+            BgmManager.OnGameStateChanged(_state);
     }
 
     /// <summary>
@@ -387,11 +373,9 @@ public class GameManager
         }
     }
 
-
     /// <summary>
     /// Add a new GameObject to the GameManager.
     /// The GameObject will be added at the start of the next Update step.
-    /// Once it is added, the GameManager will ensure all steps of the game loop will be called on the object automatically.
     /// </summary>
     /// <param name="gameObject"> The GameObject to add. </param>
     public void AddGameObject(GameObject gameObject)
@@ -433,14 +417,15 @@ public class GameManager
     }
 
     /// <summary>
-    /// Removes a GameObject from the active simulation.
+    /// Safely defers removal of a GameObject from the active simulation until the end of the update loop.
+    /// Handles centralized distribution of experience points and random item generation when enemies are destroyed.
     /// </summary>
     /// <remarks>
-    /// The GameObject will be removed at the start of the next Update step and its Destroy() method will be called.
-    /// After that the object will no longer receive any updates.
-    /// Handles dropping random items when an enemy object is destroyed.
-    /// </summary>
-    /// <param name="gameObject"> The GameObject to Remove. </param>
+    /// Defers memory de-allocation so the iteration of game objects does not throw InvalidOperationException.
+    /// Moving XP assignment to this centralized engine step guarantees XP is granted regardless of what caused the death (Weapon, Ability, Traps).
+    /// <see href="https://learn.microsoft.com/en-us/dotnet/api/system.invalidoperationexception">Microsoft InvalidOperationException Guidelines</see>
+    /// </remarks>
+    /// <param name="gameObject">The GameObject to Remove.</param>
     public void RemoveGameObject(GameObject gameObject)
     {
         if (!_toBeRemoved.Contains(gameObject))
@@ -449,6 +434,11 @@ public class GameManager
 
             if (gameObject is BaseEnemy enemy && enemy._currentHp <= 0)
             {
+                if (_player != null && playerAlive)
+                {
+                    _player.AddExperience(enemy.ExperienceValue);
+                }
+
                 double roll = RNG.NextDouble();
                 double cumulative = 0.0;
                 ItemType droppedType = ItemType.None;
@@ -484,7 +474,7 @@ public class GameManager
     }
 
     /// <summary>
-    /// Get a random location on the screen.
+    /// Get a random location on the screen viewport bounds.
     /// </summary>
     public Vector2 RandomScreenLocation()
     {
@@ -504,14 +494,9 @@ public class GameManager
     /// Resets the engine state for a new game run. 
     /// Clears all game objects, resets score and inventory, and spawns a fresh player character.
     /// </summary>
-    
-    /// <summary>
-    /// Resets the engine state for a new game run. 
-    /// Clears all game objects, resets score and inventory, and spawns a fresh player character.
-    /// </summary>
     public void LoadRun()
     {
-        var data = global::Last_Hope.Systems.RunSaveManager.LoadRunData();
+        var data = RunSaveManager.LoadRunData();
         if (data == null)
         {
             ResetGame(false);
@@ -530,8 +515,12 @@ public class GameManager
         
         EnemySpawner.LoadWaveState(data.CurrentWave, data.BossSpawned);
 
-        _player._Level = data.Level;
-        _player._Experience = data.Experience;
+        _player.LoadLevelAndExperienceSilently(data.Level, data.Experience);
+
+        // Snap unspent talent points back to what the loaded level grants, so points
+        // earned past the last checkpoint (and not saved with the run) don't persist.
+        SkillTreeSaveManager.ReconcileUnspentPoints(data.Level);
+
         _player._currentHp = data.CurrentHp;
         _player.ExtraLives = data.ExtraLives;
         if (data.Inventory != null)
@@ -543,15 +532,14 @@ public class GameManager
 
     public void ResetGame(bool isLoadingRun = false)
     {
-        if (!isLoadingRun && !global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (!isLoadingRun && !SkillTreeConfig.PersistSkillTreeOnDeath)
         {
-            global::Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
+            SkillTreeSaveManager.DeleteSave();
         }
         _gameObjects.Clear();
         _toBeAdded.Clear();
         _toBeRemoved.Clear();
 
-        // Reset player state
         playerAlive = true;
         Score = 0;
         ActiveDecoy = null;
@@ -570,16 +558,14 @@ public class GameManager
         _player.OnTalentPointEarned += Menu.AwardTalentPoint;
         AddGameObject(_player);
 
-        if (isLoadingRun || global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+        if (isLoadingRun || SkillTreeConfig.PersistSkillTreeOnDeath)
         {
             Menu.LoadSkillTreeSilently();
         }
 
     }
 
-    /// <summary>Matches player draw scale (32px frame × 3) for spawn search and clamping.</summary>
     private const float SpawnBodyWidthPx = 96f;
-    /// <summary>Same fraction as <see cref="Warrior"/> / <see cref="Archer"/> hitbox vs body.</summary>
     private const float SpawnHitboxFraction = 0.55f;
 
     private static bool PlayerFootprintOverlapsStatic(float bodyWidth, Vector2 topLeftWorld)
@@ -597,9 +583,6 @@ public class GameManager
     /// <summary>
     /// First walkable nav tile (from map center outward) whose footprint does not overlap static geometry.
     /// </summary>
-    /// <remarks>
-    /// Uses a concentric/spiral search algorithm to find the nearest valid grid cell starting from the center.
-    /// </remarks>
     private bool TryFindSpawnTopLeft(out Vector2 spawnTopLeft)
     {
         spawnTopLeft = Vector2.Zero;

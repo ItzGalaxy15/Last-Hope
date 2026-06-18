@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace Last_Hope.SkillTree
 {
     /// <summary>
-    /// Represents the tier or importance of a skill node.
+    /// Global configuration flags for the skill tree system.
     /// </summary>
     public static class SkillTreeConfig
     {
@@ -27,9 +27,7 @@ namespace Last_Hope.SkillTree
     /// </summary>
     public class NodeEffect
     {
-        // e.g., "base_damage", "unlock_whirlwind"
         public string EffectId { get; set; } 
-        // e.g., 5.0f for +5 Damage per point
         public float ValuePerPoint { get; set; } 
     }
 
@@ -95,6 +93,10 @@ namespace Last_Hope.SkillTree
     /// <summary>
     /// Represents the player's mutable state for a skill tree.
     /// </summary>
+    /// <remarks>
+    /// Separating mutable state from static data follows the Data Transfer Object (DTO) pattern.
+    /// <see href="https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/data-transfer-objects">Microsoft DTO Pattern</see>
+    /// </remarks>
     public class SkillTreeState
     {
         public string ClassId { get; set; }
@@ -108,20 +110,24 @@ namespace Last_Hope.SkillTree
     /// <summary>
     /// Manages the logic, validation, and point allocation for a player's interaction with a skill tree.
     /// </summary>
+    /// <remarks>
+    /// Utilizes the Observer pattern via C# Events/Actions to notify other systems when stats change.
+    /// <see href="https://learn.microsoft.com/en-us/dotnet/standard/events/observer-design-pattern">Microsoft Observer Design Pattern</see>
+    /// </remarks>
     public class BaseSkillTree
     {
         private readonly ClassSkillTreeData _data;
         private SkillTreeState _state;
         
-        // Pending state for point allocation planning
         private readonly Dictionary<string, int> _pendingAllocations = new Dictionary<string, int>();
-
-        // Fast lookup cache
         private readonly Dictionary<string, SkillNodeData> _nodeMap;
         
         // Caches the layer 0 root node ID for each node in the tree
         private readonly Dictionary<string, string> _nodeRoots = new Dictionary<string, string>();
 
+        /// <summary>
+        /// Event fired when a point is confirmed, applying its associated effect to the player.
+        /// </summary>
         public event Action<NodeEffect> OnEffectApplied;
         public event Action OnTreeRespec;
         
@@ -138,7 +144,6 @@ namespace Last_Hope.SkillTree
             _state = state;
             _nodeMap = _data.Nodes.ToDictionary(n => n.Id);
             
-            // Precompute root for each node
             foreach (var rootNode in _data.Nodes.Where(n => n.Layer == 0))
             {
                 var queue = new Queue<string>();
@@ -171,7 +176,7 @@ namespace Last_Hope.SkillTree
         }
 
         /// <summary>
-        /// Gets the current state of a node (Locked, Available, Partial, Maxed).
+        /// Gets the current unlock and allocation state of a node.
         /// </summary>
         public NodeState GetNodeState(string nodeId, bool includePending = true)
         {
@@ -309,7 +314,6 @@ namespace Last_Hope.SkillTree
             var node = _nodeMap[nodeId];
             int currentPts = GetAllocatedPoints(nodeId, true);
             
-            // Already maxed
             if (currentPts >= node.MaxPoints) return false; 
 
             if (!_pendingAllocations.ContainsKey(nodeId))
@@ -355,6 +359,9 @@ namespace Last_Hope.SkillTree
         /// <summary>
         /// Confirms all pending point allocations and permanently applies them.
         /// </summary>
+        /// <remarks>
+        /// Relies on external managers to sync file writes to prevent exploit loops.
+        /// </remarks>
         public void ConfirmPendingPoints()
         {
             if (_pendingAllocations.Count == 0) return;
@@ -444,12 +451,52 @@ namespace Last_Hope.SkillTree
     /// Handles loading and saving the player's skill tree progression state to disk using JSON.
     /// Source: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/how-to
     /// </summary>
+    /// <remarks>
+    /// Utilizes System.Text.Json for serialization operations.
+    /// <see href="https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-overview">Microsoft JSON Serialization</see>
+    /// </remarks>
     public static class SkillTreeSaveManager
     {
-        private const string SaveFile = "skilltree_save.json";
-        
-        // Track the actively loaded state in memory for synchronized saving
+        private static string GetSaveDirectory()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
+            string systemsPath = Path.Combine(projectRoot, "Systems");
+            
+            if (!Directory.Exists(systemsPath))
+            {
+                systemsPath = Path.Combine(baseDir, "Systems");
+                if (!Directory.Exists(systemsPath))
+                {
+                    Directory.CreateDirectory(systemsPath);
+                }
+            }
+            return systemsPath;
+        }
+
+        private static string SaveFilePath => Path.Combine(GetSaveDirectory(), "skilltree_save.json");
+
         public static SkillTreeState CurrentState { get; set; }
+
+        // Points granted at character creation, and how many levels earn one talent point.
+        // Must match the fresh-state grant below and BasePlayer.TalentPointInterval.
+        public const int InitialSkillPoints = 10;
+        public const int LevelsPerSkillPoint = 5;
+
+        /// <summary>
+        /// Recomputes unspent points from the authoritative level so a rolled-back run
+        /// (quitting before a checkpoint) cannot keep points earned past that checkpoint.
+        /// Prevents farming infinite points by leveling, quitting, and continuing.
+        /// </summary>
+        public static void ReconcileUnspentPoints(int level)
+        {
+            if (CurrentState == null) return;
+
+            int earned = InitialSkillPoints + (level / LevelsPerSkillPoint);
+            int unspent = earned - CurrentState.TotalPointsSpent;
+            CurrentState.UnspentSkillPoints = unspent < 0 ? 0 : unspent;
+            SaveCurrent();
+        }
 
         /// <summary>
         /// Saves the given skill tree state to a JSON file.
@@ -458,12 +505,19 @@ namespace Last_Hope.SkillTree
         public static void Save(SkillTreeState state)
         {
             CurrentState = state;
-            string json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(SaveFile, json);
+            try
+            {
+                string json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(SaveFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to save skill tree: {ex.Message}");
+            }
         }
 
         /// <summary>
-        /// Saves whatever state is currently active in memory. Used by RunSaveManager.
+        /// Saves whatever state is currently active in memory. Used for cross-system synchronization.
         /// </summary>
         public static void SaveCurrent()
         {
@@ -479,9 +533,16 @@ namespace Last_Hope.SkillTree
         /// </summary>
         public static void DeleteSave()
         {
-            if (File.Exists(SaveFile))
+            try
             {
-                File.Delete(SaveFile);
+                if (File.Exists(SaveFilePath))
+                {
+                    File.Delete(SaveFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to delete skill tree save: {ex.Message}");
             }
         }
 
@@ -493,11 +554,11 @@ namespace Last_Hope.SkillTree
         {
             var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-            if (File.Exists(SaveFile))
+            if (File.Exists(SaveFilePath))
             {
                 try
                 {
-                    string json = File.ReadAllText(SaveFile);
+                    string json = File.ReadAllText(SaveFilePath);
                     SkillTreeState? state = JsonSerializer.Deserialize<SkillTreeState>(json, jsonOptions);
                     if (state != null)
                     {

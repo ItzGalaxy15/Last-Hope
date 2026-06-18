@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Last_Hope.Engine;
 using Last_Hope.UI.GumForms;
+using LastHope.Audio;
 using MonoGameGum;
 using MonoGameGum.GueDeriving;
 
@@ -16,6 +17,7 @@ public sealed class MainMenuScreen : MenuBase
     private static readonly Color AccentLine = new(120, 175, 255, 90);
 
     private Panel _rootPanel;
+    private MenuAnimatedButton _musicButton;
     private bool _hintAdded;
     private Texture2D _backgroundTexture;
 
@@ -26,6 +28,7 @@ public sealed class MainMenuScreen : MenuBase
 
         GumService.Default.Root.Children.Clear();
         _rootPanel = null;
+        _musicButton = null;
         _hintAdded = false;
     }
 
@@ -92,6 +95,21 @@ public sealed class MainMenuScreen : MenuBase
         hint.Color = new Color(200, 210, 230, 200);
         _rootPanel.AddChild(hint);
         _hintAdded = true;
+
+        float musicBtnW = 260f * ui;
+        float musicBtnH = 40f * ui;
+        _musicButton = new MenuAnimatedButton(Game.GraphicsDevice, musicBtnW, musicBtnH);
+        _musicButton.Text = $"Music: {BgmManager.CurrentMainMenuTrackLabel}";
+        _musicButton.X = vp.Width - musicBtnW - marginX;
+        _musicButton.Y = vp.Height - musicBtnH - 28f * ui;
+        _musicButton.Width = musicBtnW;
+        _musicButton.Height = musicBtnH;
+        _musicButton.Click += (_, _) =>
+        {
+            BgmManager.CycleMainMenuTrack();
+            _musicButton.Text = $"Music: {BgmManager.CurrentMainMenuTrackLabel}";
+        };
+        _rootPanel.AddChild(_musicButton);
     }
 
     private void ApplySelection(int index)

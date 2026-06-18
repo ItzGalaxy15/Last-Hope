@@ -53,16 +53,21 @@ namespace Last_Hope.Systems
         /// </summary>
         public static void DeleteSave()
         {
-            if (File.Exists(SaveFilePath))
+            try
             {
-                File.Delete(SaveFilePath);
+                if (File.Exists(SaveFilePath))
+                {
+                    File.Delete(SaveFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to delete run save: {ex.Message}");
             }
             
-            // Ensures starting a "New Run" or dying completely wipes the skill tree
-            // if we have persistence turned off in the config.
-            if (!global::Last_Hope.SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
+            if (!SkillTree.SkillTreeConfig.PersistSkillTreeOnDeath)
             {
-                global::Last_Hope.SkillTree.SkillTreeSaveManager.DeleteSave();
+                SkillTree.SkillTreeSaveManager.DeleteSave();
             }
         }
 
@@ -96,8 +101,15 @@ namespace Last_Hope.Systems
                 PositionY = gm._player.GetPosition().Y,
             };
 
-            string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(SaveFilePath, json);
+            try
+            {
+                string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(SaveFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to save run data: {ex.Message}");
+            }
             
             // Synchronized save: write the skill tree to disk exactly when the wave progress is saved.
             // This closes the loophole where players could spend a point mid-wave, force quit, and double-dip XP.
@@ -117,8 +129,9 @@ namespace Last_Hope.Systems
                 string json = File.ReadAllText(SaveFilePath);
                 return JsonSerializer.Deserialize<RunSaveData>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Failed to load run data or save is corrupted: {ex.Message}");
                 return null;
             }
         }

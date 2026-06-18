@@ -264,6 +264,19 @@ public abstract class BasePlayer : GameObject
         return false;
     }
 
+    public void LoadLevelAndExperienceSilently(int level, float experience)
+    {
+        _Level = level;
+        _Experience = experience;
+        
+        // Reapply accumulated stats without triggering UI/flashes
+        _levelHpBonus = level * LevelStatBonus;
+        _levelDamageBonus = level * LevelStatBonus;
+        _levelCritBonus = level * LevelStatBonus;
+        _levelHasteBonus = level * LevelStatBonus;
+        _levelSpeedBonus = level * LevelStatBonus;
+    }
+
     public void AddExperience(float amount)
     {
         _Experience += amount;

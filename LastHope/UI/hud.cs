@@ -33,6 +33,7 @@ public class Hud
 			new OneUpIcon(pixel),
 			new WaveIndicator(),
 			_bossWarningIndicator,
+			new BossHealthBar(pixel),
 			new ToastNotification(pixel)
 		};
 

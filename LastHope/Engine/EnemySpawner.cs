@@ -50,6 +50,20 @@ public class EnemySpawner
     /// <summary>Indicates whether the final wave's boss has been spawned yet.</summary>
     public bool BossSpawned => bossSpawned;
 
+    /// <summary>True when the final village wave has no enemies left and the forest can be entered.</summary>
+    public bool VillageFinalWaveCleared
+    {
+        get
+        {
+            var gm = GameManager.GetGameManager();
+            return gm.CurrentZone == Zone.Village &&
+                   currentWave == TotalWaves &&
+                   bossSpawned &&
+                   spawnedThisWave >= GetTargetEnemiesForWave(currentWave) &&
+                   CountActiveEnemies(gm) == 0;
+        }
+    }
+
     /// <summary>
     /// Calculates the total number of enemies remaining in the current wave, including both alive and yet to spawn enemies.
     /// </summary>
@@ -57,15 +71,7 @@ public class EnemySpawner
     public int GetEnemiesLeftCount()
     {
         var gm = GameManager.GetGameManager();
-        int currentEnemyCount = 0;
-        foreach (var gameObject in gm._gameObjects)
-        {
-            if (gameObject is BaseEnemy) currentEnemyCount++;
-        }
-        foreach (var gameObject in gm._toBeAdded)
-        {
-            if (gameObject is BaseEnemy) currentEnemyCount++;
-        }
+        int currentEnemyCount = CountActiveEnemies(gm);
 
         int unspawned = GetTargetEnemiesForWave(currentWave) - spawnedThisWave;
         if (unspawned < 0) unspawned = 0;
@@ -104,7 +110,7 @@ public class EnemySpawner
                 bossSpawned = false;
             }
             _previousZone = gm.CurrentZone; 
-            global::Last_Hope.Systems.RunSaveManager.SaveRun(gm);
+            Systems.RunSaveManager.SaveRun(gm);
         }
 
         int currentEnemyCount = 0;
@@ -120,6 +126,20 @@ public class EnemySpawner
         int targetEnemiesForWave = GetTargetEnemiesForWave(currentWave);
         int finalWave = TotalWaves;
 
+        if (gm.CurrentZone == Zone.Village &&
+            currentWave == finalWave &&
+            bossSpawned &&
+            spawnedThisWave >= targetEnemiesForWave &&
+            currentEnemyCount == 0)
+        {
+            if (!gm.VillageCleared)
+            {
+                gm.VillageCleared = true;
+                Systems.RunSaveManager.SaveRun(gm);
+            }
+            return;
+        }
+
         if (waitingForNextWave)
         {
             if (currentEnemyCount == 0)
@@ -128,9 +148,7 @@ public class EnemySpawner
                 {
                     if (gm.CurrentZone == Zone.Village)
                     {
-                        if (!gm.VillageCleared) { gm.VillageCleared = true; global::Last_Hope.Systems.RunSaveManager.SaveRun(gm); }
-                        // Idle until player crosses west, which flips CurrentZone to Forest and resets us.
-                    }
+                        if (!gm.VillageCleared) { gm.VillageCleared = true; Systems.RunSaveManager.SaveRun(gm); }                    }
                     else
                     {
                         gm._state = GameState.Winner;
@@ -145,7 +163,7 @@ public class EnemySpawner
                     waveWaitTimer = 0f;
                     currentWave++;
                     spawnedThisWave = 0;
-                    global::Last_Hope.Systems.RunSaveManager.SaveRun(gm);
+                    Systems.RunSaveManager.SaveRun(gm);
                 }
             }
             return;
@@ -272,6 +290,21 @@ public class EnemySpawner
         }
 
         return Math.Max(1, enemies); // Make sure there is always at least 1 enemy
+    }
+
+    private static int CountActiveEnemies(GameManager gm)
+    {
+        int currentEnemyCount = 0;
+        foreach (var gameObject in gm._gameObjects)
+        {
+            if (gameObject is BaseEnemy) currentEnemyCount++;
+        }
+        foreach (var gameObject in gm._toBeAdded)
+        {
+            if (gameObject is BaseEnemy) currentEnemyCount++;
+        }
+
+        return currentEnemyCount;
     }
 
     /// <summary>
