@@ -33,6 +33,7 @@ public class ForestDirectionPrompt
         Color textColor = new Color(255, 245, 210, alpha);
         Color textShadow = new Color(0, 0, 0, Math.Min(alpha, 180));
 
+        // https://docs.monogame.net/api/Microsoft.Xna.Framework.MathHelper.html 
         float arrowLength = MathHelper.Clamp(viewport.Width * 0.105f, 86f, 150f);
         float headLength = MathHelper.Clamp(viewport.Width * 0.034f, 30f, 50f);
         float headHeight = headLength * 0.68f;
