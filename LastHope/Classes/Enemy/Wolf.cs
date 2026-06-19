@@ -39,11 +39,11 @@ public class Wolf : BaseEnemy
     private const float LungeMaxRange = 380f;
     private const float LungeCooldownSeconds = 4f;
 
-    // Melee cooldown (for Decoy hits only — player contact damage comes from Warrior.OnCollision)
+    // Melee cooldown (for Decoy hits only. player contact damage comes from Warrior.OnCollision)
     private float _meleeCooldownTimer = 0f;
     private const float MeleeCooldownSeconds = 0.75f;
 
-    // Sprite sheet constants — shares the orc sheet as a placeholder until a wolf sprite is ready
+    // Sprite sheet constants. shares the orc sheet as a placeholder until a wolf sprite is ready
     private const int FrameSize = 32;
     private const int SheetColumns = 8;
     private const int WolfFacingRightRow = 0;
@@ -54,7 +54,7 @@ public class Wolf : BaseEnemy
     private float HitboxSize => FullSize * 0.55f;
     private float HitboxOffset => (FullSize - HitboxSize) / 2f;
 
-        // Base Wolf stats
+    // Base Wolf stats
     public override float BaseMaxHp { get; } = 75f;
     public override int BaseDamage { get; } = 5;
     public override float BaseCritChance { get; } = 0f;
@@ -245,7 +245,7 @@ public class Wolf : BaseEnemy
             return;
         }
 
-        // Player contact damage is applied by Warrior.OnCollision — we only add the bleed on a lunge hit
+        // Player contact damage is applied by Warrior.OnCollision. we only add the bleed on a lunge hit
         if (other is Warrior warrior && _state == WolfState.Lunging)
         {
             AudioManager.PlaySfxOnce(ref _sharedAttackInstance, _attackSound);
