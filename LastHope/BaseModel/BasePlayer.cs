@@ -304,8 +304,8 @@ public abstract class BasePlayer : GameObject
         _levelSpeedBonus  += LevelStatBonus;
         if (_Level % TalentPointInterval == 0)
         {
-            OnTalentPointEarned?.Invoke();
             GameManager.GetGameManager().Menu.ForceOpenSkillTree();
+            OnTalentPointEarned?.Invoke();
         }
     }
 
