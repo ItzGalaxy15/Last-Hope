@@ -104,10 +104,6 @@ namespace Last_Hope.Classes.Weapon
                     GameManager.GetGameManager().RemoveGameObject(enemy);
                 }
             }
-
-
-            // TODO: Implement when you have an enemy/health system
-
         }
 
         private int CalculateDamage()
