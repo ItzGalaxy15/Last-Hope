@@ -311,7 +311,6 @@ public class Archer : BasePlayer
             return;
 
         _hurtCooldown = EnemyContactHurtInterval;
-        //_hurtCooldown = enemy is Troll ? 1f : EnemyContactHurtInterval;
 
         float damageToTake = EnemyContactDamage;
         if (enemy is Boss)
@@ -427,7 +426,6 @@ public class Archer : BasePlayer
         float prevDamageBonus = _levelDamageBonus;
         base.OnLevelUp();
         CurrentMaxHp += LevelStatBonus * 100; // Each point in HP gives 10 max HP
-        // Damage is int; apply only when the float crosses the next integer
         int dmgIncrease = (int)_levelDamageBonus - (int)prevDamageBonus;
         if (dmgIncrease > 0) CurrentDamage += dmgIncrease;
         CurrentCritChance = Math.Min(1f, CurrentCritChance + LevelStatBonus);

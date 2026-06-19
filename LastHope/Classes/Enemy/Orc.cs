@@ -93,7 +93,7 @@ public class Orc : BaseEnemy
             OrcFacingRightRow * FrameSize
         );
 
-        // ✅ IMPORTANT: keep spawn position, only ensure size is correct
+        // Keep spawn position, only ensure size is correct
         var scaledSize = new Point((int)(FrameSize * SpriteScale), (int)(FrameSize * SpriteScale));
         _collider.shape.Size = scaledSize;
 
